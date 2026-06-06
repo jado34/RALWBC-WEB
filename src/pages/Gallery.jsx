@@ -1,32 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const PHOTOS_LIST = [
-  { id: 1, url: '/Lagos-West1.jpeg', alt: 'Two men discussing at Lagos West Conference' },
-  { id: 2, url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA member uniform profile inspection' },
-  { id: 3, url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Stage event auditorium audience meeting' },
-  { id: 4, url: '/Lagos-West3.jpeg', alt: 'Ambassador saluting during drill inspection' },
-  { id: 5, url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Singing with microphone during worship' },
-  { id: 6, url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Marshal speaking at podium and address' }
-];
+import { dbService } from '../services/db';
 
 export const Gallery = () => {
+  const [photosList, setPhotosList] = useState([]);
   const [currentPage, setCurrentPage] = useState('01');
   const [activePhoto, setActivePhoto] = useState(null);
+
+  useEffect(() => {
+    dbService.init();
+    setPhotosList(dbService.getGalleryPhotos());
+  }, []);
 
   // Navigate lightbox images
   const handlePrevPhoto = (e) => {
     e.stopPropagation();
-    const idx = PHOTOS_LIST.findIndex(p => p.url === activePhoto.url);
-    const prevIdx = (idx - 1 + PHOTOS_LIST.length) % PHOTOS_LIST.length;
-    setActivePhoto(PHOTOS_LIST[prevIdx]);
+    if (photosList.length === 0) return;
+    const idx = photosList.findIndex(p => p.url === activePhoto.url);
+    const prevIdx = (idx - 1 + photosList.length) % photosList.length;
+    setActivePhoto(photosList[prevIdx]);
   };
 
   const handleNextPhoto = (e) => {
     e.stopPropagation();
-    const idx = PHOTOS_LIST.findIndex(p => p.url === activePhoto.url);
-    const nextIdx = (idx + 1) % PHOTOS_LIST.length;
-    setActivePhoto(PHOTOS_LIST[nextIdx]);
+    if (photosList.length === 0) return;
+    const idx = photosList.findIndex(p => p.url === activePhoto.url);
+    const nextIdx = (idx + 1) % photosList.length;
+    setActivePhoto(photosList[nextIdx]);
   };
 
   return (
@@ -44,122 +44,52 @@ export const Gallery = () => {
           Gallery
         </h1>
 
-        {/* Section 1: Jubilee Experience */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
-            <h2 style={{ 
-              fontSize: '1.1rem', 
-              fontWeight: '700', 
-              color: '#000000',
-              paddingBottom: '0.4rem', 
-              borderBottom: '2px solid #000000', 
-              whiteSpace: 'nowrap',
-              margin: 0
-            }}>
-              Jubilee Experience
-            </h2>
-            <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
+        {/* Dynamic Photo Sections */}
+        {photosList.length === 0 ? (
+          <div style={{ padding: '4rem 2rem', textAlign: 'center', border: '1px dashed #cbd5e1', borderRadius: '8px', color: '#64748b', margin: '2rem 0' }}>
+            <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No photos available in the gallery yet.</p>
           </div>
-
-          {/* Grid of 6 */}
-          <div style={gridStyle}>
-            {PHOTOS_LIST.map((photo) => (
-              <div 
-                key={`jubilee-${photo.id}`} 
-                style={imgContainerStyle} 
-                onClick={() => setActivePhoto(photo)}
-                className="gallery-photo-card"
-              >
-                <img src={photo.url} alt={photo.alt} style={imgStyle} />
+        ) : (
+          Object.entries(
+            photosList.reduce((acc, photo) => {
+              const cat = photo.category || 'General';
+              if (!acc[cat]) acc[cat] = [];
+              acc[cat].push(photo);
+              return acc;
+            }, {})
+          ).map(([categoryName, photos]) => (
+            <div key={categoryName} style={{ marginBottom: '4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
+                <h2 style={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: '700', 
+                  color: '#000000',
+                  paddingBottom: '0.4rem', 
+                  borderBottom: '2px solid #000000', 
+                  whiteSpace: 'nowrap',
+                  margin: 0
+                }}>
+                  {categoryName}
+                </h2>
+                <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
               </div>
-            ))}
-          </div>
 
-          {/* See more link */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
-            <a href="#more-jamboree" onClick={(e) => { e.preventDefault(); alert("Viewing more Jamboree pictures..."); }} style={linkStyle}>
-              See more Jamboree pictures ›
-            </a>
-          </div>
-        </div>
-
-        {/* Section 2: 2023 Ushering In */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
-            <h2 style={{ 
-              fontSize: '1.1rem', 
-              fontWeight: '700', 
-              color: '#000000',
-              paddingBottom: '0.4rem', 
-              borderBottom: '2px solid #000000', 
-              whiteSpace: 'nowrap',
-              margin: 0
-            }}>
-              2023 Ushering In
-            </h2>
-            <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
-          </div>
-
-          {/* Grid of 6 */}
-          <div style={gridStyle}>
-            {PHOTOS_LIST.map((photo) => (
-              <div 
-                key={`ushering-${photo.id}`} 
-                style={imgContainerStyle} 
-                onClick={() => setActivePhoto(photo)}
-                className="gallery-photo-card"
-              >
-                <img src={photo.url} alt={photo.alt} style={imgStyle} />
+              {/* Grid of photos */}
+              <div style={gridStyle}>
+                {photos.map((photo) => (
+                  <div 
+                    key={`photo-${photo.id}`} 
+                    style={imgContainerStyle} 
+                    onClick={() => setActivePhoto(photo)}
+                    className="gallery-photo-card"
+                  >
+                    <img src={photo.url} alt={photo.alt} style={imgStyle} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          {/* See more link */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
-            <a href="#more-ushering" onClick={(e) => { e.preventDefault(); alert("Viewing more 2023 Ushering In pictures..."); }} style={linkStyle}>
-              See more 2023 Ushering In pictures ›
-            </a>
-          </div>
-        </div>
-
-        {/* Section 3: Chapter Inauguration */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
-            <h2 style={{ 
-              fontSize: '1.1rem', 
-              fontWeight: '700', 
-              color: '#000000',
-              paddingBottom: '0.4rem', 
-              borderBottom: '2px solid #000000', 
-              whiteSpace: 'nowrap',
-              margin: 0
-            }}>
-              Chapter Inauguration
-            </h2>
-            <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
-          </div>
-
-          {/* Grid of 6 */}
-          <div style={gridStyle}>
-            {PHOTOS_LIST.map((photo) => (
-              <div 
-                key={`inauguration-${photo.id}`} 
-                style={imgContainerStyle} 
-                onClick={() => setActivePhoto(photo)}
-                className="gallery-photo-card"
-              >
-                <img src={photo.url} alt={photo.alt} style={imgStyle} />
-              </div>
-            ))}
-          </div>
-
-          {/* See more link */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
-            <a href="#more-ushering-2" onClick={(e) => { e.preventDefault(); alert("Viewing more 2023 Ushering In pictures..."); }} style={linkStyle}>
-              See more 2023 Ushering In pictures ›
-            </a>
-          </div>
-        </div>
+            </div>
+          ))
+        )}
 
         {/* Pagination bar divided by line */}
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '3rem' }}>

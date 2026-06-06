@@ -95,9 +95,21 @@ export const AdminLogin = () => {
           <h1 style={{ margin: '0 0 0.4rem', fontSize: '1.5rem', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
             Conference Administration
           </h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem' }}>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
             Authorized personnel only
           </p>
+          <div style={{
+            fontSize: '0.72rem',
+            backgroundColor: 'rgba(234,179,8,0.08)',
+            border: '1px solid rgba(234,179,8,0.25)',
+            color: '#b45309',
+            padding: '0.5rem',
+            borderRadius: '6px',
+            lineHeight: 1.4,
+            textAlign: 'left'
+          }}>
+            <strong>Prototype Notice:</strong> Register students as admins using registration code <code>RALWBC-COMMITTEE-2026</code>.
+          </div>
         </div>
 
         {/* Error */}

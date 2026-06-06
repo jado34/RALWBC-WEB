@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { dbService } from '../../services/db';
 import { AntiCheatGuard } from '../../components/AntiCheatGuard';
@@ -46,6 +46,38 @@ export const Examination = () => {
 
   const [flaggedQuestions, setFlaggedQuestions] = useState({});
   const [infractionLogs, setInfractionLogs] = useState([]);
+
+  // React Router v7 useBlocker implementation
+  const blocker = useBlocker(({ nextLocation }) => {
+    return !isSubmitted;
+  });
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const confirmLeave = window.confirm(
+        "WARNING: The exam is in progress! If you navigate away, your progress will not be saved and this will count as an incomplete attempt. Do you want to leave?"
+      );
+      if (confirmLeave) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
+
+  // Window beforeunload implementation
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!isSubmitted) {
+        e.preventDefault();
+        e.returnValue = "Are you sure you want to exit? Your exam is in progress and will be lost.";
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isSubmitted]);
 
   const storageKey = `ralwbc_active_exam_${currentUser.id}_${id}`;
 

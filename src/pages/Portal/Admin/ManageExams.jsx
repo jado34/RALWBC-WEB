@@ -225,18 +225,35 @@ export const ManageExams = () => {
     loadExams();
   };
 
-  const handleDeleteQuestionFromWizard = () => {
+  const handleDeleteQuestion = (idxToDelete) => {
     if (editingExam.questions.length <= 1) {
       alert("Exams must have at least one question!");
       return;
     }
-    if (window.confirm("Delete this question?")) {
-      const updated = editingExam.questions.filter((_, idx) => idx !== currentQIndex);
+    if (window.confirm(`Are you sure you want to delete Question #${idxToDelete + 1}?`)) {
+      const updated = editingExam.questions.filter((_, idx) => idx !== idxToDelete);
       setEditingExam(prev => ({ ...prev, questions: updated }));
-      if (currentQIndex > 0) {
+      if (currentQIndex >= updated.length) {
+        setCurrentQIndex(updated.length - 1);
+      } else if (currentQIndex === idxToDelete && currentQIndex > 0) {
         setCurrentQIndex(currentQIndex - 1);
       }
     }
+  };
+
+  const handleAddNewQuestion = () => {
+    const newQuestion = {
+      id: "q_" + Math.random().toString(36).substr(2, 9),
+      text: "",
+      options: ["", "", "", ""],
+      optionImages: ["", "", "", ""],
+      correctAnswer: ""
+    };
+    setEditingExam(prev => ({
+      ...prev,
+      questions: [...prev.questions, newQuestion]
+    }));
+    setCurrentQIndex(editingExam.questions.length);
   };
 
   return (
@@ -360,231 +377,352 @@ export const ManageExams = () => {
             </div>
           </div>
         ) : (
-          /* Step 2: Wizard Question Editor View (Matches Image 4 Layout) */
-          <div style={{ maxWidth: '850px' }}>
+          /* Step 2: Wizard Question Editor View with Sidebar Navigator (Matches Image 4 Layout) */
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start', width: '100%' }}>
             
-            {/* Header info bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#000000' }}>Add Question</h3>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#64748b' }}>
-                  Question {currentQIndex + 1} of {editingExam.questions.length}
-                </span>
-                <button 
-                  onClick={handleDeleteQuestionFromWizard} 
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    color: '#ef4444',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                  title="Remove this question"
-                >
-                  <Trash2 size={16} /> Delete Question
-                </button>
+            {/* Sidebar Navigator */}
+            <div style={{
+              width: '260px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              padding: '1.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              maxHeight: '650px',
+              overflowY: 'auto',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.75rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0a1141', margin: 0 }}>Questions ({editingExam.questions.length})</h4>
               </div>
-            </div>
-
-            {/* Question Text Area Box (Image 4 Style) */}
-            <div style={{ marginBottom: '2rem' }}>
-              <textarea 
-                value={editingExam.questions[currentQIndex]?.text || ''}
-                onChange={(e) => handleQuestionTextChange(e.target.value)}
-                placeholder="The current Marshal of RAN is..."
-                style={{
-                  width: '100%',
-                  minHeight: '120px',
-                  backgroundColor: '#f1f5f9', // faint grey box
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  color: '#000000',
-                  outline: 'none',
-                  resize: 'vertical',
-                  fontFamily: 'var(--font-body)'
-                }}
-              />
-            </div>
-
-            {/* Option boxes list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
-              {(editingExam.questions[currentQIndex]?.options || ["", "", "", ""]).map((option, optIdx) => {
-                const isSelected = editingExam.questions[currentQIndex].correctAnswer === option && option.trim() !== '';
-                const currentOptImg = editingExam.questions[currentQIndex].optionImages?.[optIdx] || '';
-
-                return (
-                  <div 
-                    key={optIdx} 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      padding: '0.75rem 1.25rem',
-                      border: isSelected ? '2px solid #16a34a' : '1px solid #cbd5e1',
-                      backgroundColor: isSelected ? '#f0fdf4' : '#f8fafc',
-                      borderRadius: '8px',
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    {/* Left: Custom checkmark status indicator */}
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {editingExam.questions.map((q, idx) => {
+                  const isActive = idx === currentQIndex;
+                  const snippet = q.text.trim() ? (q.text.length > 25 ? q.text.substring(0, 25) + '...' : q.text) : '(Empty question)';
+                  return (
                     <div 
-                      onClick={() => handleCorrectAnswerSelect(option)}
+                      key={q.id}
+                      onClick={() => setCurrentQIndex(idx)}
                       style={{
-                        width: '26px',
-                        height: '26px',
-                        borderRadius: '50%',
-                        backgroundColor: isSelected ? '#16a34a' : '#cbd5e1',
-                        color: '#ffffff',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: '700',
-                        fontSize: '0.85rem',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem',
+                        borderRadius: '6px',
+                        backgroundColor: isActive ? '#0a1141' : '#ffffff',
+                        color: isActive ? '#ffffff' : '#000000',
+                        border: '1px solid',
+                        borderColor: isActive ? '#0a1141' : '#cbd5e1',
                         cursor: 'pointer',
-                        userSelect: 'none'
+                        transition: 'all 0.2s',
+                        fontSize: '0.85rem'
                       }}
-                      title="Select as correct answer"
                     >
-                      ✓
-                    </div>
-
-                    {/* Middle: Option input field */}
-                    <input 
-                      type="text"
-                      placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
-                      value={option}
-                      onChange={(e) => handleOptionChange(optIdx, e.target.value)}
-                      style={{
-                        flex: 1,
-                        background: 'transparent',
-                        border: 'none',
-                        outline: 'none',
-                        fontSize: '1rem',
-                        color: '#000000',
-                        fontWeight: isSelected ? '700' : '500',
-                        fontFamily: 'var(--font-body)'
-                      }}
-                    />
-
-                    {/* Image preview (if uploaded) */}
-                    {currentOptImg && (
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <img 
-                          src={currentOptImg} 
-                          alt="option upload" 
-                          style={{ height: '36px', maxWidth: '60px', borderRadius: '4px', objectFit: 'contain', border: '1px solid #cbd5e1' }}
-                        />
-                        <button 
-                          type="button" 
-                          onClick={() => removeOptionImage(optIdx)}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', overflow: 'hidden', marginRight: '0.5rem', flex: 1 }}>
+                        <span style={{ fontWeight: '700', fontSize: '0.75rem', color: isActive ? '#eab308' : '#64748b' }}>
+                          Question {idx + 1}
+                        </span>
+                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {snippet}
+                        </span>
+                      </div>
+                      
+                      {editingExam.questions.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteQuestion(idx);
+                          }}
                           style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            backgroundColor: '#ef4444',
-                            color: '#ffffff',
+                            background: 'none',
                             border: 'none',
-                            fontSize: '9px',
+                            color: isActive ? '#fca5a5' : '#ef4444',
                             cursor: 'pointer',
+                            padding: '0.25rem',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            borderRadius: '4px',
+                            transition: 'background-color 0.2s'
                           }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isActive ? 'rgba(255, 255, 255, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                          title="Delete question"
                         >
-                          ✕
+                          <Trash2 size={14} />
                         </button>
-                      </div>
-                    )}
-
-                    {/* Right: Image attachment trigger */}
-                    <label style={{ cursor: 'pointer', padding: '0.25rem', color: '#64748b' }} title="Attach image option">
-                      <ImageIcon size={20} />
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={(e) => handleOptionImageUpload(e, optIdx)}
-                        style={{ display: 'none' }} 
-                      />
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Wizard Buttons Footer (Previous (Gold), Save & Next (Navy), Save & Exit (Green)) */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              borderTop: '1px solid #e2e8f0',
-              paddingTop: '2rem'
-            }}>
-              {/* Previous button (Gold) */}
-              <button 
-                onClick={handlePreviousAction}
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <button
+                type="button"
+                onClick={handleAddNewQuestion}
                 style={{
-                  backgroundColor: '#eab308', // Gold
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0.85rem 2.25rem',
-                  fontSize: '1rem',
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  color: '#0a1141',
+                  border: '2px dashed #0a1141',
                   fontWeight: '700',
+                  fontSize: '0.85rem',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(234,179,8,0.2)'
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#0a1141';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                  e.currentTarget.style.color = '#0a1141';
                 }}
               >
-                Previous
+                <Plus size={16} /> Add Question
               </button>
+            </div>
 
-              {/* Middle Right: Save & Next (Navy) + Save & Exit (Green) */}
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {/* Save & Next (Navy) */}
-                <button 
-                  onClick={handleSaveAndNext}
-                  style={{
-                    backgroundColor: '#0a1141', // Navy
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.85rem 2.25rem',
-                    fontSize: '1rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(10,17,65,0.2)'
-                  }}
-                >
-                  Save & Next
-                </button>
-
-                {/* Save & Exit (Green) */}
-                <button 
-                  onClick={handleSaveAndExit}
-                  style={{
-                    backgroundColor: '#16a34a', // Green
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.85rem 2.25rem',
-                    fontSize: '1rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(22,163,74,0.2)'
-                  }}
-                >
-                  Save & Exit
-                </button>
+            {/* Main Question Editor (Right Side) */}
+            <div style={{ flex: 1, minWidth: '320px', maxWidth: '850px' }}>
+              
+              {/* Header info bar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#000000', margin: 0 }}>Add Question</h3>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#64748b' }}>
+                    Question {currentQIndex + 1} of {editingExam.questions.length}
+                  </span>
+                  <button 
+                    onClick={() => handleDeleteQuestion(currentQIndex)} 
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}
+                    title="Remove this question"
+                  >
+                    <Trash2 size={16} /> Delete Question
+                  </button>
+                </div>
               </div>
+
+              {/* Question Text Area Box (Image 4 Style) */}
+              <div style={{ marginBottom: '2rem' }}>
+                <textarea 
+                  value={editingExam.questions[currentQIndex]?.text || ''}
+                  onChange={(e) => handleQuestionTextChange(e.target.value)}
+                  placeholder="The current Marshal of RAN is..."
+                  style={{
+                    width: '100%',
+                    minHeight: '120px',
+                    backgroundColor: '#f1f5f9', // faint grey box
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    color: '#000000',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'var(--font-body)'
+                  }}
+                />
+              </div>
+
+              {/* Option boxes list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+                {(editingExam.questions[currentQIndex]?.options || ["", "", "", ""]).map((option, optIdx) => {
+                  const isSelected = editingExam.questions[currentQIndex].correctAnswer === option && option.trim() !== '';
+                  const currentOptImg = editingExam.questions[currentQIndex].optionImages?.[optIdx] || '';
+
+                  return (
+                    <div 
+                      key={optIdx} 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        padding: '0.75rem 1.25rem',
+                        border: isSelected ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                        backgroundColor: isSelected ? '#f0fdf4' : '#f8fafc',
+                        borderRadius: '8px',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      {/* Left: Custom checkmark status indicator */}
+                      <div 
+                        onClick={() => handleCorrectAnswerSelect(option)}
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          backgroundColor: isSelected ? '#16a34a' : '#cbd5e1',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: '700',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        title="Select as correct answer"
+                      >
+                        ✓
+                      </div>
+
+                      {/* Middle: Option input field */}
+                      <input 
+                        type="text"
+                        placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                        value={option}
+                        onChange={(e) => handleOptionChange(optIdx, e.target.value)}
+                        style={{
+                          flex: 1,
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          fontSize: '1rem',
+                          color: '#000000',
+                          fontWeight: isSelected ? '700' : '500',
+                          fontFamily: 'var(--font-body)'
+                        }}
+                      />
+
+                      {/* Image preview (if uploaded) */}
+                      {currentOptImg && (
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <img 
+                            src={currentOptImg} 
+                            alt="option upload" 
+                            style={{ height: '36px', maxWidth: '60px', borderRadius: '4px', objectFit: 'contain', border: '1px solid #cbd5e1' }}
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => removeOptionImage(optIdx)}
+                            style={{
+                              position: 'absolute',
+                              top: '-8px',
+                              right: '-8px',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: '#ef4444',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontSize: '9px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Right: Image attachment trigger */}
+                      <label style={{ cursor: 'pointer', padding: '0.25rem', color: '#64748b' }} title="Attach image option">
+                        <ImageIcon size={20} />
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={(e) => handleOptionImageUpload(e, optIdx)}
+                          style={{ display: 'none' }} 
+                        />
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Wizard Buttons Footer (Previous (Gold), Save & Next (Navy), Save & Exit (Green)) */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                borderTop: '1px solid #e2e8f0',
+                paddingTop: '2rem'
+              }}>
+                {/* Previous button (Gold) */}
+                <button 
+                  onClick={handlePreviousAction}
+                  style={{
+                    backgroundColor: '#eab308', // Gold
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.85rem 2.25rem',
+                    fontSize: '1rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(234,179,8,0.2)'
+                  }}
+                >
+                  Previous
+                </button>
+
+                {/* Middle Right: Save & Next (Navy) + Save & Exit (Green) */}
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {/* Save & Next (Navy) */}
+                  <button 
+                    onClick={handleSaveAndNext}
+                    style={{
+                      backgroundColor: '#0a1141', // Navy
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.85rem 2.25rem',
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(10,17,65,0.2)'
+                    }}
+                  >
+                    Save & Next
+                  </button>
+
+                  {/* Save & Exit (Green) */}
+                  <button 
+                    onClick={handleSaveAndExit}
+                    style={{
+                      backgroundColor: '#16a34a', // Green
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.85rem 2.25rem',
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(22,163,74,0.2)'
+                    }}
+                  >
+                    Save & Exit
+                  </button>
+                </div>
+              </div>
+
             </div>
 
           </div>

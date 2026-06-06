@@ -43,6 +43,11 @@ export const Register = () => {
       return;
     }
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { dbService } from '../services/db';
 
 export const Login = () => {
   const { login, currentUser } = useAuth();
@@ -144,12 +145,39 @@ export const Login = () => {
               fontWeight: '700',
               color: '#0a1141', // Navy blue
               fontFamily: 'var(--font-heading)',
-              transition: 'transform var(--transition-fast)'
+              transition: 'transform var(--transition-fast)',
+              display: 'block',
+              margin: '0 auto 1.5rem'
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             Click <span style={{ color: '#ca8a04' }}>here</span> to begin
+          </button>
+
+          {/* Quick Demo Populate Button */}
+          <button
+            onClick={() => {
+              dbService.populateDemoData();
+              alert("Database populated with mock candidates, active exams, announcements, and submissions! Admin: admin@ralwbc.org / adminpassword. Student: samuel@gmail.com / password.");
+              window.location.reload();
+            }}
+            style={{
+              padding: '0.6rem 1.5rem',
+              backgroundColor: '#ca8a04',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '24px',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(202,138,4,0.2)',
+              fontFamily: 'var(--font-heading)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}
+          >
+            ⚡ Populate Mock Demo Data
           </button>
         </div>
       ) : (

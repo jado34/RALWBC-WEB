@@ -108,17 +108,27 @@ export const AntiCheatGuard = ({ children, onWarning, onAutoSubmit, maxWarnings 
       }
     };
 
+    let blurTimeout = null;
+
     const handleWindowBlur = () => {
-      // Small timeout because clicking certain browser controls can trigger blur temporarily
-      setTimeout(() => {
+      if (blurTimeout) clearTimeout(blurTimeout);
+      blurTimeout = setTimeout(() => {
         if (!document.hasFocus() && document.visibilityState !== 'hidden') {
-          triggerWarning("Exam browser window lost focus.");
+          triggerWarning("Exam browser window lost focus (Focus was lost for more than 1.5 seconds).");
         }
-      }, 200);
+      }, 1500); // 1.5 second grace period
+    };
+
+    const handleWindowFocus = () => {
+      if (blurTimeout) {
+        clearTimeout(blurTimeout);
+        blurTimeout = null;
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
 
     // 5. Fullscreen exit detection
     const handleFullscreenChange = () => {
@@ -144,6 +154,7 @@ export const AntiCheatGuard = ({ children, onWarning, onAutoSubmit, maxWarnings 
       const customStyles = document.getElementById('anti-cheat-styles');
       if (customStyles) customStyles.remove();
       
+      if (blurTimeout) clearTimeout(blurTimeout);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('copy', handleClipboardEvent);
@@ -151,6 +162,7 @@ export const AntiCheatGuard = ({ children, onWarning, onAutoSubmit, maxWarnings 
       document.removeEventListener('paste', handleClipboardEvent);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
       if (isFullscreenSupported()) {
         document.removeEventListener('fullscreenchange', handleFullscreenChange);
       }

@@ -19,6 +19,28 @@ const DEFAULT_USERS = [];
 const DEFAULT_EXAMS = [];
 const DEFAULT_BLOGS = [];
 const DEFAULT_SUBMISSIONS = [];
+const DEFAULT_GALLERY = [
+  { id: 'gal_1', url: '/Lagos-West1.jpeg', alt: 'Two men discussing at Lagos West Conference', category: 'Jubilee Experience' },
+  { id: 'gal_2', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA member uniform profile inspection', category: 'Jubilee Experience' },
+  { id: 'gal_3', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Stage event auditorium audience meeting', category: 'Jubilee Experience' },
+  { id: 'gal_4', url: '/Lagos-West3.jpeg', alt: 'Ambassador saluting during drill inspection', category: 'Jubilee Experience' },
+  { id: 'gal_5', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Singing with microphone during worship', category: 'Jubilee Experience' },
+  { id: 'gal_6', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Marshal speaking at podium and address', category: 'Jubilee Experience' },
+
+  { id: 'gal_7', url: '/Lagos-West1.jpeg', alt: 'Group discussion at Lagos West Conference', category: '2023 Ushering In' },
+  { id: 'gal_8', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA parade prep', category: '2023 Ushering In' },
+  { id: 'gal_9', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Conference congregation', category: '2023 Ushering In' },
+  { id: 'gal_10', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute inspection', category: '2023 Ushering In' },
+  { id: 'gal_11', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Praise and worship service', category: '2023 Ushering In' },
+  { id: 'gal_12', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Conference address', category: '2023 Ushering In' },
+
+  { id: 'gal_13', url: '/Lagos-West1.jpeg', alt: 'Chapter Inauguration Discussion', category: 'Chapter Inauguration' },
+  { id: 'gal_14', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'Inauguration parade', category: 'Chapter Inauguration' },
+  { id: 'gal_15', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Inauguration congregation', category: 'Chapter Inauguration' },
+  { id: 'gal_16', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute parade', category: 'Chapter Inauguration' },
+  { id: 'gal_17', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration praise', category: 'Chapter Inauguration' },
+  { id: 'gal_18', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration address', category: 'Chapter Inauguration' }
+];
 const DEFAULT_OFFICERS = [
   { id: 'off_1', name: 'Coun. Adegbola Thomas', post: 'Director, RALWBC', image: '', sortOrder: 1 },
   { id: 'off_2', name: 'Amb. Philip Olopade', post: 'Assistant Director, RALWBC', image: '', sortOrder: 2 },
@@ -62,11 +84,18 @@ export const dbService = {
     getStorageItem("ralwbc_exams", DEFAULT_EXAMS);
     getStorageItem("ralwbc_blogs", DEFAULT_BLOGS);
     getStorageItem("ralwbc_submissions", DEFAULT_SUBMISSIONS);
+    getStorageItem("ralwbc_gallery", DEFAULT_GALLERY);
     
     // Check if officers are empty/not present and pre-populate if needed
     const officers = localStorage.getItem("ralwbc_officers");
     if (!officers || JSON.parse(officers).length === 0) {
       localStorage.setItem("ralwbc_officers", JSON.stringify(DEFAULT_OFFICERS));
+    }
+    
+    // Check if gallery is empty/not present and pre-populate if needed
+    const gallery = localStorage.getItem("ralwbc_gallery");
+    if (!gallery || JSON.parse(gallery).length === 0) {
+      localStorage.setItem("ralwbc_gallery", JSON.stringify(DEFAULT_GALLERY));
     }
     
     getStorageItem("ralwbc_session", DEFAULT_SESSION);
@@ -298,6 +327,240 @@ export const dbService = {
 
   deleteOfficer(id) {
     setStorageItem("ralwbc_officers", this.getOfficers().filter(o => o.id !== id));
+  },
+
+  // ── Gallery Operations ───────────────────────────────────────────────────────
+
+  getGalleryPhotos() {
+    return getStorageItem("ralwbc_gallery", DEFAULT_GALLERY);
+  },
+
+  saveGalleryPhoto(photoData) {
+    const photos = this.getGalleryPhotos();
+    if (photoData.id) {
+      const index = photos.findIndex(p => p.id === photoData.id);
+      if (index !== -1) photos[index] = { ...photos[index], ...photoData };
+    } else {
+      photoData.id = "gal_" + Math.random().toString(36).substr(2, 9);
+      photos.push(photoData);
+    }
+    setStorageItem("ralwbc_gallery", photos);
+    return photoData;
+  },
+
+  deleteGalleryPhoto(id) {
+    setStorageItem("ralwbc_gallery", this.getGalleryPhotos().filter(p => p.id !== id));
+  },
+
+  // ── Demo Data Populator ──────────────────────────────────────────────────────
+
+  populateDemoData() {
+    // 1. Reset everything
+    localStorage.removeItem("ralwbc_users");
+    localStorage.removeItem("ralwbc_exams");
+    localStorage.removeItem("ralwbc_blogs");
+    localStorage.removeItem("ralwbc_submissions");
+    localStorage.removeItem("ralwbc_gallery");
+    localStorage.removeItem("ralwbc_session");
+
+    // 2. Mock Admin & Candidates
+    const adminUser = {
+      id: "usr_admin",
+      name: "Admin Committee",
+      email: "admin@ralwbc.org",
+      password: "adminpassword",
+      role: "admin"
+    };
+
+    const student1 = {
+      id: "usr_samuel",
+      name: "Samuel Adebayo",
+      email: "samuel@gmail.com",
+      password: "password",
+      role: "student",
+      dob: "2008-04-12",
+      phone: "+2348011112222",
+      phoneNumber: "+2348011112222",
+      church: "First Baptist Church, Ikeja",
+      address: "12, Allen Avenue, Ikeja",
+      chapterName: "Ikeja Pioneers",
+      association: "Lagos West Association",
+      rankCategory: "ambassador",
+      rank: "Ambassador"
+    };
+
+    const student2 = {
+      id: "usr_david",
+      name: "David Okon",
+      email: "david@gmail.com",
+      password: "password",
+      role: "student",
+      dob: "2007-08-24",
+      phone: "+2348033334444",
+      phoneNumber: "+2348033334444",
+      church: "Grace Baptist Church, Surulere",
+      address: "45, Adeniran Ogunsanya, Surulere",
+      chapterName: "Surulere Victors",
+      association: "Lagos West Association",
+      rankCategory: "ambassador_extraordinary",
+      rank: "Ambassador Extraordinary"
+    };
+
+    const student3 = {
+      id: "usr_emmanuel",
+      name: "Emmanuel Cole",
+      email: "emmanuel@gmail.com",
+      password: "password",
+      role: "student",
+      dob: "2005-11-03",
+      phone: "+2348055556666",
+      phoneNumber: "+2348055556666",
+      church: "Faith Baptist Church, Agege",
+      address: "88, Agege Motor Road, Agege",
+      chapterName: "Agege Conquerors",
+      association: "Lagos West Association",
+      rankCategory: "ambassador_plenipotentiary",
+      rank: "Ambassador Plenipotentiary"
+    };
+
+    setStorageItem("ralwbc_users", [adminUser, student1, student2, student3]);
+
+    // 3. Mock Exams
+    const exam1 = {
+      id: "exm_amb",
+      title: "Ambassador General Ranking Quiz",
+      description: "Basic ranking quiz covering RA history, core pledges, and Matthew 28 scripture verification.",
+      category: "ambassador",
+      duration: 20,
+      isActive: true,
+      questions: [
+        {
+          id: "q_amb1",
+          text: "What is the official motto of the Royal Ambassadors of Nigeria?",
+          options: ["We are ambassadors for Christ", "Touching the lives of boys", "Implanting scripture in boys", "To the work, to the work"],
+          optionImages: ["", "", "", ""],
+          correctAnswer: "We are ambassadors for Christ"
+        },
+        {
+          id: "q_amb2",
+          text: "In what year was the Royal Ambassador organization founded?",
+          options: ["1908", "1998", "1954", "1944"],
+          optionImages: ["", "", "", ""],
+          correctAnswer: "1908"
+        },
+        {
+          id: "q_amb3",
+          text: "Which scripture text serves as the basis for the RA Motto?",
+          options: ["Matthew 28:19-20", "2 Corinthians 5:20", "John 3:16", "Ephesians 6:1-3"],
+          optionImages: ["", "", "", ""],
+          correctAnswer: "2 Corinthians 5:20"
+        }
+      ]
+    };
+
+    const exam2 = {
+      id: "exm_extra",
+      title: "Ambassador Extraordinary Theological Quiz",
+      description: "Intermediate quiz assessing the theological aspects of the Royal Ambassador rank.",
+      category: "ambassador_extraordinary",
+      duration: 30,
+      isActive: true,
+      questions: [
+        {
+          id: "q_extra1",
+          text: "Who is the current Director of the RALWBC?",
+          options: ["Coun. Adegbola Thomas", "Amb. Philip Olopade", "Amb. Akinola Asabisi", "Amb. Daniel Ojeyomi"],
+          optionImages: ["", "", "", ""],
+          correctAnswer: "Coun. Adegbola Thomas"
+        },
+        {
+          id: "q_extra2",
+          text: "The emblem of the Royal Ambassadors contains which geometric shapes?",
+          options: ["Shield, Star, Crown", "Shield, Cross, Circle", "Anchor, Star, Shield", "Cross, Crown, Shield"],
+          optionImages: ["", "", "", ""],
+          correctAnswer: "Shield, Star, Crown"
+        }
+      ]
+    };
+
+    setStorageItem("ralwbc_exams", [exam1, exam2]);
+
+    // 4. Mock Blogs
+    const blog1 = {
+      id: "blog_demo1",
+      title: "Announcement: 2026 Annual Camping Session Schedule",
+      author: "Exam Committee",
+      date: new Date().toISOString().split('T')[0],
+      content: "Greetings Ambassadors! The 2026 Annual Camping and Promotion Session will be held from September 10th to September 15th. All candidates must complete their profiles and verify their rank categories prior to August 30th to be enrolled in the ranking exams."
+    };
+
+    const blog2 = {
+      id: "blog_demo2",
+      title: "RA Promotion Exam Study Guide Out",
+      author: "Ranking Board",
+      date: new Date().toISOString().split('T')[0],
+      content: "The ranking board has released the study materials for the upcoming promotion exams. Focus on RA history, pledges, hymns, and Matthew 28:19-20. Study hard, write well, and remember: we are ambassadors for Christ!"
+    };
+
+    setStorageItem("ralwbc_blogs", [blog1, blog2]);
+
+    // 5. Mock Gallery (re-initialize default)
+    setStorageItem("ralwbc_gallery", DEFAULT_GALLERY);
+
+    // 6. Mock Submissions
+    const sub1 = {
+      id: "sub_demo1",
+      userId: "usr_samuel",
+      userName: "Samuel Adebayo",
+      examId: "exm_amb",
+      examTitle: "Ambassador General Ranking Quiz",
+      answers: {
+        "q_amb1": "We are ambassadors for Christ",
+        "q_amb2": "1908",
+        "q_amb3": "Matthew 28:19-20"
+      },
+      correctCount: 2,
+      totalQuestions: 3,
+      scorePercentage: 67,
+      warningsCount: 1,
+      infractionLogs: [
+        { timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), reason: "Exam browser window lost focus." }
+      ],
+      durationSpent: 620,
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
+    };
+
+    const sub2 = {
+      id: "sub_demo2",
+      userId: "usr_david",
+      userName: "David Okon",
+      examId: "exm_extra",
+      examTitle: "Ambassador Extraordinary Theological Quiz",
+      answers: {
+        "q_extra1": "Coun. Adegbola Thomas",
+        "q_extra2": "Shield, Star, Crown"
+      },
+      correctCount: 2,
+      totalQuestions: 2,
+      scorePercentage: 100,
+      warningsCount: 3,
+      infractionLogs: [
+        { timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), reason: "Browser tab or application switched." },
+        { timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(), reason: "Keyboard shortcuts (Copy, Paste) blocked." },
+        { timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), reason: "Secure fullscreen mode exited." }
+      ],
+      durationSpent: 1140,
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString()
+    };
+
+    setStorageItem("ralwbc_submissions", [sub1, sub2]);
+
+    // 7. Mock Session Window (Active)
+    setStorageItem("ralwbc_session", {
+      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString().split('T')[0],
+      isOpen: true
+    });
   },
 
   // ── Session / Camping Window Operations ──────────────────────────────────────

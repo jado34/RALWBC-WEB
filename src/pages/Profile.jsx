@@ -10,6 +10,8 @@ export const Profile = () => {
   const [dob, setDob] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [church, setChurch] = useState('');
   const [address, setAddress] = useState('');
@@ -80,10 +82,22 @@ export const Profile = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setMsg({ type: '', text: '' });
+
+    if (password) {
+      if (password.length < 6) {
+        setMsg({ type: 'error', text: 'New password must be at least 6 characters long.' });
+        return;
+      }
+      if (password !== confirmPassword) {
+        setMsg({ type: 'error', text: 'Passwords do not match.' });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      updateProfile({
+      const updateData = {
         name,
         dob,
         phone,
@@ -94,8 +108,16 @@ export const Profile = () => {
         chapterName,
         association,
         avatar
-      });
+      };
+
+      if (password) {
+        updateData.password = password;
+      }
+
+      updateProfile(updateData);
       setMsg({ type: 'success', text: 'Profile updated successfully!' });
+      setPassword('');
+      setConfirmPassword('');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setMsg({ type: 'error', text: 'Failed to update profile details.' });
@@ -171,8 +193,15 @@ export const Profile = () => {
                 />
               </div>
 
-              {/* Extra spacing block matching screenshot structure */}
-              <div style={{ height: '3.5rem', display: 'none' }} className="desktop-spacer"></div>
+              <div>
+                <input 
+                  type="password"
+                  placeholder="New Password (Leave blank to keep current)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
 
               <div>
                 <input 
@@ -211,8 +240,15 @@ export const Profile = () => {
                 />
               </div>
 
-              {/* Empty placeholder aligning with Email */}
-              <div style={{ height: '3.5rem' }}></div>
+              <div>
+                <input 
+                  type="password"
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
 
 
 

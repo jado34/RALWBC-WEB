@@ -4,7 +4,8 @@ import { dbService, RANK_CATEGORIES, getRankLabel } from '../../../services/db';
 import {
   Users, Award, ShieldAlert, FileSpreadsheet, PlusCircle, Settings,
   ClipboardList, UserCheck, Download, Plus, CalendarClock,
-  ToggleLeft, ToggleRight, Save, Trash2, RotateCcw, Trophy, Medal
+  ToggleLeft, ToggleRight, Save, Trash2, RotateCcw, Trophy, Medal,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -24,6 +25,12 @@ export const AdminDashboard = () => {
   // Session Settings
   const [session, setSession] = useState({ startDate: '', endDate: '', isOpen: false });
   const [sessionSaved, setSessionSaved] = useState(false);
+
+  // Warning Logs & Gallery management states
+  const [selectedSubLogs, setSelectedSubLogs] = useState(null);
+  const [newPhotoAlt, setNewPhotoAlt] = useState('');
+  const [newPhotoCategory, setNewPhotoCategory] = useState('Jubilee Experience');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,29 +94,47 @@ export const AdminDashboard = () => {
     return `${m}m ${s}s`;
   };
 
+  const escapeCSV = (val) => {
+    const str = String(val || '');
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
   const handleDownloadReport = () => {
     if (submissions.length === 0) { alert('No submissions to download.'); return; }
-    let csv = 'data:text/csv;charset=utf-8,S/N,Time,Name,Score,Church,Rank,Category,Warnings\n';
+    let csv = 'S/N,Time,Name,Score,Church,Rank,Category,Warnings\n';
     submissions.forEach((sub, i) => {
       const u = userMap[sub.userId] || {};
-      csv += `${i + 1},${formatTime(sub.submittedAt)},${(sub.userName || '').replace(/,/g, '')},${sub.scorePercentage}%,${(u.church || 'N/A').replace(/,/g, '')},${(u.rank || 'N/A').replace(/,/g, '')},${getRankLabel(u.rankCategory)},${sub.warningsCount}\n`;
+      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${sub.scorePercentage}%,${escapeCSV(u.church || 'N/A')},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${sub.warningsCount}\n`;
     });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = encodeURI(csv);
+    link.href = url;
     link.download = `RALWBC_Submissions_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDownloadCandidates = () => {
     if (candidates.length === 0) { alert('No candidates to download.'); return; }
-    let csv = 'data:text/csv;charset=utf-8,S/N,Name,Email,Association,Church,Rank Category,Rank Title,Phone\n';
+    let csv = 'S/N,Name,Email,Association,Church,Rank Category,Rank Title,Phone\n';
     candidates.forEach((u, i) => {
-      csv += `${i + 1},${(u.name || '').replace(/,/g, '')},${(u.email || '').replace(/,/g, '')},${(u.association || 'N/A').replace(/,/g, '')},${(u.church || 'N/A').replace(/,/g, '')},${getRankLabel(u.rankCategory)},${(u.rank || 'N/A').replace(/,/g, '')},${(u.phoneNumber || 'N/A').replace(/,/g, '')}\n`;
+      csv += `${i + 1},${escapeCSV(u.name)},${escapeCSV(u.email)},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${escapeCSV(u.rank || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')}\n`;
     });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = encodeURI(csv);
+    link.href = url;
     link.download = `RALWBC_Candidates_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDeleteCandidate = (userId, userName) => {
@@ -138,6 +163,127 @@ export const AdminDashboard = () => {
     if (count > 0) return '#ca8a04';
     return '#10b981';
   };
+
+  // ── GALLERY TAB ────────────────────────────────────────────────────────────
+  if (currentTab === 'gallery') {
+    const photos = dbService.getGalleryPhotos();
+    const categories = ['Jubilee Experience', '2023 Ushering In', 'Chapter Inauguration'];
+    
+    const handleUploadPhoto = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) { alert("Please upload a valid image file."); return; }
+      
+      setIsUploadingPhoto(true);
+      try {
+        const base64 = await compressAndResizePhoto(file);
+        dbService.saveGalleryPhoto({
+          url: base64,
+          alt: newPhotoAlt.trim() || "Gallery Image",
+          category: newPhotoCategory
+        });
+        setNewPhotoAlt('');
+        alert("Photo added to gallery successfully!");
+        loadDashboardData();
+      } catch (err) {
+        alert("Error processing photo: " + err.message);
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    };
+
+    const compressAndResizePhoto = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 600;
+            canvas.height = 400;
+            ctx.drawImage(img, 0, 0, 600, 400);
+            const base64 = canvas.toDataURL("image/jpeg", 0.85);
+            resolve(base64);
+          };
+          img.onerror = () => reject(new Error("Failed to load image resource"));
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    const handleDeletePhoto = (id) => {
+      if (window.confirm("Are you sure you want to delete this photo from the public gallery?")) {
+        dbService.deleteGalleryPhoto(id);
+        loadDashboardData();
+      }
+    };
+
+    return (
+      <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
+        <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button onClick={() => navigate('/admin')} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            ← Back to Admin
+          </button>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#000000', margin: 0 }}>Manage Public Gallery</h1>
+        </div>
+
+        <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '2rem' }}>Upload new photographs or delete them from the website gallery sections.</p>
+
+        {/* Upload Section */}
+        <div className="glass-panel" style={{ border: '1px solid #cbd5e1', borderRadius: '12px', padding: '2rem', backgroundColor: '#f8fafc', marginBottom: '3rem' }}>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', color: '#000000', margin: 0 }}>Upload New Photo</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem', marginTop: '1rem' }}>
+            <div>
+              <label style={labelStyle}>Image Alt Text (Description)</label>
+              <input type="text" placeholder="e.g. Stage address at NBC Abuja" value={newPhotoAlt} onChange={(e) => setNewPhotoAlt(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Gallery Category Section</label>
+              <select value={newPhotoCategory} onChange={(e) => setNewPhotoCategory(e.target.value)} style={inputStyle}>
+                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            </div>
+          </div>
+          
+          <label style={{ ...navyBtnStyle, display: 'inline-flex', cursor: 'pointer', alignSelf: 'flex-start' }}>
+            <ImageIcon size={18} /> {isUploadingPhoto ? "Processing Image..." : "Select File & Upload"}
+            <input type="file" accept="image/*" onChange={handleUploadPhoto} style={{ display: 'none' }} disabled={isUploadingPhoto} />
+          </label>
+        </div>
+
+        {/* Catalog list grouped by category */}
+        {categories.map(cat => {
+          const catPhotos = photos.filter(p => p.category === cat);
+          return (
+            <div key={cat} style={{ marginBottom: '3rem' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0a1141', borderBottom: '2px solid #0a1141', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>{cat}</h2>
+              {catPhotos.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                  {catPhotos.map(photo => (
+                    <div key={photo.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ height: '140px', overflow: 'hidden' }}>
+                        <img src={photo.url} alt={photo.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <p style={{ fontSize: '0.82rem', color: '#475569', margin: 0, minHeight: '36px', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.4' }}>{photo.alt}</p>
+                        <button onClick={() => handleDeletePhoto(photo.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'transparent', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', borderRadius: '6px', padding: '0.4rem 0.5rem', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer', marginTop: 'auto', alignSelf: 'stretch', justifyContent: 'center' }}>
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.88rem' }}>No photos uploaded under this section.</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   // ── CANDIDATES TAB ─────────────────────────────────────────────────────────
   if (currentTab === 'candidates') {
@@ -271,9 +417,22 @@ export const AdminDashboard = () => {
                           </span>
                         </td>
                         <td style={{ padding: '1rem' }}>
-                          <span style={{ fontWeight: '600', color: getInfractionColor(sub.warningsCount) }}>
+                          <button
+                            onClick={() => setSelectedSubLogs(sub)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              fontWeight: '600',
+                              color: getInfractionColor(sub.warningsCount),
+                              cursor: sub.warningsCount > 0 ? 'pointer' : 'default',
+                              textDecoration: sub.warningsCount > 0 ? 'underline' : 'none',
+                              padding: 0
+                            }}
+                            disabled={sub.warningsCount === 0}
+                            title={sub.warningsCount > 0 ? "View infraction logs" : ""}
+                          >
                             {sub.warningsCount} / 3
-                          </span>
+                          </button>
                         </td>
                         <td style={{ padding: '1rem', color: '#475569' }}>{formatDuration(sub.durationSpent)}</td>
                         <td style={{ padding: '1rem' }}>
@@ -307,15 +466,20 @@ export const AdminDashboard = () => {
     const handleDownloadLeaderboard = () => {
       if (submissions.length === 0) { alert('No submissions to download.'); return; }
       const sorted = [...submissions].sort((a, b) => b.scorePercentage - a.scorePercentage);
-      let csv = 'data:text/csv;charset=utf-8,Rank,Name,Score,Church,Category,Warnings,Time Spent\n';
+      let csv = 'Rank,Name,Score,Church,Category,Warnings,Time Spent\n';
       sorted.forEach((sub, i) => {
         const u = userMap[sub.userId] || {};
-        csv += `${i + 1},${(sub.userName || '').replace(/,/g, '')},${sub.scorePercentage}%,${(u.church || 'N/A').replace(/,/g, '')},${getRankLabel(u.rankCategory)},${sub.warningsCount},${formatDuration(sub.durationSpent)}\n`;
+        csv += `${i + 1},${escapeCSV(sub.userName)},${sub.scorePercentage}%,${escapeCSV(u.church || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${sub.warningsCount},${escapeCSV(formatDuration(sub.durationSpent))}\n`;
       });
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = encodeURI(csv);
+      link.href = url;
       link.download = `RALWBC_Leaderboard_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     };
 
     return (
@@ -377,9 +541,22 @@ export const AdminDashboard = () => {
                           </td>
                           <td style={{ padding: '1rem', color: '#475569' }}>{u.church || 'N/A'}</td>
                           <td style={{ padding: '1rem' }}>
-                            <span style={{ fontWeight: '600', color: getInfractionColor(sub.warningsCount) }}>
+                            <button
+                              onClick={() => setSelectedSubLogs(sub)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                fontWeight: '600',
+                                color: getInfractionColor(sub.warningsCount),
+                                cursor: sub.warningsCount > 0 ? 'pointer' : 'default',
+                                textDecoration: sub.warningsCount > 0 ? 'underline' : 'none',
+                                padding: 0
+                              }}
+                              disabled={sub.warningsCount === 0}
+                              title={sub.warningsCount > 0 ? "View infraction logs" : ""}
+                            >
                               {sub.warningsCount} / 3
-                            </span>
+                            </button>
                           </td>
                           <td style={{ padding: '1rem', color: '#475569' }}>{formatDuration(sub.durationSpent)}</td>
                         </tr>
@@ -439,6 +616,7 @@ export const AdminDashboard = () => {
           <Link to="/admin?tab=leaderboard" style={shortcutBtnStyle}><Trophy size={16} /> Leaderboard</Link>
           <Link to="/admin/exams" style={shortcutBtnStyle}><Settings size={16} /> Manage Quizzes</Link>
           <Link to="/admin/officers" style={shortcutBtnStyle}><UserCheck size={16} /> Manage Officers</Link>
+          <Link to="/admin?tab=gallery" style={shortcutBtnStyle}><ImageIcon size={16} /> Manage Gallery</Link>
           <Link to="/admin/blogs" style={{ ...shortcutBtnStyle, backgroundColor: '#0a1141', color: '#ffffff' }}><PlusCircle size={16} /> Post Announcement</Link>
         </div>
       </div>
@@ -506,6 +684,34 @@ export const AdminDashboard = () => {
           {sessionSaved && <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem' }}>✓ Saved successfully!</span>}
         </div>
       </div>
+
+      {/* Proctoring Warning Infraction Log Details Modal */}
+      {selectedSubLogs && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,15,25,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', zIndex: 10000, backdropFilter: 'blur(4px)' }}>
+          <div className="glass-panel" style={{ maxWidth: '500px', width: '100%', padding: '2.5rem', border: '2px solid var(--border-color)', backgroundColor: '#ffffff', color: '#000000' }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>Security Proctoring Infraction Logs</h3>
+            <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem', color: '#475569' }}>
+              Infraction details for candidate <strong>{selectedSubLogs.userName}</strong>. Total of <strong>{selectedSubLogs.warningsCount}</strong> warning(s) flagged.
+            </p>
+            <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', textAlign: 'left' }}>
+              {selectedSubLogs.infractionLogs && selectedSubLogs.infractionLogs.length > 0 ? (
+                selectedSubLogs.infractionLogs.map((log, idx) => (
+                  <div key={idx} style={{ padding: '0.75rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                      <span>Infraction #{idx + 1}</span>
+                      <span>{formatTime(log.timestamp)}</span>
+                    </div>
+                    <div style={{ color: '#ef4444', fontWeight: '500' }}>{log.reason}</div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', color: '#64748b', fontStyle: 'italic', padding: '1rem' }}>No infraction logs recorded. Focus loss grace period protected attempt.</div>
+              )}
+            </div>
+            <button onClick={() => setSelectedSubLogs(null)} className="btn btn-navy btn-full">Close Log</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -530,5 +736,7 @@ const shortcutBtnStyle = { display: 'inline-flex', alignItems: 'center', gap: '0
 const arrowButtonStyle = { border: '1px solid #e2e8f0', borderRadius: '4px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', color: '#64748b', fontSize: '1rem', lineHeight: 1 };
 const goldBtnStyle = { backgroundColor: '#eab308', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem 1.75rem', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 2px 8px rgba(234,179,8,0.2)' };
 const navyBtnStyle = { backgroundColor: '#0a1141', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem 1.75rem', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 2px 8px rgba(10,17,65,0.2)' };
+const labelStyle = { display: 'block', fontSize: '0.9rem', fontWeight: '700', color: '#000000', marginBottom: '0.5rem', fontFamily: 'var(--font-heading)' };
+const inputStyle = { width: '100%', padding: '0.85rem 1.25rem', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', color: '#000000', fontSize: '0.95rem', outline: 'none', fontFamily: 'var(--font-body)', boxSizing: 'border-box' };
 
 export default AdminDashboard;
