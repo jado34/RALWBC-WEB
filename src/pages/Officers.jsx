@@ -36,7 +36,6 @@ const Avatar = ({ name, size = 120 }) => {
 
 export const Officers = () => {
   const [officers, setOfficers] = useState([]);
-  const [hoveredId, setHoveredId] = useState(null);
 
   useEffect(() => {
     dbService.init();
@@ -91,45 +90,54 @@ export const Officers = () => {
       {/* ── FEATURED TOP 2 (Director + Asst. Director) ─────────────────── */}
       {(director || asstDirector) && (
         <section style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: 'clamp(3rem,6vw,5rem) clamp(1.5rem,5vw,4rem)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5px', backgroundColor: '#e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2rem' }}>
             {[director, asstDirector].filter(Boolean).map((officer) => {
-              const tier = getTier(officer.sortOrder);
               return (
                 <div
                   key={officer.id}
                   style={{
-                    backgroundColor: '#fff', padding: '3rem 2.5rem',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                    gap: '1.25rem',
-                    transition: 'background-color 0.2s',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '3rem 2.5rem',
+                    width: '100%',
+                    maxWidth: '420px',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    gap: '1.5rem',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     cursor: 'default',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fefce8'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.borderColor = '#ca8a04';
+                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(10, 17, 65, 0.08)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                  }}
                 >
                   {/* Photo */}
-                  <div style={{ flexShrink: 0, position: 'relative' }}>
+                  <div style={{ flexShrink: 0 }}>
                     {officer.image ? (
-                      <img src={officer.image} alt={officer.name} style={{ width: '200px', height: '200px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #ca8a04', boxShadow: '0 8px 32px rgba(202,138,4,0.25)' }} />
+                      <img src={officer.image} alt={officer.name} style={{ width: '200px', height: '200px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #ca8a04', boxShadow: '0 8px 24px rgba(202,138,4,0.15)' }} />
                     ) : (
                       <Avatar name={officer.name} size={200} />
                     )}
-                    {/* Rank badge */}
-                    <div style={{ position: 'absolute', bottom: '4px', right: '4px', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: tier.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                      <Shield size={16} color={tier.text} />
-                    </div>
                   </div>
                   {/* Info */}
                   <div>
-                    <div style={{ fontSize: '0.65rem', fontWeight: '700', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.5rem' }}>
-                      {tier.label || officer.post.split(',')[0]}
+                    <div style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.4rem' }}>
+                      {officer.post}
                     </div>
-                    <h2 style={{ margin: '0 0 0.35rem', fontSize: 'clamp(1.1rem,2vw,1.4rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.1 }}>
+                    <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem,2vw,1.5rem)', fontWeight: '800', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
                       {officer.name}
                     </h2>
-                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', fontWeight: '500' }}>
-                      {officer.post}
-                    </p>
                   </div>
                 </div>
               );
@@ -152,61 +160,56 @@ export const Officers = () => {
           </div>
 
           {rest.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: '1.5px', backgroundColor: '#e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: '1.5rem' }}>
               {rest.map((officer) => (
                 <div
                   key={officer.id}
-                  onMouseEnter={() => setHoveredId(officer.id)}
-                  onMouseLeave={() => setHoveredId(null)}
                   style={{
-                    backgroundColor: hoveredId === officer.id ? '#fefce8' : '#fff',
-                    padding: '2rem 1.75rem',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                    gap: '1rem', transition: 'background-color 0.25s', cursor: 'default',
-                    position: 'relative',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '2.5rem 1.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    gap: '1.25rem',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    cursor: 'default',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.borderColor = '#ca8a04';
+                    e.currentTarget.style.boxShadow = '0 10px 24px rgba(10, 17, 65, 0.06)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                   }}
                 >
-                  {/* Top gold accent on hover */}
-                  <div style={{
-                    position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-                    height: '2px', width: hoveredId === officer.id ? '60%' : '0%',
-                    backgroundColor: '#ca8a04', transition: 'width 0.35s ease',
-                    borderRadius: '0 0 2px 2px',
-                  }} />
-
                   {/* Photo / Avatar */}
-                  <div style={{ position: 'relative' }}>
+                  <div>
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} style={{
                         width: '160px', height: '160px', borderRadius: '50%', objectFit: 'cover',
-                        border: hoveredId === officer.id ? '3px solid #ca8a04' : '3px solid #e2e8f0',
-                        transition: 'border-color 0.25s',
-                        boxShadow: hoveredId === officer.id ? '0 8px 24px rgba(202,138,4,0.2)' : '0 2px 8px rgba(0,0,0,0.06)',
+                        border: '3px solid #e2e8f0',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                       }} />
                     ) : (
-                      <div style={{
-                        width: '160px', height: '160px', borderRadius: '50%',
-                        background: hoveredId === officer.id
-                          ? 'linear-gradient(135deg,#ca8a04 0%,#a16207 100%)'
-                          : 'linear-gradient(135deg,#0a1141 0%,#1e3a8a 100%)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: hoveredId === officer.id ? '#fff' : '#ca8a04',
-                        fontWeight: '800', fontSize: '2rem',
-                        transition: 'background 0.3s, color 0.3s',
-                      }}>
-                        {officer.name.trim().split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()}
-                      </div>
+                      <Avatar name={officer.name} size={160} />
                     )}
                   </div>
 
-                  {/* Name */}
+                  {/* Info */}
                   <div>
-                    <h3 style={{ margin: '0 0 0.3rem', fontSize: '1rem', fontWeight: '800', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.35rem' }}>
+                      {officer.post}
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
                       {officer.name}
                     </h3>
-                    <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: '600', color: '#ca8a04', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      {officer.post.replace(', RALWBC', '')}
-                    </p>
                   </div>
                 </div>
               ))}

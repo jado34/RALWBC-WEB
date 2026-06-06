@@ -121,9 +121,9 @@ export const Home = () => {
         <div className="hero-content" style={{ position: 'relative', zIndex: 4, width: '100%', maxWidth: '1280px', margin: '0 auto', padding: 'clamp(2rem,5vw,5rem)', paddingBottom: 'clamp(5rem,10vh,8rem)' }}>
 
           {/* Gold badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '1.75rem', maxWidth: '100%', ...fade(0.1) }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ca8a04', flexShrink: 0, marginTop: '0.35em' }} />
-            <span style={{ color: '#ca8a04', fontSize: 'clamp(1.25rem,2.2vw,1.75rem)', fontWeight: '800', letterSpacing: 'clamp(0.04em,0.16vw,0.16em)', textTransform: 'uppercase', lineHeight: 1.35 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', maxWidth: '100%', ...fade(0.1) }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ca8a04', flexShrink: 0 }} />
+            <span style={{ color: '#ca8a04', fontSize: 'clamp(0.85rem, 1.3vw, 1.1rem)', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1 }}>
               Royal Ambassadors Lagos West Baptist Conference
             </span>
           </div>
@@ -446,10 +446,12 @@ export const Home = () => {
         @media (max-width: 768px) {
           .hero-section {
             align-items: center !important;
+            height: auto !important;
+            min-height: 80vh !important;
+            padding: 4rem 0 !important;
           }
           .hero-content {
-            padding-bottom: 2rem !important;
-            padding-top: 4.5rem !important;
+            padding: 2rem !important;
           }
           .responsive-row {
             grid-template-columns: 1fr !important;

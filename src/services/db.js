@@ -19,7 +19,20 @@ const DEFAULT_USERS = [];
 const DEFAULT_EXAMS = [];
 const DEFAULT_BLOGS = [];
 const DEFAULT_SUBMISSIONS = [];
-const DEFAULT_OFFICERS = [];
+const DEFAULT_OFFICERS = [
+  { id: 'off_1', name: 'Coun. Adegbola Thomas', post: 'Director, RALWBC', image: '', sortOrder: 1 },
+  { id: 'off_2', name: 'Amb. Philip Olopade', post: 'Assistant Director, RALWBC', image: '', sortOrder: 2 },
+  { id: 'off_3', name: 'Amb. Akinola Asabisi', post: 'Secretary, RALWBC', image: '', sortOrder: 3 },
+  { id: 'off_4', name: 'Amb. Daniel Ojeyomi', post: 'Recording Secretary, RALWBC', image: '', sortOrder: 4 },
+  { id: 'off_5', name: 'Amb. Damilola Aderibigbe', post: 'Ranking officer, RALWBC', image: '', sortOrder: 5 },
+  { id: 'off_6', name: 'Amb. Emmanuel Akinteye', post: 'Mission Officer, RALWBC', image: '', sortOrder: 6 },
+  { id: 'off_7', name: 'Amb. Ayo Balogun', post: 'Custodian, RALWBC', image: '', sortOrder: 7 },
+  { id: 'off_8', name: 'Amb. Pelumi Ojo', post: 'Treasurer, RALWBC', image: '', sortOrder: 8 },
+  { id: 'off_9', name: 'Amb. Adeleke Adeyemi', post: 'Financial Secretary, RALWBC', image: '', sortOrder: 9 },
+  { id: 'off_10', name: 'Amb. Tobi Oni', post: 'Auditor, RALWBC', image: '', sortOrder: 10 },
+  { id: 'off_11', name: 'Amb. Segun Adeniji', post: 'ASVC Coordinator, RALWBC', image: '', sortOrder: 11 },
+  { id: 'off_12', name: 'Amb. Olamidotun Simidu', post: 'PRO, RALWBC', image: '', sortOrder: 12 }
+];
 
 // Default camping/exam session window (closed by default)
 const DEFAULT_SESSION = {
@@ -49,7 +62,13 @@ export const dbService = {
     getStorageItem("ralwbc_exams", DEFAULT_EXAMS);
     getStorageItem("ralwbc_blogs", DEFAULT_BLOGS);
     getStorageItem("ralwbc_submissions", DEFAULT_SUBMISSIONS);
-    getStorageItem("ralwbc_officers", DEFAULT_OFFICERS);
+    
+    // Check if officers are empty/not present and pre-populate if needed
+    const officers = localStorage.getItem("ralwbc_officers");
+    if (!officers || JSON.parse(officers).length === 0) {
+      localStorage.setItem("ralwbc_officers", JSON.stringify(DEFAULT_OFFICERS));
+    }
+    
     getStorageItem("ralwbc_session", DEFAULT_SESSION);
   },
 
