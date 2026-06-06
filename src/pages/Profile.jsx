@@ -1,0 +1,333 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+
+export const Profile = () => {
+  const { currentUser, updateProfile } = useAuth();
+  
+  // Form states
+  const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [church, setChurch] = useState('');
+  const [address, setAddress] = useState('');
+  const [chapterName, setChapterName] = useState('');
+  const [association, setAssociation] = useState('');
+  const [avatar, setAvatar] = useState('');
+  
+  const [msg, setMsg] = useState({ type: '', text: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load current values
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name || '');
+      setDob(currentUser.dob || '');
+      setEmail(currentUser.email || '');
+      setPhone(currentUser.phone || currentUser.phoneNumber || '');
+
+      setChurch(currentUser.church || '');
+      setAddress(currentUser.address || '');
+      setChapterName(currentUser.chapterName || '');
+      setAssociation(currentUser.association || '');
+      setAvatar(currentUser.avatar || '');
+    }
+  }, [currentUser]);
+
+  // Canvas Image Compressor
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to base64 jpeg at 0.8 quality
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        setAvatar(compressedBase64);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setMsg({ type: '', text: '' });
+    setIsSubmitting(true);
+
+    try {
+      updateProfile({
+        name,
+        dob,
+        phone,
+        phoneNumber: phone, // sync both fields
+
+        church,
+        address,
+        chapterName,
+        association,
+        avatar
+      });
+      setMsg({ type: 'success', text: 'Profile updated successfully!' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setMsg({ type: 'error', text: 'Failed to update profile details.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '2rem 1.5rem', backgroundColor: '#ffffff', minHeight: '80vh' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '3rem', fontWeight: '800', marginBottom: '2.5rem', color: '#000000', fontFamily: 'var(--font-heading)' }}>
+          Edit Profile
+        </h1>
+
+        {msg.text && (
+          <div style={{
+            display: 'flex',
+            gap: '0.5rem',
+            backgroundColor: msg.type === 'success' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+            border: `1px solid ${msg.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`,
+            padding: '1rem',
+            borderRadius: '8px',
+            color: msg.type === 'success' ? '#10b981' : '#ef4444',
+            fontSize: '0.9rem',
+            marginBottom: '2rem',
+            alignItems: 'center'
+          }}>
+            {msg.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            <span>{msg.text}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Two-column Input Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '2rem'
+          }}>
+            
+            {/* Left Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <input 
+                  type="text"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  style={inputStyle}
+                  required
+                />
+              </div>
+
+              <div>
+                <input 
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  disabled
+                  style={{ ...inputStyle, backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#64748b' }}
+                />
+              </div>
+
+              <div>
+                <input 
+                  type="text"
+                  placeholder="Phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+
+              {/* Extra spacing block matching screenshot structure */}
+              <div style={{ height: '3.5rem', display: 'none' }} className="desktop-spacer"></div>
+
+              <div>
+                <input 
+                  type="text"
+                  placeholder="Church"
+                  value={church}
+                  onChange={(e) => setChurch(e.target.value)}
+                  style={inputStyle}
+                  required
+                />
+              </div>
+
+              <div>
+                <input 
+                  type="text"
+                  placeholder="Chapter Name"
+                  value={chapterName}
+                  onChange={(e) => setChapterName(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                {/* Date of Birth input (can be text or date type, styled to look like image) */}
+                <input 
+                  type="text"
+                  placeholder="Date of Birth"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  style={inputStyle}
+                  onFocus={(e) => e.target.type = 'date'}
+                  onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
+                />
+              </div>
+
+              {/* Empty placeholder aligning with Email */}
+              <div style={{ height: '3.5rem' }}></div>
+
+
+
+              <div>
+                <input 
+                  type="text"
+                  placeholder="Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <input 
+                  type="text"
+                  placeholder="Association"
+                  value={association}
+                  onChange={(e) => setAssociation(e.target.value)}
+                  style={inputStyle}
+                  required
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Profile Image Uploader */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            borderTop: '1px solid #e2e8f0',
+            paddingTop: '2rem',
+            marginTop: '1rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              {avatar && (
+                <img 
+                  src={avatar} 
+                  alt="Profile Avatar" 
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid #e2e8f0'
+                  }}
+                />
+              )}
+              <div style={{ flex: 1 }}>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    backgroundColor: '#edf2f7',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Centered Navy Submit Button */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2.5rem' }}>
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              style={{
+                backgroundColor: '#0a1141',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.9rem 4rem',
+                fontSize: '1rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(10, 17, 65, 0.25)',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              {isSubmitting ? 'Updating...' : 'Update Profile'}
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <style>{`
+        @media (max-width: 968px) {
+          .desktop-spacer { display: none !important; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// Common Input style matching Image 5
+const inputStyle = {
+  width: '100%',
+  padding: '0.9rem 1.25rem',
+  backgroundColor: '#edf2f7', // Faint greyish input bg
+  border: 'none',
+  borderRadius: '8px',
+  color: '#000000',
+  fontSize: '1rem',
+  outline: 'none',
+  fontFamily: 'var(--font-body)'
+};
+
+export default Profile;

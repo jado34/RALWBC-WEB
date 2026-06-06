@@ -1,0 +1,97 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { RALogo } from './Navbar';
+
+export const Footer = () => {
+  const isPortalRoute = ['/dashboard', '/exam', '/admin', '/profile'].some(path => location.pathname.startsWith(path));
+  if (isPortalRoute) return null;
+
+  const isPublicPage = true;
+  const footerBg = '#ffffff';
+  const footerBorderColor = '#e2e8f0';
+  const textColor = '#475569';
+  const titleColor = '#002060';
+
+  return (
+    <footer className="footer-section" style={{
+      backgroundColor: footerBg,
+      borderTop: `1px solid ${footerBorderColor}`,
+      padding: '4rem 0 2rem',
+      color: textColor
+    }}>
+      <div className="container">
+        <div className="footer-grid" style={{ gridTemplateColumns: '2fr repeat(2, 1fr) 1.5fr' }}>
+          
+          <div className="footer-col-about" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <RALogo size={32} />
+              <span className="logo-text" style={{ fontSize: '1rem', color: '#002060', fontWeight: '800' }}>
+                RALWBC
+              </span>
+            </Link>
+            <p style={{ color: textColor, fontSize: '0.85rem', lineHeight: '1.6', maxWidth: '300px' }}>
+              Lagos West Baptist Conference (RALWBC). Developing Christ-centered youths through discipleship, missions, and quiz competitions.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold' }}>Navigation</h4>
+            <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/" style={{ color: textColor }}>Home</Link></li>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/about-us" style={{ color: textColor }}>About Us</Link></li>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/blogs" style={{ color: textColor }}>Blog</Link></li>
+              <li><Link to="/gallery" style={{ color: textColor }}>Gallery</Link></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold' }}>Portal</h4>
+            <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/login" style={{ color: textColor }}>Log In</Link></li>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/register" style={{ color: textColor }}>Sign Up</Link></li>
+              <li><Link to="/admin-access" style={{ color: '#ca8a04', fontWeight: '600', fontSize: '0.85rem' }}>Admin Access</Link></li>
+            </ul>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Social Links</h4>
+            <div style={{ display: 'flex', gap: '1rem', color: '#002060' }}>
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Instagram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              </a>
+              <a href="https://facebook.com" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Facebook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Twitter">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+              </a>
+            </div>
+            <span style={{ fontSize: '0.8rem', color: textColor, marginTop: '0.5rem' }}>
+              Conference Secretariat, Lagos, Nigeria.
+            </span>
+          </div>
+        </div>
+
+        
+        <div className="footer-bottom" style={{ borderTop: `1px solid ${footerBorderColor}`, marginTop: '3rem', paddingTop: '1.5rem', color: textColor }}>
+          <p>Copyright &copy; {new Date().getFullYear()} RALWBC. All rights reserved.</p>
+          <p style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <a href="#privacy" style={{ color: textColor }}>Privacy Policy</a>
+            <span>&bull;</span>
+            <a href="#terms" style={{ color: textColor }}>Terms of Service</a>
+          </p>
+        </div>
+      </div>
+      
+      <style>{`
+        @media (max-width: 768px) {
+          .footer-grid {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+        }
+      `}</style>
+    </footer>
+  );
+};
+
