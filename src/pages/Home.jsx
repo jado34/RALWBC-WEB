@@ -13,7 +13,7 @@ const SLIDES = [
 // ─── Stats Data ───────────────────────────────────────────────────────────────
 const STATS = [
   { end: 1998, label: 'YEAR FOUNDED', prefix: '' },
-  { end: 17, label: 'LWBC ASSOCIATIONS', prefix: '' },
+  { end: 16, label: 'LWBC ASSOCIATIONS', prefix: '' },
   { end: 11, label: 'RA RANKS', prefix: '' },
   { end: 28, label: 'YEARS OF MINISTRY', prefix: '' },
 ];
@@ -123,7 +123,7 @@ export const Home = () => {
           {/* Gold badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', maxWidth: '100%', ...fade(0.1) }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ca8a04', flexShrink: 0 }} />
-            <span style={{ color: '#ca8a04', fontSize: 'clamp(0.85rem, 1.3vw, 1.1rem)', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1 }}>
+            <span style={{ color: '#ca8a04', fontSize: 'clamp(0.85rem, 1.7vw, 1.9rem)', fontWeight: '800', letterSpacing: 'clamp(0.04em,0.16vw,0.16em)', textTransform: 'uppercase', lineHeight: 1.35 }}>
               Royal Ambassadors Lagos West Baptist Conference
             </span>
           </div>
