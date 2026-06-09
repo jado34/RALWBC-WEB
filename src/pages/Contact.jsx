@@ -14,14 +14,14 @@ export const Contact = () => {
       alert("Please fill in all required fields.");
       return;
     }
-    
+
     // Simulate contact submission
     setSubmitted(true);
     setName('');
     setEmail('');
     setSubject('');
     setMessage('');
-    
+
     // Reset notification after 5 seconds
     setTimeout(() => {
       setSubmitted(false);
@@ -30,20 +30,20 @@ export const Contact = () => {
 
   return (
     <div className="animate-fade-in" style={{ padding: '4rem 0', backgroundColor: '#ffffff', minHeight: '85vh' }}>
-      
+
       {/* Page Title Header */}
       <section className="container" style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-        <h1 style={{ 
-          fontSize: '3rem', 
-          fontWeight: '800', 
-          marginBottom: '1rem', 
-          color: '#002060', 
-          fontFamily: 'var(--font-heading)' 
+        <h1 style={{
+          fontSize: '3rem',
+          fontWeight: '800',
+          marginBottom: '1rem',
+          color: '#002060',
+          fontFamily: 'var(--font-heading)'
         }}>
           Contact Us
         </h1>
         <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
-          Have questions about the annual Bible Quiz, membership registrations, or conference events? Get in touch with our secretariat.
+          Have questions about the Annual Parade Rehersal, Senior Ranking Exams, or any other events? Get in touch with our secretariat.
         </p>
       </section>
 
@@ -55,7 +55,7 @@ export const Contact = () => {
           gap: '3rem',
           alignItems: 'start'
         }}>
-          
+
           {/* Left Column: Contact Information */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <h2 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#002060', borderBottom: '2px solid #ca8a04', paddingBottom: '0.5rem', display: 'inline-block', alignSelf: 'flex-start' }}>
@@ -63,7 +63,7 @@ export const Contact = () => {
             </h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              
+
               {/* Address */}
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                 <div style={iconBoxStyle}>
@@ -155,11 +155,11 @@ export const Contact = () => {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              
+
               {/* Name */}
               <div>
                 <label style={labelStyle}>Full Name<span style={{ color: '#ef4444' }}>*</span></label>
-                <input 
+                <input
                   type="text"
                   required
                   placeholder="Enter your name"
@@ -172,7 +172,7 @@ export const Contact = () => {
               {/* Email */}
               <div>
                 <label style={labelStyle}>Email Address<span style={{ color: '#ef4444' }}>*</span></label>
-                <input 
+                <input
                   type="email"
                   required
                   placeholder="Enter your email address"
@@ -185,7 +185,7 @@ export const Contact = () => {
               {/* Subject */}
               <div>
                 <label style={labelStyle}>Subject</label>
-                <input 
+                <input
                   type="text"
                   placeholder="What is this regarding?"
                   value={subject}
@@ -197,7 +197,7 @@ export const Contact = () => {
               {/* Message */}
               <div>
                 <label style={labelStyle}>Message<span style={{ color: '#ef4444' }}>*</span></label>
-                <textarea 
+                <textarea
                   required
                   rows="4"
                   placeholder="Type your message here..."
@@ -208,7 +208,7 @@ export const Contact = () => {
               </div>
 
               {/* Send Button */}
-              <button 
+              <button
                 type="submit"
                 style={{
                   backgroundColor: '#002060',

@@ -33,7 +33,7 @@ export const Footer = () => {
               </span>
             </Link>
             <p style={{ color: textColor, fontSize: '0.85rem', lineHeight: '1.6', maxWidth: '300px' }}>
-              Lagos West Baptist Conference (RALWBC). Developing Christ-centered youths through discipleship, missions, and quiz competitions.
+              Royal Ambassadors Lagos West Baptist Conference (RALWBC). Developing Christ-centered youths through discipleship, missions, and Parade Session.
             </p>
           </div>
 
