@@ -1,27 +1,4 @@
-// LocalStorage Database Service for RALWBC Web App
-
-// ── Password Hashing (SubtleCrypto SHA-256) ───────────────────────────────────
-// Passwords are stored as 'sha256:<hex>' and never as plain text.
-// Legacy plain-text passwords (from old data) are handled gracefully on login.
-const HASH_PREFIX = 'sha256:';
-const HASH_SALT = 'ralwbc_portal_2026';
-
-export async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + HASH_SALT);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return HASH_PREFIX + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyPassword(input, stored) {
-  if (stored.startsWith(HASH_PREFIX)) {
-    const inputHash = await hashPassword(input);
-    return inputHash === stored;
-  }
-  // Legacy plain-text fallback (migrates on next login)
-  return input === stored;
-}
+import { supabase } from './supabaseClient';
 
 // Rank categories — the three official RA exam tiers
 export const RANK_CATEGORIES = [
@@ -43,221 +20,320 @@ export const GALLERY_CATEGORIES = [
   'RA Leadership Training Conference'
 ];
 
-// Empty defaults — no demo data
-const DEFAULT_USERS = [];
-const DEFAULT_EXAMS = [];
-const DEFAULT_BLOGS = [];
-const DEFAULT_SUBMISSIONS = [];
-const DEFAULT_GALLERY = [
-  { id: 'gal_1', url: '/Lagos-West1.jpeg', alt: 'Two men discussing at Lagos West Conference', category: 'Jamboore Experience' },
-  { id: 'gal_2', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA member uniform profile inspection', category: 'Jamboore Experience' },
-  { id: 'gal_3', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Stage event auditorium audience meeting', category: 'Jamboore Experience' },
-  { id: 'gal_4', url: '/Lagos-West3.jpeg', alt: 'Ambassador saluting during drill inspection', category: 'Jamboore Experience' },
-  { id: 'gal_5', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Singing with microphone during worship', category: 'Jamboore Experience' },
-  { id: 'gal_6', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Marshal speaking at podium and address', category: 'Jamboore Experience' },
-
-  { id: 'gal_7', url: '/Lagos-West1.jpeg', alt: 'Group discussion at Lagos West Conference', category: 'RA Week Ushering In' },
-  { id: 'gal_8', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA parade prep', category: 'RA Week Ushering In' },
-  { id: 'gal_9', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Conference congregation', category: 'RA Week Ushering In' },
-  { id: 'gal_10', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute inspection', category: 'RA Week Ushering In' },
-  { id: 'gal_11', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Praise and worship service', category: 'RA Week Ushering In' },
-  { id: 'gal_12', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Conference address', category: 'RA Week Ushering In' },
-
-  { id: 'gal_13', url: '/Lagos-West1.jpeg', alt: 'Chapter Inauguration Discussion', category: 'Convention - in - Session' },
-  { id: 'gal_14', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'Inauguration parade', category: 'Convention - in - Session' },
-  { id: 'gal_15', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Inauguration congregation', category: 'Convention - in - Session' },
-  { id: 'gal_16', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute parade', category: 'Convention - in - Session' },
-  { id: 'gal_17', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration praise', category: 'Convention - in - Session' },
-  { id: 'gal_18', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration address', category: 'Convention - in - Session' },
-];
-
-const DEFAULT_OFFICERS = [
-  { id: 'off_1', name: 'Coun. Adegbola Thomas', post: 'Director, RALWBC', image: '', sortOrder: 1 },
-  { id: 'off_2', name: 'Amb. Philip Olopade', post: 'Assistant Director, RALWBC', image: '', sortOrder: 2 },
-  { id: 'off_3', name: 'Amb. Akinola Asabisi', post: 'Secretary, RALWBC', image: '', sortOrder: 3 },
-  { id: 'off_4', name: 'Amb. Daniel Ojeyomi', post: 'Recording Secretary, RALWBC', image: '', sortOrder: 4 },
-  { id: 'off_5', name: 'Amb. Damilola Aderibigbe', post: 'Ranking officer, RALWBC', image: '', sortOrder: 5 },
-  { id: 'off_6', name: 'Amb. Emmanuel Akinteye', post: 'Mission Officer, RALWBC', image: '', sortOrder: 6 },
-  { id: 'off_7', name: 'Amb. Ayo Balogun', post: 'Custodian, RALWBC', image: '', sortOrder: 7 },
-  { id: 'off_8', name: 'Amb. Pelumi Ojo', post: 'Treasurer, RALWBC', image: '', sortOrder: 8 },
-  { id: 'off_9', name: 'Amb. Adeleke Adeyemi', post: 'Financial Secretary, RALWBC', image: '', sortOrder: 9 },
-  { id: 'off_10', name: 'Amb. Tobi Oni', post: 'Auditor, RALWBC', image: '', sortOrder: 10 },
-  { id: 'off_11', name: 'Amb. Segun Adeniji', post: 'ASVC Coordinator, RALWBC', image: '', sortOrder: 11 },
-  { id: 'off_12', name: 'Amb. Olamidotun Simidu', post: 'PRO, RALWBC', image: '', sortOrder: 12 },
-];
-
-// Default camping/exam session window (closed by default)
-const DEFAULT_SESSION = { startDate: null, endDate: null, startTime: '08:00', isOpen: false };
-
-// ── LocalStorage helpers ──────────────────────────────────────────────────────
-const getStorageItem = (key, defaultValue) => {
-  const data = localStorage.getItem(key);
-  if (!data) {
-    localStorage.setItem(key, JSON.stringify(defaultValue));
-    return defaultValue;
-  }
-  try {
-    return JSON.parse(data);
-  } catch {
-    return defaultValue;
-  }
-};
-
-const setStorageItem = (key, data) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-    return true;
-  } catch (e) {
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
-      throw new Error('Storage full: The browser storage limit has been reached. Please contact the administrator to clear old gallery images before uploading more.');
-    }
-    throw e;
-  }
-};
-
-// ── DB Service ────────────────────────────────────────────────────────────────
 export const dbService = {
-
-  // Initialize Database
+  // Initialize Database (no-op now since Supabase client is self-initializing)
   init() {
-    getStorageItem('ralwbc_users', DEFAULT_USERS);
-    getStorageItem('ralwbc_exams', DEFAULT_EXAMS);
-    getStorageItem('ralwbc_blogs', DEFAULT_BLOGS);
-    getStorageItem('ralwbc_submissions', DEFAULT_SUBMISSIONS);
-
-    const officers = localStorage.getItem('ralwbc_officers');
-    if (!officers || JSON.parse(officers).length === 0) {
-      localStorage.setItem('ralwbc_officers', JSON.stringify(DEFAULT_OFFICERS));
-    }
-
-    const gallery = localStorage.getItem('ralwbc_gallery');
-    if (!gallery || JSON.parse(gallery).length === 0) {
-      localStorage.setItem('ralwbc_gallery', JSON.stringify(DEFAULT_GALLERY));
-    }
-
-    getStorageItem('ralwbc_session', DEFAULT_SESSION);
+    console.log('Supabase Database Service initialized');
   },
 
   // ── Auth Operations ───────────────────────────────────────────────────────
 
-  /**
-   * Register a new student account.
-   * Admins can ONLY be created via populateDemoData() or direct DB seeding —
-   * the self-registration admin code has been removed from the client bundle.
-   */
-  async register(name, email, password) {
-    const users = getStorageItem('ralwbc_users', DEFAULT_USERS);
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-      throw new Error('Email already registered');
+  async register(name, email, password, meta = {}) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role: 'student',
+          ...meta
+        }
+      }
+    });
+    if (error) throw error;
+    if (!data.user) throw new Error('Registration failed');
+
+    const profileFields = {
+      id: data.user.id,
+      name,
+      role: 'student'
+    };
+    if (meta.dob !== undefined) profileFields.dob = meta.dob;
+    if (meta.phone !== undefined) profileFields.phone = meta.phone;
+    if (meta.phoneNumber !== undefined) profileFields.phone_number = meta.phoneNumber;
+    if (meta.church !== undefined) profileFields.church = meta.church;
+    if (meta.address !== undefined) profileFields.address = meta.address;
+    if (meta.chapterName !== undefined) profileFields.chapter_name = meta.chapterName;
+    if (meta.association !== undefined) profileFields.association = meta.association;
+    if (meta.rankCategory !== undefined) profileFields.rank_category = meta.rankCategory;
+    if (meta.rank !== undefined) profileFields.rank = meta.rank;
+
+    // Robust fallback upsert in case SQL trigger is not yet executed/created
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(profileFields);
+    if (profileError) {
+      console.warn('Profile upsert fallback warning (might be handled by SQL trigger):', profileError);
     }
-    const hashedPassword = await hashPassword(password);
-    const newUser = {
-      id: 'usr_' + Math.random().toString(36).substr(2, 9),
+
+    return {
+      id: data.user.id,
       name,
       email,
-      password: hashedPassword,
       role: 'student',
+      ...meta
     };
-    users.push(newUser);
-    setStorageItem('ralwbc_users', users);
-    return newUser;
   },
 
   async login(email, password) {
-    const users = getStorageItem('ralwbc_users', DEFAULT_USERS);
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!user) throw new Error('Invalid email or password');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) throw error;
+    if (!data.user) throw new Error('Login failed');
 
-    const match = await verifyPassword(password, user.password);
-    if (!match) throw new Error('Invalid email or password');
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
 
-    // Silently upgrade legacy plain-text passwords to hashed on successful login
-    if (!user.password.startsWith(HASH_PREFIX)) {
-      user.password = await hashPassword(password);
-      setStorageItem('ralwbc_users', users);
+    if (profileError || !profile) {
+      const name = data.user.user_metadata?.name || email.split('@')[0];
+      const role = data.user.user_metadata?.role || 'student';
+      await supabase.from('profiles').upsert({ id: data.user.id, name, role });
+      return { id: data.user.id, name, email, role };
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return {
+      id: profile.id,
+      name: profile.name,
+      email: data.user.email,
+      role: profile.role,
+      dob: profile.dob,
+      phone: profile.phone || profile.phone_number,
+      phoneNumber: profile.phone_number || profile.phone,
+      church: profile.church,
+      address: profile.address,
+      chapterName: profile.chapter_name,
+      association: profile.association,
+      rankCategory: profile.rank_category,
+      rank: profile.rank
+    };
   },
 
-  updateUser(userId, fields) {
-    const users = getStorageItem('ralwbc_users', DEFAULT_USERS);
-    const idx = users.findIndex(u => u.id === userId);
-    if (idx !== -1) {
-      users[idx] = { ...users[idx], ...fields };
-      setStorageItem('ralwbc_users', users);
-      return users[idx];
-    }
-    return null;
+  async updateUser(userId, fields) {
+    const dbFields = {};
+    if (fields.name !== undefined) dbFields.name = fields.name;
+    if (fields.dob !== undefined) dbFields.dob = fields.dob;
+    if (fields.phone !== undefined) dbFields.phone = fields.phone;
+    if (fields.phoneNumber !== undefined) dbFields.phone_number = fields.phoneNumber;
+    if (fields.church !== undefined) dbFields.church = fields.church;
+    if (fields.address !== undefined) dbFields.address = fields.address;
+    if (fields.chapterName !== undefined) dbFields.chapter_name = fields.chapterName;
+    if (fields.association !== undefined) dbFields.association = fields.association;
+    if (fields.rankCategory !== undefined) dbFields.rank_category = fields.rankCategory;
+    if (fields.rank !== undefined) dbFields.rank = fields.rank;
+    if (fields.role !== undefined) dbFields.role = fields.role;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(dbFields)
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data ? {
+      id: data.id,
+      name: data.name,
+      role: data.role,
+      dob: data.dob,
+      phone: data.phone,
+      phoneNumber: data.phone_number,
+      church: data.church,
+      address: data.address,
+      chapterName: data.chapter_name,
+      association: data.association,
+      rankCategory: data.rank_category,
+      rank: data.rank
+    } : null;
   },
 
-  /**
-   * Update user password — accepts a plain-text newPassword and hashes it.
-   * Returns a Promise.
-   */
   async updateUserPassword(userId, newPassword) {
-    const hashed = await hashPassword(newPassword);
-    return this.updateUser(userId, { password: hashed });
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return true;
   },
 
-  /**
-   * Admin: permanently delete a registered student account.
-   * Also removes all their exam submissions.
-   */
-  deleteUser(userId) {
-    const users = getStorageItem('ralwbc_users', DEFAULT_USERS);
-    setStorageItem('ralwbc_users', users.filter(u => u.id !== userId));
-    const subs = getStorageItem('ralwbc_submissions', DEFAULT_SUBMISSIONS);
-    setStorageItem('ralwbc_submissions', subs.filter(s => s.userId !== userId));
+  async deleteUser(userId) {
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    if (error) throw error;
   },
 
   // ── Exam Operations ───────────────────────────────────────────────────────
 
-  getExams() { return getStorageItem('ralwbc_exams', DEFAULT_EXAMS); },
-  getExamsByCategory(category) {
-    const exams = this.getExams();
+  async getExams() {
+    const { data, error } = await supabase
+      .from('exams')
+      .select('*');
+    if (error) throw error;
+    return (data || []).map(e => ({
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      category: e.category,
+      duration: e.duration,
+      isActive: e.is_active,
+      questions: e.questions
+    }));
+  },
+
+  async getExamsByCategory(category) {
+    const exams = await this.getExams();
     if (!category) return exams;
     return exams.filter(e => e.category === category);
   },
-  getExamById(id) {
-    return this.getExams().find(e => e.id === id) || null;
+
+  async getExamById(id) {
+    const { data, error } = await supabase
+      .from('exams')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      duration: data.duration,
+      isActive: data.is_active,
+      questions: data.questions
+    } : null;
   },
-  saveExam(examData) {
-    const exams = this.getExams();
-    if (examData.id) {
-      const index = exams.findIndex(e => e.id === examData.id);
-      if (index !== -1) exams[index] = examData;
+
+  async saveExam(examData) {
+    const dbExam = {
+      title: examData.title,
+      description: examData.description,
+      category: examData.category,
+      duration: examData.duration,
+      is_active: examData.isActive !== undefined ? examData.isActive : true,
+      questions: examData.questions || []
+    };
+    
+    let id = examData.id;
+    if (id) {
+      const { error } = await supabase
+        .from('exams')
+        .update(dbExam)
+        .eq('id', id);
+      if (error) throw error;
     } else {
-      examData.id = 'exm_' + Math.random().toString(36).substr(2, 9);
-      exams.push(examData);
+      id = 'exm_' + Math.random().toString(36).substr(2, 9);
+      const { error } = await supabase
+        .from('exams')
+        .insert({ id, ...dbExam });
+      if (error) throw error;
     }
-    setStorageItem('ralwbc_exams', exams);
-    return examData;
+    return { ...examData, id };
   },
-  deleteExam(id) {
-    setStorageItem('ralwbc_exams', this.getExams().filter(e => e.id !== id));
+
+  async deleteExam(id) {
+    const { error } = await supabase
+      .from('exams')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
   },
 
   // ── Submission Operations ─────────────────────────────────────────────────
 
-  getSubmissions() { return getStorageItem('ralwbc_submissions', DEFAULT_SUBMISSIONS); },
-  getSubmissionsByUser(userId) { return this.getSubmissions().filter(s => s.userId === userId); },
-  getSubmissionForUserAndExam(userId, examId) {
-    return this.getSubmissions().find(s => s.userId === userId && s.examId === examId) || null;
-  },
-  deleteSubmission(submissionId) {
-    setStorageItem('ralwbc_submissions', this.getSubmissions().filter(s => s.id !== submissionId));
-  },
-  resetExamSubmissions(examId) {
-    setStorageItem('ralwbc_submissions', this.getSubmissions().filter(s => s.examId !== examId));
+  async getSubmissions() {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*');
+    if (error) throw error;
+    return (data || []).map(s => ({
+      id: s.id,
+      userId: s.user_id,
+      userName: s.user_name,
+      examId: s.exam_id,
+      examTitle: s.exam_title,
+      answers: s.answers,
+      correctCount: s.correct_count,
+      totalQuestions: s.total_questions,
+      scorePercentage: s.score_percentage,
+      warningsCount: s.warnings_count,
+      infractionLogs: s.infraction_logs,
+      durationSpent: s.duration_spent,
+      submittedAt: s.submitted_at
+    }));
   },
 
-  submitExam(userId, userName, examId, examTitle, answers, warningsCount, durationSpent, infractionLogs = []) {
-    const exam = this.getExamById(examId);
+  async getSubmissionsByUser(userId) {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('user_id', userId);
+    if (error) throw error;
+    return (data || []).map(s => ({
+      id: s.id,
+      userId: s.user_id,
+      userName: s.user_name,
+      examId: s.exam_id,
+      examTitle: s.exam_title,
+      answers: s.answers,
+      correctCount: s.correct_count,
+      totalQuestions: s.total_questions,
+      scorePercentage: s.score_percentage,
+      warningsCount: s.warnings_count,
+      infractionLogs: s.infraction_logs,
+      durationSpent: s.duration_spent,
+      submittedAt: s.submitted_at
+    }));
+  },
+
+  async getSubmissionForUserAndExam(userId, examId) {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('exam_id', examId)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? {
+      id: data.id,
+      userId: data.user_id,
+      userName: data.user_name,
+      examId: data.exam_id,
+      examTitle: data.exam_title,
+      answers: data.answers,
+      correctCount: data.correct_count,
+      totalQuestions: data.total_questions,
+      scorePercentage: data.score_percentage,
+      warningsCount: data.warnings_count,
+      infractionLogs: data.infraction_logs,
+      durationSpent: data.duration_spent,
+      submittedAt: data.submitted_at
+    } : null;
+  },
+
+  async deleteSubmission(submissionId) {
+    const { error } = await supabase
+      .from('submissions')
+      .delete()
+      .eq('id', submissionId);
+    if (error) throw error;
+  },
+
+  async resetExamSubmissions(examId) {
+    const { error } = await supabase
+      .from('submissions')
+      .delete()
+      .eq('exam_id', examId);
+    if (error) throw error;
+  },
+
+  async submitExam(userId, userName, examId, examTitle, answers, warningsCount, durationSpent, infractionLogs = []) {
+    const exam = await this.getExamById(examId);
     if (!exam) throw new Error('Exam not found');
 
-    const existing = this.getSubmissionForUserAndExam(userId, examId);
+    const existing = await this.getSubmissionForUserAndExam(userId, examId);
     if (existing) throw new Error('You have already submitted this exam.');
 
     let correctCount = 0;
@@ -267,182 +343,229 @@ export const dbService = {
     });
     const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
 
+    const submissionId = 'sub_' + Math.random().toString(36).substr(2, 9);
     const submission = {
-      id: 'sub_' + Math.random().toString(36).substr(2, 9),
-      userId, userName, examId, examTitle,
-      answers, correctCount, totalQuestions, scorePercentage,
-      warningsCount, infractionLogs, durationSpent,
-      submittedAt: new Date().toISOString(),
+      id: submissionId,
+      user_id: userId,
+      user_name: userName,
+      exam_id: examId,
+      exam_title: examTitle,
+      answers,
+      correct_count: correctCount,
+      total_questions: totalQuestions,
+      score_percentage: scorePercentage,
+      warnings_count: warningsCount,
+      infraction_logs: infractionLogs,
+      duration_spent: durationSpent,
+      submitted_at: new Date().toISOString(),
     };
 
-    const subs = this.getSubmissions();
-    subs.push(submission);
-    setStorageItem('ralwbc_submissions', subs);
-    return submission;
+    const { error } = await supabase
+      .from('submissions')
+      .insert(submission);
+    if (error) throw error;
+
+    return {
+      id: submissionId,
+      userId,
+      userName,
+      examId,
+      examTitle,
+      answers,
+      correctCount,
+      totalQuestions,
+      scorePercentage,
+      warningsCount,
+      infractionLogs,
+      durationSpent,
+      submittedAt: submission.submitted_at,
+    };
   },
 
   // ── Blog Operations ───────────────────────────────────────────────────────
 
-  getBlogs() { return getStorageItem('ralwbc_blogs', DEFAULT_BLOGS); },
-  saveBlog(blogData) {
-    const blogs = this.getBlogs();
-    if (blogData.id) {
-      const index = blogs.findIndex(b => b.id === blogData.id);
-      if (index !== -1) blogs[index] = { ...blogs[index], ...blogData };
-    } else {
-      blogData.id = 'blog_' + Math.random().toString(36).substr(2, 9);
-      blogData.date = new Date().toISOString().split('T')[0];
-      blogs.push(blogData);
-    }
-    setStorageItem('ralwbc_blogs', blogs);
-    return blogData;
+  async getBlogs() {
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('*')
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(b => ({
+      id: b.id,
+      title: b.title,
+      author: b.author,
+      date: b.date,
+      content: b.content
+    }));
   },
-  deleteBlog(id) {
-    setStorageItem('ralwbc_blogs', this.getBlogs().filter(b => b.id !== id));
+
+  async saveBlog(blogData) {
+    const dbBlog = {
+      title: blogData.title,
+      author: blogData.author,
+      content: blogData.content
+    };
+    
+    let id = blogData.id;
+    if (id) {
+      const { error } = await supabase
+        .from('blogs')
+        .update(dbBlog)
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      id = 'blog_' + Math.random().toString(36).substr(2, 9);
+      const { error } = await supabase
+        .from('blogs')
+        .insert({
+          id,
+          ...dbBlog,
+          date: new Date().toISOString().split('T')[0]
+        });
+      if (error) throw error;
+    }
+    return { ...blogData, id, date: blogData.date || new Date().toISOString().split('T')[0] };
+  },
+
+  async deleteBlog(id) {
+    const { error } = await supabase
+      .from('blogs')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
   },
 
   // ── Officer Operations ────────────────────────────────────────────────────
 
-  getOfficers() {
-    const officers = getStorageItem('ralwbc_officers', DEFAULT_OFFICERS);
-    return officers.sort((a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0));
+  async getOfficers() {
+    const { data, error } = await supabase
+      .from('officers')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    if (error) throw error;
+    return (data || []).map(o => ({
+      id: o.id,
+      name: o.name,
+      post: o.post,
+      image: o.image || '',
+      sortOrder: o.sort_order
+    }));
   },
-  saveOfficer(officerData) {
-    const officers = getStorageItem('ralwbc_officers', DEFAULT_OFFICERS);
-    if (officerData.id) {
-      const index = officers.findIndex(o => o.id === officerData.id);
-      if (index !== -1) officers[index] = { ...officers[index], ...officerData };
+
+  async saveOfficer(officerData) {
+    const dbOfficer = {
+      name: officerData.name,
+      post: officerData.post,
+      image: officerData.image || '',
+      sort_order: Number(officerData.sortOrder) || 0
+    };
+    
+    let id = officerData.id;
+    if (id) {
+      const { error } = await supabase
+        .from('officers')
+        .update(dbOfficer)
+        .eq('id', id);
+      if (error) throw error;
     } else {
-      officerData.id = 'off_' + Math.random().toString(36).substr(2, 9);
-      officers.push(officerData);
+      id = 'off_' + Math.random().toString(36).substr(2, 9);
+      const { error } = await supabase
+        .from('officers')
+        .insert({ id, ...dbOfficer });
+      if (error) throw error;
     }
-    setStorageItem('ralwbc_officers', officers);
-    return officerData;
+    return { ...officerData, id };
   },
-  deleteOfficer(id) {
-    setStorageItem('ralwbc_officers', this.getOfficers().filter(o => o.id !== id));
+
+  async deleteOfficer(id) {
+    const { error } = await supabase
+      .from('officers')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
   },
 
   // ── Gallery Operations ────────────────────────────────────────────────────
 
-  getGalleryPhotos() {
-    let photos = getStorageItem('ralwbc_gallery', DEFAULT_GALLERY);
-    let migrated = false;
-    photos = photos.map(p => {
-      if (p.category === 'Jubilee Experience') {
-        p.category = 'Jamboore Experience';
-        migrated = true;
-      } else if (p.category === '2023 Ushering In') {
-        p.category = 'RA Week Ushering In';
-        migrated = true;
-      } else if (p.category === 'Chapter Inauguration') {
-        p.category = 'Convention - in - Session';
-        migrated = true;
-      }
-      return p;
-    });
-    if (migrated) {
-      setStorageItem('ralwbc_gallery', photos);
-    }
-    return photos;
+  async getGalleryPhotos() {
+    const { data, error } = await supabase
+      .from('gallery')
+      .select('*');
+    if (error) throw error;
+    return (data || []).map(g => ({
+      id: g.id,
+      url: g.url,
+      alt: g.alt || '',
+      category: g.category
+    }));
   },
-  saveGalleryPhoto(photoData) {
-    const photos = this.getGalleryPhotos();
-    if (photoData.id) {
-      const index = photos.findIndex(p => p.id === photoData.id);
-      if (index !== -1) photos[index] = { ...photos[index], ...photoData };
+
+  async saveGalleryPhoto(photoData) {
+    const dbPhoto = {
+      url: photoData.url,
+      alt: photoData.alt || '',
+      category: photoData.category
+    };
+    
+    let id = photoData.id;
+    if (id) {
+      const { error } = await supabase
+        .from('gallery')
+        .update(dbPhoto)
+        .eq('id', id);
+      if (error) throw error;
     } else {
-      photoData.id = 'gal_' + Math.random().toString(36).substr(2, 9);
-      photos.push(photoData);
+      id = 'gal_' + Math.random().toString(36).substr(2, 9);
+      const { error } = await supabase
+        .from('gallery')
+        .insert({ id, ...dbPhoto });
+      if (error) throw error;
     }
-    // May throw QuotaExceededError — caller must handle
-    setStorageItem('ralwbc_gallery', photos);
-    return photoData;
-  },
-  deleteGalleryPhoto(id) {
-    setStorageItem('ralwbc_gallery', this.getGalleryPhotos().filter(p => p.id !== id));
+    return { ...photoData, id };
   },
 
-  // ── Demo Data Populator ───────────────────────────────────────────────────
-
-  /**
-   * Async because passwords must be hashed before storing.
-   * Call with: await dbService.populateDemoData()
-   */
-  async populateDemoData() {
-    localStorage.removeItem('ralwbc_users');
-    localStorage.removeItem('ralwbc_exams');
-    localStorage.removeItem('ralwbc_blogs');
-    localStorage.removeItem('ralwbc_submissions');
-    localStorage.removeItem('ralwbc_gallery');
-    localStorage.removeItem('ralwbc_session');
-
-    const adminPwd = await hashPassword('adminpassword');
-    const studentPwd = await hashPassword('password');
-
-    const adminUser = { id: 'usr_admin', name: 'Admin Committee', email: 'admin@ralwbc.org', password: adminPwd, role: 'admin' };
-    const student1 = { id: 'usr_samuel', name: 'Samuel Adebayo', email: 'samuel@gmail.com', password: studentPwd, role: 'student', dob: '2008-04-12', phone: '+2348011112222', phoneNumber: '+2348011112222', church: 'First Baptist Church, Ikeja', address: '12, Allen Avenue, Ikeja', chapterName: 'Ikeja Pioneers', association: 'Lagos West Association', rankCategory: 'ambassador', rank: 'Ambassador' };
-    const student2 = { id: 'usr_david', name: 'David Okon', email: 'david@gmail.com', password: studentPwd, role: 'student', dob: '2007-08-24', phone: '+2348033334444', phoneNumber: '+2348033334444', church: 'Grace Baptist Church, Surulere', address: '45, Adeniran Ogunsanya, Surulere', chapterName: 'Surulere Victors', association: 'Lagos West Association', rankCategory: 'ambassador_extraordinary', rank: 'Ambassador Extraordinary' };
-    const student3 = { id: 'usr_emmanuel', name: 'Emmanuel Cole', email: 'emmanuel@gmail.com', password: studentPwd, role: 'student', dob: '2005-11-03', phone: '+2348055556666', phoneNumber: '+2348055556666', church: 'Faith Baptist Church, Agege', address: '88, Agege Motor Road, Agege', chapterName: 'Agege Conquerors', association: 'Lagos West Association', rankCategory: 'ambassador_plenipotentiary', rank: 'Ambassador Plenipotentiary' };
-
-    setStorageItem('ralwbc_users', [adminUser, student1, student2, student3]);
-
-    const exam1 = {
-      id: 'exm_amb', title: 'Ambassador General Ranking Exam',
-      description: 'Basic ranking exam covering RA history, core pledges, and Matthew 28 scripture verification.',
-      category: 'ambassador', duration: 20, isActive: true,
-      questions: [
-        { id: 'q_amb1', text: 'What is the official motto of the Royal Ambassadors of Nigeria?', options: ['We are ambassadors for Christ', 'Touching the lives of boys', 'Implanting scripture in boys', 'To the work, to the work'], optionImages: ['', '', '', ''], correctAnswer: 'We are ambassadors for Christ' },
-        { id: 'q_amb2', text: 'In what year was the Royal Ambassador organization founded?', options: ['1908', '1998', '1954', '1944'], optionImages: ['', '', '', ''], correctAnswer: '1908' },
-        { id: 'q_amb3', text: 'Which scripture text serves as the basis for the RA Motto?', options: ['Matthew 28:19-20', '2 Corinthians 5:20', 'John 3:16', 'Ephesians 6:1-3'], optionImages: ['', '', '', ''], correctAnswer: '2 Corinthians 5:20' },
-      ],
-    };
-    const exam2 = {
-      id: 'exm_extra', title: 'Ambassador Extraordinary Theological Exam',
-      description: 'Intermediate exam assessing the theological aspects of the Royal Ambassador rank.',
-      category: 'ambassador_extraordinary', duration: 30, isActive: true,
-      questions: [
-        { id: 'q_extra1', text: 'Who is the current Director of the RALWBC?', options: ['Coun. Adegbola Thomas', 'Amb. Philip Olopade', 'Amb. Akinola Asabisi', 'Amb. Daniel Ojeyomi'], optionImages: ['', '', '', ''], correctAnswer: 'Coun. Adegbola Thomas' },
-        { id: 'q_extra2', text: 'The emblem of the Royal Ambassadors contains which geometric shapes?', options: ['Shield, Star, Crown', 'Shield, Cross, Circle', 'Anchor, Star, Shield', 'Cross, Crown, Shield'], optionImages: ['', '', '', ''], correctAnswer: 'Shield, Star, Crown' },
-      ],
-    };
-    setStorageItem('ralwbc_exams', [exam1, exam2]);
-
-    const blog1 = { id: 'blog_demo1', title: 'Announcement: 2026 Annual Camping Session Schedule', author: 'Exam Committee', date: new Date().toISOString().split('T')[0], content: 'Greetings Ambassadors! The 2026 Annual Camping and Promotion Session will be held from September 10th to September 15th. All candidates must complete their profiles and verify their rank categories prior to August 30th to be enrolled in the ranking exams.' };
-    const blog2 = { id: 'blog_demo2', title: 'RA Promotion Exam Study Guide Out', author: 'Ranking Board', date: new Date().toISOString().split('T')[0], content: 'The ranking board has released the study materials for the upcoming promotion exams. Focus on RA history, pledges, hymns, and Matthew 28:19-20. Study hard, write well, and remember: we are ambassadors for Christ!' };
-    setStorageItem('ralwbc_blogs', [blog1, blog2]);
-
-    setStorageItem('ralwbc_gallery', DEFAULT_GALLERY);
-
-    const sub1 = { id: 'sub_demo1', userId: 'usr_samuel', userName: 'Samuel Adebayo', examId: 'exm_amb', examTitle: 'Ambassador General Ranking Exam', answers: { q_amb1: 'We are ambassadors for Christ', q_amb2: '1908', q_amb3: 'Matthew 28:19-20' }, correctCount: 2, totalQuestions: 3, scorePercentage: 67, warningsCount: 1, infractionLogs: [{ timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), reason: 'Exam browser window lost focus.' }], durationSpent: 620, submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() };
-    const sub2 = { id: 'sub_demo2', userId: 'usr_david', userName: 'David Okon', examId: 'exm_extra', examTitle: 'Ambassador Extraordinary Theological Exam', answers: { q_extra1: 'Coun. Adegbola Thomas', q_extra2: 'Shield, Star, Crown' }, correctCount: 2, totalQuestions: 2, scorePercentage: 100, warningsCount: 3, infractionLogs: [{ timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), reason: 'Browser tab or application switched.' }, { timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(), reason: 'Keyboard shortcuts blocked.' }, { timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), reason: 'Secure fullscreen mode exited.' }], durationSpent: 1140, submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() };
-    setStorageItem('ralwbc_submissions', [sub1, sub2]);
-
-    setStorageItem('ralwbc_session', {
-      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString().split('T')[0],
-      startTime: '08:00',
-      isOpen: true,
-    });
+  async deleteGalleryPhoto(id) {
+    const { error } = await supabase
+      .from('gallery')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
   },
 
   // ── Session / Camping Window Operations ──────────────────────────────────
 
-  getSession() { return getStorageItem('ralwbc_session', DEFAULT_SESSION); },
-  saveSession(sessionData) {
-    const current = this.getSession();
-    const updated = { ...current, ...sessionData };
-    setStorageItem('ralwbc_session', updated);
-    return updated;
+  async getSession() {
+    const { data, error } = await supabase
+      .from('camping_session')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return { startDate: null, endDate: null, startTime: '08:00', isOpen: false };
+    return {
+      startDate: data.start_date,
+      endDate: data.end_date,
+      startTime: data.start_time,
+      isOpen: data.is_open
+    };
   },
 
-  /**
-   * Returns true if the portal is currently within the active exam session window.
-   * Open when: admin forced isOpen=true  OR  today is between startDate and endDate (inclusive).
-   * Respects startTime if provided.
-   */
-  isSessionActive() {
-    const session = this.getSession();
+  async saveSession(sessionData) {
+    const dbSession = {};
+    if (sessionData.startDate !== undefined) dbSession.start_date = sessionData.startDate;
+    if (sessionData.endDate !== undefined) dbSession.end_date = sessionData.endDate;
+    if (sessionData.startTime !== undefined) dbSession.start_time = sessionData.startTime;
+    if (sessionData.isOpen !== undefined) dbSession.is_open = sessionData.isOpen;
+
+    const { error } = await supabase
+      .from('camping_session')
+      .upsert({ id: 1, ...dbSession });
+    if (error) throw error;
+    return this.getSession();
+  },
+
+  async isSessionActive() {
+    const session = await this.getSession();
     if (session.isOpen) return true;
     if (!session.startDate || !session.endDate) return false;
     const now = new Date();
@@ -451,4 +574,8 @@ export const dbService = {
     const end = new Date(session.endDate + 'T23:59:59');
     return now >= start && now <= end;
   },
+
+  async populateDemoData() {
+    console.log('Seeding is done via the SQL Editor or direct updates');
+  }
 };

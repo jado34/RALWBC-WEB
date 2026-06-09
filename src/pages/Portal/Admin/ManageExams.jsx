@@ -10,8 +10,13 @@ export const ManageExams = () => {
   const [currentQIndex, setCurrentQIndex] = useState(0); // Current question wizard index
   const navigate = useNavigate();
 
-  const loadExams = () => {
-    setExams(dbService.getExams());
+  const loadExams = async () => {
+    try {
+      const data = await dbService.getExams();
+      setExams(data);
+    } catch (err) {
+      console.error('Failed to load exams:', err);
+    }
   };
 
   useEffect(() => {
@@ -46,10 +51,14 @@ export const ManageExams = () => {
     setCurrentQIndex(0);
   };
 
-  const handleDeleteExam = (id) => {
+  const handleDeleteExam = async (id) => {
     if (window.confirm("Are you sure you want to delete this exam? All candidate exam results might be orphaned!")) {
-      dbService.deleteExam(id);
-      loadExams();
+      try {
+        await dbService.deleteExam(id);
+        loadExams();
+      } catch (err) {
+        console.error('Failed to delete exam:', err);
+      }
     }
   };
 
@@ -184,7 +193,7 @@ export const ManageExams = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSaveAndExit = () => {
+  const handleSaveAndExit = async () => {
     // Validations
     if (!editingExam.title.trim()) {
       alert("Exam Title is required!");
@@ -222,9 +231,13 @@ export const ManageExams = () => {
     if (clampedDuration > 180) clampedDuration = 180;
 
     const updatedExam = { ...editingExam, duration: clampedDuration, questions: questionsToSave };
-    dbService.saveExam(updatedExam);
-    setEditingExam(null);
-    loadExams();
+    try {
+      await dbService.saveExam(updatedExam);
+      setEditingExam(null);
+      loadExams();
+    } catch (err) {
+      console.error('Failed to save exam:', err);
+    }
   };
 
   const handleDeleteQuestion = (idxToDelete) => {

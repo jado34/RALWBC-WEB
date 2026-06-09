@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { dbService, RANK_CATEGORIES, getRankLabel, GALLERY_CATEGORIES } from '../../../services/db';
+import { supabase } from '../../../services/supabaseClient';
 import {
   Users, Award, ShieldAlert, FileSpreadsheet, PlusCircle, Settings,
   ClipboardList, UserCheck, Download, Plus, CalendarClock,
@@ -15,6 +16,8 @@ export const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [candidatePage, setCandidatePage] = useState(1);
   const [submissionPage, setSubmissionPage] = useState(1);
+  const [photos, setPhotos] = useState([]);
+  const [sessionActive, setSessionActive] = useState(false);
   const itemsPerPage = 10;
 
   const [stats, setStats] = useState({
@@ -22,28 +25,38 @@ export const AdminDashboard = () => {
     totalInfractions: 0, totalOfficers: 0
   });
 
-  const loadDashboardData = () => {
-    const allSubs = dbService.getSubmissions();
-    const allUsers = JSON.parse(localStorage.getItem('ralwbc_users') || '[]');
-    const studentUsers = allUsers.filter(u => u.role === 'student');
-    const allOfficers = dbService.getOfficers();
+  const loadDashboardData = async () => {
+    try {
+      const allSubs = await dbService.getSubmissions();
+      const { data: allUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('*');
+      if (usersError) throw usersError;
 
-    const map = {};
-    allUsers.forEach(u => { map[u.id] = u; });
-    setUserMap(map);
+      const studentUsers = (allUsers || []).filter(u => u.role === 'student');
+      const allOfficers = await dbService.getOfficers();
+      const photosData = await dbService.getGalleryPhotos();
+      setPhotos(photosData);
 
-    let totalScore = 0, totalWarnings = 0;
-    allSubs.forEach(s => { totalScore += s.scorePercentage; totalWarnings += s.warningsCount; });
+      const map = {};
+      (allUsers || []).forEach(u => { map[u.id] = u; });
+      setUserMap(map);
 
-    setSubmissions(allSubs.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)));
-    setCandidates(studentUsers);
-    setStats({
-      totalUsers: studentUsers.length,
-      totalSubs: allSubs.length,
-      averageScore: allSubs.length > 0 ? Math.round(totalScore / allSubs.length) : 0,
-      totalInfractions: totalWarnings,
-      totalOfficers: allOfficers.length
-    });
+      let totalScore = 0, totalWarnings = 0;
+      allSubs.forEach(s => { totalScore += s.scorePercentage; totalWarnings += s.warningsCount; });
+
+      setSubmissions(allSubs.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)));
+      setCandidates(studentUsers);
+      setStats({
+        totalUsers: studentUsers.length,
+        totalSubs: allSubs.length,
+        averageScore: allSubs.length > 0 ? Math.round(totalScore / allSubs.length) : 0,
+        totalInfractions: totalWarnings,
+        totalOfficers: allOfficers.length
+      });
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    }
   };
 
   // Session Settings
@@ -64,15 +77,30 @@ export const AdminDashboard = () => {
   useEffect(() => {
     dbService.init();
     loadDashboardData();
-    const s = dbService.getSession();
-    setSession({ startDate: s.startDate || '', endDate: s.endDate || '', startTime: s.startTime || '08:00', isOpen: s.isOpen || false });
+    const loadSession = async () => {
+      try {
+        const s = await dbService.getSession();
+        setSession({ startDate: s.startDate || '', endDate: s.endDate || '', startTime: s.startTime || '08:00', isOpen: s.isOpen || false });
+        const active = await dbService.isSessionActive();
+        setSessionActive(active);
+      } catch (err) {
+        console.error('Failed to load session details:', err);
+      }
+    };
+    loadSession();
   }, [location.search]);
 
 
-  const handleSaveSession = () => {
-    dbService.saveSession({ startDate: session.startDate || null, endDate: session.endDate || null, startTime: session.startTime || '08:00', isOpen: session.isOpen });
-    setSessionSaved(true);
-    setTimeout(() => setSessionSaved(false), 3000);
+  const handleSaveSession = async () => {
+    try {
+      await dbService.saveSession({ startDate: session.startDate || null, endDate: session.endDate || null, startTime: session.startTime || '08:00', isOpen: session.isOpen });
+      const active = await dbService.isSessionActive();
+      setSessionActive(active);
+      setSessionSaved(true);
+      setTimeout(() => setSessionSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save session:', err);
+    }
   };
 
   const formatTime = (isoString) => {
@@ -138,24 +166,36 @@ export const AdminDashboard = () => {
     document.body.removeChild(link);
   };
 
-  const handleDeleteCandidate = (userId, userName) => {
+  const handleDeleteCandidate = async (userId, userName) => {
     if (window.confirm(`Are you sure you want to permanently delete "${userName}"? This will also remove all their exam submissions.`)) {
-      dbService.deleteUser(userId);
-      loadDashboardData();
+      try {
+        await dbService.deleteUser(userId);
+        loadDashboardData();
+      } catch (err) {
+        console.error('Failed to delete candidate:', err);
+      }
     }
   };
 
-  const handleRevokeSubmission = (submissionId, userName) => {
+  const handleRevokeSubmission = async (submissionId, userName) => {
     if (window.confirm(`Revoke "${userName}"'s submission? They will be able to re-take the exam.`)) {
-      dbService.deleteSubmission(submissionId);
-      loadDashboardData();
+      try {
+        await dbService.deleteSubmission(submissionId);
+        loadDashboardData();
+      } catch (err) {
+        console.error('Failed to revoke submission:', err);
+      }
     }
   };
 
-  const handleResetExamSubmissions = (examId, examTitle) => {
+  const handleResetExamSubmissions = async (examId, examTitle) => {
     if (window.confirm(`Reset ALL submissions for "${examTitle}"? This wipes every result for this exam and cannot be undone.`)) {
-      dbService.resetExamSubmissions(examId);
-      loadDashboardData();
+      try {
+        await dbService.resetExamSubmissions(examId);
+        loadDashboardData();
+      } catch (err) {
+        console.error('Failed to reset submissions:', err);
+      }
     }
   };
 
@@ -167,7 +207,6 @@ export const AdminDashboard = () => {
 
   // ── GALLERY TAB ────────────────────────────────────────────────────────────
   if (currentTab === 'gallery') {
-    const photos = dbService.getGalleryPhotos();
     const categories = [...GALLERY_CATEGORIES];
     photos.forEach(p => {
       if (p.category && !categories.includes(p.category)) {
@@ -183,7 +222,7 @@ export const AdminDashboard = () => {
       setIsUploadingPhoto(true);
       try {
         const base64 = await compressAndResizePhoto(file);
-        dbService.saveGalleryPhoto({
+        await dbService.saveGalleryPhoto({
           url: base64,
           alt: newPhotoAlt.trim() || "Gallery Image",
           category: newPhotoCategory
@@ -223,10 +262,14 @@ export const AdminDashboard = () => {
       });
     };
 
-    const handleDeletePhoto = (id) => {
+    const handleDeletePhoto = async (id) => {
       if (window.confirm("Are you sure you want to delete this photo from the public gallery?")) {
-        dbService.deleteGalleryPhoto(id);
-        loadDashboardData();
+        try {
+          await dbService.deleteGalleryPhoto(id);
+          loadDashboardData();
+        } catch (err) {
+          console.error('Failed to delete photo:', err);
+        }
       }
     };
 
@@ -639,11 +682,11 @@ export const AdminDashboard = () => {
           <span style={{
             marginLeft: 'auto', padding: '0.3rem 0.85rem', borderRadius: '999px',
             fontSize: '0.78rem', fontWeight: '700',
-            backgroundColor: dbService.isSessionActive() ? 'rgba(16,185,129,0.12)' : 'rgba(234,179,8,0.12)',
-            color: dbService.isSessionActive() ? '#059669' : '#b45309',
-            border: `1px solid ${dbService.isSessionActive() ? 'rgba(16,185,129,0.3)' : 'rgba(234,179,8,0.3)'}`
+            backgroundColor: sessionActive ? 'rgba(16,185,129,0.12)' : 'rgba(234,179,8,0.12)',
+            color: sessionActive ? '#059669' : '#b45309',
+            border: `1px solid ${sessionActive ? 'rgba(16,185,129,0.3)' : 'rgba(234,179,8,0.3)'}`
           }}>
-            {dbService.isSessionActive() ? '● Portal Open' : '● Portal Closed'}
+            {sessionActive ? '● Portal Open' : '● Portal Closed'}
           </span>
         </div>
 

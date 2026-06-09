@@ -9,7 +9,7 @@ export const Gallery = () => {
 
   useEffect(() => {
     dbService.init();
-    setPhotosList(dbService.getGalleryPhotos());
+    dbService.getGalleryPhotos().then(data => setPhotosList(data));
   }, []);
 
   // Navigate lightbox images

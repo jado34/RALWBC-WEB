@@ -98,20 +98,6 @@ export const AdminLogin = () => {
           <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
             Authorized personnel only
           </p>
-          <div style={{
-            fontSize: '0.72rem',
-            backgroundColor: 'rgba(234,179,8,0.08)',
-            border: '1px solid rgba(234,179,8,0.25)',
-            color: '#b45309',
-            padding: '0.5rem',
-            borderRadius: '6px',
-            lineHeight: 1.4,
-            textAlign: 'left'
-          }}>
-            <strong>Seeded Admin Credentials:</strong>
-            <div style={{ marginTop: '0.25rem' }}>Email: <code>admin@ralwbc.org</code></div>
-            <div>Password: <code>adminpassword</code></div>
-          </div>
         </div>
 
         {/* Error */}

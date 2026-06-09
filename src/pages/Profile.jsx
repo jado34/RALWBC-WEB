@@ -18,6 +18,7 @@ export const Profile = () => {
   const [address, setAddress]             = useState('');
   const [chapterName, setChapterName]     = useState('');
   const [association, setAssociation]     = useState('');
+  const [rankCategory, setRankCategory]   = useState('');
   const [avatar, setAvatar]               = useState('');
 
   const [msg, setMsg]             = useState({ type: '', text: '' });
@@ -34,6 +35,7 @@ export const Profile = () => {
       setAddress(currentUser.address || '');
       setChapterName(currentUser.chapterName || '');
       setAssociation(currentUser.association || '');
+      setRankCategory(currentUser.rankCategory || '');
       setAvatar(currentUser.avatar || '');
     }
   }, [currentUser]);
@@ -91,6 +93,7 @@ export const Profile = () => {
         chapterName,
         association,
         avatar,
+        rankCategory,
       };
       if (password) {
         updateData.password = password;
@@ -282,6 +285,24 @@ export const Profile = () => {
                   style={inputStyle}
                   required
                 />
+              </div>
+
+              <div>
+                <label style={labelStyle} htmlFor="prof-rankCategory">RA Rank Category</label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <select
+                    id="prof-rankCategory"
+                    value={rankCategory}
+                    onChange={(e) => setRankCategory(e.target.value)}
+                    style={{ ...inputStyle, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' }}
+                  >
+                    <option value="" disabled>— Select rank category —</option>
+                    {RANK_CATEGORIES.map(r => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                  <span style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b' }}>▼</span>
+                </div>
               </div>
             </div>
           </div>

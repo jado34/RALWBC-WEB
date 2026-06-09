@@ -39,7 +39,7 @@ export const Officers = () => {
 
   useEffect(() => {
     dbService.init();
-    setOfficers(dbService.getOfficers());
+    dbService.getOfficers().then(data => setOfficers(data));
   }, []);
 
   const director = officers.find(o => o.sortOrder === 1);

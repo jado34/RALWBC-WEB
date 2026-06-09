@@ -52,9 +52,7 @@ export const Register = () => {
 
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
-      const user = await register(fullName, email, password);
-
-      updateProfile({
+      const user = await register(fullName, email, password, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         association: association.trim(),

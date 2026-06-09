@@ -68,7 +68,7 @@ export const Examination = () => {
   // Keep submitExamResults in a ref so the interval can always call the latest version
   const submitExamResultsRef = useRef(null);
 
-  const submitExamResults = useCallback((method = 'MANUAL_SUBMIT') => {
+  const submitExamResults = useCallback(async (method = 'MANUAL_SUBMIT') => {
     if (isSubmittingRef.current) return; // guard against race condition
     isSubmittingRef.current = true;
 
@@ -79,7 +79,7 @@ export const Examination = () => {
       const currentExam   = examRef.current;
       const totalDuration = currentExam ? currentExam.duration * 60 : 0;
       const durationSpent = Math.max(1, totalDuration - timeRemainingRef.current);
-      dbService.submitExam(
+      await dbService.submitExam(
         currentUser.id, currentUser.name,
         currentExam.id, currentExam.title,
         answersRef.current, warningsRef.current,
@@ -99,74 +99,85 @@ export const Examination = () => {
 
   useEffect(() => {
     dbService.init();
-    const fetchedExam = dbService.getExamById(id);
-    if (!fetchedExam || !fetchedExam.isActive) {
-      navigate('/dashboard');
-      return;
-    }
 
-    const existingSub = dbService.getSubmissionForUserAndExam(currentUser.id, id);
-    if (existingSub) {
-      navigate('/dashboard');
-      return;
-    }
-
-    // Seeded deterministic shuffle
-    const seed     = hashSeed(currentUser.id + id);
-    const shuffled = seededShuffle(fetchedExam.questions, seed);
-    setShuffledQuestions(shuffled);
-    setExam(fetchedExam);
-    examRef.current = fetchedExam;
-    setLoading(false);
-
-    // Resume saved session
-    const savedSession = localStorage.getItem(storageKey);
-    let initialTime     = fetchedExam.duration * 60;
-    let initialAnswers  = {};
-    let initialWarnings = 0;
-    let initialLogs     = [];
-    let initialFlagged  = {};
-
-    if (savedSession) {
+    const initExam = async () => {
       try {
-        const parsed = JSON.parse(savedSession);
-        initialTime     = typeof parsed.timeRemaining === 'number' ? parsed.timeRemaining : initialTime;
-        initialAnswers  = parsed.answers || {};
-        initialWarnings = typeof parsed.warningsCount === 'number' ? parsed.warningsCount : 0;
-        initialLogs     = parsed.infractionLogs || [];
-        initialFlagged  = parsed.flaggedQuestions || {};
-      } catch { /* ignore corrupted session */ }
-    }
-
-    setTimeRemaining(initialTime);    timeRemainingRef.current  = initialTime;
-    setAnswers(initialAnswers);       answersRef.current        = initialAnswers;
-    setWarningsCount(initialWarnings); warningsRef.current      = initialWarnings;
-    setInfractionLogs(initialLogs);   infractionLogsRef.current = initialLogs;
-    setFlaggedQuestions(initialFlagged); flaggedRef.current     = initialFlagged;
-
-    // ── Countdown timer ──────────────────────────────────────────────────────
-    timerIntervalRef.current = setInterval(() => {
-      setTimeRemaining(prev => {
-        const next = prev <= 1 ? 0 : prev - 1;
-        timeRemainingRef.current = next;
-        saveSessionToStorage(next, answersRef.current, warningsRef.current, infractionLogsRef.current, flaggedRef.current);
-        if (next === 0) {
-          clearInterval(timerIntervalRef.current);
-          submitExamResultsRef.current?.('TIME_EXPIRED');
+        const fetchedExam = await dbService.getExamById(id);
+        if (!fetchedExam || !fetchedExam.isActive) {
+          navigate('/dashboard');
+          return;
         }
-        return next;
-      });
-    }, 1000);
 
-    // ── Session expiry poll (every 60s) ──────────────────────────────────────
-    sessionPollRef.current = setInterval(() => {
-      if (!dbService.isSessionActive()) {
-        clearInterval(timerIntervalRef.current);
-        clearInterval(sessionPollRef.current);
-        setSessionClosed(true);
-        setTimeout(() => submitExamResultsRef.current?.('SESSION_CLOSED'), 5000);
+        const existingSub = await dbService.getSubmissionForUserAndExam(currentUser.id, id);
+        if (existingSub) {
+          navigate('/dashboard');
+          return;
+        }
+
+        // Seeded deterministic shuffle
+        const seed     = hashSeed(currentUser.id + id);
+        const shuffled = seededShuffle(fetchedExam.questions, seed);
+        setShuffledQuestions(shuffled);
+        setExam(fetchedExam);
+        examRef.current = fetchedExam;
+        setLoading(false);
+
+        // Resume saved session
+        const savedSession = localStorage.getItem(storageKey);
+        let initialTime     = fetchedExam.duration * 60;
+        let initialAnswers  = {};
+        let initialWarnings = 0;
+        let initialLogs     = [];
+        let initialFlagged  = {};
+
+        if (savedSession) {
+          try {
+            const parsed = JSON.parse(savedSession);
+            initialTime     = typeof parsed.timeRemaining === 'number' ? parsed.timeRemaining : initialTime;
+            initialAnswers  = parsed.answers || {};
+            initialWarnings = typeof parsed.warningsCount === 'number' ? parsed.warningsCount : 0;
+            initialLogs     = parsed.infractionLogs || [];
+            initialFlagged  = parsed.flaggedQuestions || {};
+          } catch { /* ignore corrupted session */ }
+        }
+
+        setTimeRemaining(initialTime);    timeRemainingRef.current  = initialTime;
+        setAnswers(initialAnswers);       answersRef.current        = initialAnswers;
+        setWarningsCount(initialWarnings); warningsRef.current      = initialWarnings;
+        setInfractionLogs(initialLogs);   infractionLogsRef.current = initialLogs;
+        setFlaggedQuestions(initialFlagged); flaggedRef.current     = initialFlagged;
+
+        // ── Countdown timer ──────────────────────────────────────────────────────
+        timerIntervalRef.current = setInterval(() => {
+          setTimeRemaining(prev => {
+            const next = prev <= 1 ? 0 : prev - 1;
+            timeRemainingRef.current = next;
+            saveSessionToStorage(next, answersRef.current, warningsRef.current, infractionLogsRef.current, flaggedRef.current);
+            if (next === 0) {
+              clearInterval(timerIntervalRef.current);
+              submitExamResultsRef.current?.('TIME_EXPIRED');
+            }
+            return next;
+          });
+        }, 1000);
+
+        // ── Session expiry poll (every 60s) ──────────────────────────────────────
+        sessionPollRef.current = setInterval(async () => {
+          const active = await dbService.isSessionActive();
+          if (!active) {
+            clearInterval(timerIntervalRef.current);
+            clearInterval(sessionPollRef.current);
+            setSessionClosed(true);
+            setTimeout(() => submitExamResultsRef.current?.('SESSION_CLOSED'), 5000);
+          }
+        }, 60000);
+      } catch (err) {
+        console.error('Failed to initialize exam:', err);
+        navigate('/dashboard');
       }
-    }, 60000);
+    };
+
+    initExam();
 
     return () => {
       clearInterval(timerIntervalRef.current);

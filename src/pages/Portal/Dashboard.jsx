@@ -25,55 +25,68 @@ export const Dashboard = () => {
   useEffect(() => {
     dbService.init();
 
-    const loadData = () => {
-      // Filter active exams matching user's rankCategory
-      const allExams = dbService.getExams().filter(
-        e => e.isActive && (!e.category || !currentUser.rankCategory || e.category === currentUser.rankCategory)
-      );
-      setExams(allExams);
+    const loadData = async () => {
+      try {
+        const examsData = await dbService.getExams();
+        const allExams = examsData.filter(
+          e => e.isActive && (!e.category || !currentUser.rankCategory || e.category === currentUser.rankCategory)
+        );
+        setExams(allExams);
 
-      const subs = dbService.getSubmissionsByUser(currentUser.id);
-      const subMap = {};
-      subs.forEach(s => { subMap[s.examId] = s; });
-      setSubmissions(subMap);
+        const subs = await dbService.getSubmissionsByUser(currentUser.id);
+        const subMap = {};
+        subs.forEach(s => { subMap[s.examId] = s; });
+        setSubmissions(subMap);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+      }
     };
 
-    const loadSession = () => {
-      const s = dbService.getSession();
-      setSession(s);
-      const active = dbService.isSessionActive();
-      setSessionActive(active);
-      return { session: s, active };
+    const loadSession = async () => {
+      try {
+        const s = await dbService.getSession();
+        setSession(s);
+        const active = await dbService.isSessionActive();
+        setSessionActive(active);
+        return { session: s, active };
+      } catch (err) {
+        console.error('Failed to load session details:', err);
+        return { session: null, active: false };
+      }
     };
 
-    loadData();
-    const { session: s, active } = loadSession();
+    const initDashboard = async () => {
+      await loadData();
+      const { session: s, active } = await loadSession();
 
-    // ── Countdown timer to session open ─────────────────────────────────────
-    if (!active && s && s.startDate) {
-      const tick = () => {
-        const now    = new Date();
-        const time   = s.startTime || '08:00';
-        const target = new Date(s.startDate + 'T' + time + ':00');
-        const diff = target - now;
-        if (diff <= 0) {
-          setCountdown(null);
-          clearInterval(countdownRef.current);
-        } else {
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const sec = Math.floor((diff % 60000) / 1000);
-          setCountdown({ d, h, m, s: sec });
-        }
-      };
-      tick();
-      countdownRef.current = setInterval(tick, 1000);
-    }
+      // ── Countdown timer to session open ─────────────────────────────────────
+      if (!active && s && s.startDate) {
+        const tick = () => {
+          const now    = new Date();
+          const time   = s.startTime || '08:00';
+          const target = new Date(s.startDate + 'T' + time + ':00');
+          const diff = target - now;
+          if (diff <= 0) {
+            setCountdown(null);
+            clearInterval(countdownRef.current);
+          } else {
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const sec = Math.floor((diff % 60000) / 1000);
+            setCountdown({ d, h, m, s: sec });
+          }
+        };
+        tick();
+        countdownRef.current = setInterval(tick, 1000);
+      }
+    };
+
+    initDashboard();
 
     // ── Session polling — re-check every 60s ────────────────────────────────
-    sessionPollRef.current = setInterval(() => {
-      const newActive = dbService.isSessionActive();
+    sessionPollRef.current = setInterval(async () => {
+      const newActive = await dbService.isSessionActive();
       setSessionActive(newActive);
       if (newActive) {
         clearInterval(countdownRef.current);

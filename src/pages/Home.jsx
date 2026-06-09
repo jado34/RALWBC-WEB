@@ -50,7 +50,7 @@ export const Home = () => {
 
   useEffect(() => {
     dbService.init();
-    setBlogs(dbService.getBlogs());
+    dbService.getBlogs().then(data => setBlogs(data));
     const t = setTimeout(() => setLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);

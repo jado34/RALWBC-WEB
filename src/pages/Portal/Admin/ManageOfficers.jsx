@@ -9,8 +9,13 @@ export const ManageOfficers = () => {
   const [isCompressing, setIsCompressing] = useState(false);
   const navigate = useNavigate();
 
-  const loadOfficers = () => {
-    setOfficers(dbService.getOfficers());
+  const loadOfficers = async () => {
+    try {
+      const data = await dbService.getOfficers();
+      setOfficers(data);
+    } catch (err) {
+      console.error('Failed to load officers:', err);
+    }
   };
 
   useEffect(() => {
@@ -31,10 +36,14 @@ export const ManageOfficers = () => {
     setEditingOfficer({ ...officer });
   };
 
-  const handleDeleteOfficer = (id) => {
+  const handleDeleteOfficer = async (id) => {
     if (window.confirm("Are you sure you want to delete this officer from leadership?")) {
-      dbService.deleteOfficer(id);
-      loadOfficers();
+      try {
+        await dbService.deleteOfficer(id);
+        loadOfficers();
+      } catch (err) {
+        console.error('Failed to delete officer:', err);
+      }
     }
   };
 
@@ -105,16 +114,20 @@ export const ManageOfficers = () => {
     });
   };
 
-  const handleSaveOfficer = (e) => {
+  const handleSaveOfficer = async (e) => {
     e.preventDefault();
     if (!editingOfficer.name.trim() || !editingOfficer.post.trim()) {
       alert("Please fill in both the Name and the Post/Office!");
       return;
     }
 
-    dbService.saveOfficer(editingOfficer);
-    setEditingOfficer(null);
-    loadOfficers();
+    try {
+      await dbService.saveOfficer(editingOfficer);
+      setEditingOfficer(null);
+      loadOfficers();
+    } catch (err) {
+      console.error('Failed to save officer:', err);
+    }
   };
 
   // Helper to render fallback user avatar

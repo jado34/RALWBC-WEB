@@ -8,8 +8,13 @@ export const ManageBlogs = () => {
   const [editingBlog, setEditingBlog] = useState(null);
   const navigate = useNavigate();
 
-  const loadBlogs = () => {
-    setBlogs(dbService.getBlogs());
+  const loadBlogs = async () => {
+    try {
+      const data = await dbService.getBlogs();
+      setBlogs(data);
+    } catch (err) {
+      console.error('Failed to load blogs:', err);
+    }
   };
 
   useEffect(() => {
@@ -29,23 +34,31 @@ export const ManageBlogs = () => {
     setEditingBlog({ ...blog });
   };
 
-  const handleDeleteBlog = (id) => {
+  const handleDeleteBlog = async (id) => {
     if (window.confirm("Are you sure you want to delete this announcement?")) {
-      dbService.deleteBlog(id);
-      loadBlogs();
+      try {
+        await dbService.deleteBlog(id);
+        loadBlogs();
+      } catch (err) {
+        console.error('Failed to delete blog:', err);
+      }
     }
   };
 
-  const handleSaveBlog = (e) => {
+  const handleSaveBlog = async (e) => {
     e.preventDefault();
     if (!editingBlog.title.trim() || !editingBlog.content.trim()) {
       alert("Please fill in both the title and the content!");
       return;
     }
 
-    dbService.saveBlog(editingBlog);
-    setEditingBlog(null);
-    loadBlogs();
+    try {
+      await dbService.saveBlog(editingBlog);
+      setEditingBlog(null);
+      loadBlogs();
+    } catch (err) {
+      console.error('Failed to save blog:', err);
+    }
   };
 
   return (
