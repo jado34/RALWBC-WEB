@@ -33,6 +33,24 @@ export const AntiCheatGuard = ({ children, onWarning, onAutoSubmit, maxWarnings 
   const fsDialogRef = useRef(null);
   const isFullscreenSupported = () => typeof document.documentElement.requestFullscreen === 'function';
 
+  // ── Warning trigger ─────────────────────────────────────────────────────────
+  const triggerWarning = (reason) => {
+    if (isAutoSubmitted.current) return;
+    setWarnings(prev => {
+      const next = prev + 1;
+      if (onWarningRef.current) onWarningRef.current(next, reason);
+      if (next >= maxWarnings) {
+        isAutoSubmitted.current = true;
+        setShowAlert(false);
+        if (onAutoSubmitRef.current) onAutoSubmitRef.current();
+      } else {
+        setAlertReason(reason);
+        setShowAlert(true);
+      }
+      return next;
+    });
+  };
+
   const enterFullscreen = () => {
     const docEl = document.documentElement;
     if (docEl.requestFullscreen) {
@@ -143,23 +161,7 @@ export const AntiCheatGuard = ({ children, onWarning, onAutoSubmit, maxWarnings 
     };
   }, []); // Run once on mount
 
-  // ── Warning trigger ─────────────────────────────────────────────────────────
-  const triggerWarning = (reason) => {
-    if (isAutoSubmitted.current) return;
-    setWarnings(prev => {
-      const next = prev + 1;
-      if (onWarningRef.current) onWarningRef.current(next, reason);
-      if (next >= maxWarnings) {
-        isAutoSubmitted.current = true;
-        setShowAlert(false);
-        if (onAutoSubmitRef.current) onAutoSubmitRef.current();
-      } else {
-        setAlertReason(reason);
-        setShowAlert(true);
-      }
-      return next;
-    });
-  };
+
 
   return (
     <div style={{ position: 'relative', width: '100%', minHeight: '100%' }}>

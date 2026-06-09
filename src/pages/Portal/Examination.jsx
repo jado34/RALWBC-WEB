@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { dbService } from '../../services/db';
 import { AntiCheatGuard } from '../../components/AntiCheatGuard';
@@ -28,24 +28,9 @@ export const Examination = () => {
   // ── Race-condition guard: prevents double-submit from timer + session poll ──
   const isSubmittingRef = useRef(false);
 
-  // ── useBlocker: fix stale closure by using a ref for isSubmitted ────────────
+  // ── Fix stale closure by using a ref for isSubmitted ────────────
   const isSubmittedRef = useRef(false);
   useEffect(() => { isSubmittedRef.current = isSubmitted; }, [isSubmitted]);
-
-  const blocker = useBlocker(useCallback(
-    ({ nextLocation }) => !isSubmittedRef.current,
-    []
-  ));
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setShowConfirmModal(false); // close any existing modal first
-      setShowLeaveModal(true);
-    }
-  }, [blocker]);
-
-  // Separate leave-confirmation state (distinct from submit confirmation)
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   // Window beforeunload
   useEffect(() => {
@@ -599,17 +584,7 @@ export const Examination = () => {
         </div>
       )}
 
-      {/* ── Leave Exam Confirmation ──────────────────────────────────────────── */}
-      <ConfirmDialog
-        isOpen={showLeaveModal}
-        title="Leave Exam?"
-        message="WARNING: The exam is in progress. If you navigate away, your progress will not be saved and this will count as an incomplete attempt. Are you sure you want to leave?"
-        confirmLabel="Leave Anyway"
-        cancelLabel="Stay in Exam"
-        danger
-        onConfirm={() => { setShowLeaveModal(false); blocker.proceed?.(); }}
-        onCancel={() => { setShowLeaveModal(false); blocker.reset?.(); }}
-      />
+
 
       <style>{`
         .sr-only {

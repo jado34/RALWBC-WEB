@@ -35,32 +35,40 @@ export const getRankLabel = (value) => {
   return found ? found.label : (value || 'N/A');
 };
 
+export const GALLERY_CATEGORIES = [
+  'Jamboore Experience',
+  'RA Week Ushering In',
+  'Convention - in - Session',
+  'RALWBC Annual General Meeting',
+  'RA Leadership Training Conference'
+];
+
 // Empty defaults — no demo data
 const DEFAULT_USERS = [];
 const DEFAULT_EXAMS = [];
 const DEFAULT_BLOGS = [];
 const DEFAULT_SUBMISSIONS = [];
 const DEFAULT_GALLERY = [
-  { id: 'gal_1', url: '/Lagos-West1.jpeg', alt: 'Two men discussing at Lagos West Conference', category: 'Jubilee Experience' },
-  { id: 'gal_2', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA member uniform profile inspection', category: 'Jubilee Experience' },
-  { id: 'gal_3', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Stage event auditorium audience meeting', category: 'Jubilee Experience' },
-  { id: 'gal_4', url: '/Lagos-West3.jpeg', alt: 'Ambassador saluting during drill inspection', category: 'Jubilee Experience' },
-  { id: 'gal_5', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Singing with microphone during worship', category: 'Jubilee Experience' },
-  { id: 'gal_6', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Marshal speaking at podium and address', category: 'Jubilee Experience' },
+  { id: 'gal_1', url: '/Lagos-West1.jpeg', alt: 'Two men discussing at Lagos West Conference', category: 'Jamboore Experience' },
+  { id: 'gal_2', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA member uniform profile inspection', category: 'Jamboore Experience' },
+  { id: 'gal_3', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Stage event auditorium audience meeting', category: 'Jamboore Experience' },
+  { id: 'gal_4', url: '/Lagos-West3.jpeg', alt: 'Ambassador saluting during drill inspection', category: 'Jamboore Experience' },
+  { id: 'gal_5', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Singing with microphone during worship', category: 'Jamboore Experience' },
+  { id: 'gal_6', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Marshal speaking at podium and address', category: 'Jamboore Experience' },
 
-  { id: 'gal_7', url: '/Lagos-West1.jpeg', alt: 'Group discussion at Lagos West Conference', category: '2023 Ushering In' },
-  { id: 'gal_8', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA parade prep', category: '2023 Ushering In' },
-  { id: 'gal_9', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Conference congregation', category: '2023 Ushering In' },
-  { id: 'gal_10', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute inspection', category: '2023 Ushering In' },
-  { id: 'gal_11', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Praise and worship service', category: '2023 Ushering In' },
-  { id: 'gal_12', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Conference address', category: '2023 Ushering In' },
+  { id: 'gal_7', url: '/Lagos-West1.jpeg', alt: 'Group discussion at Lagos West Conference', category: 'RA Week Ushering In' },
+  { id: 'gal_8', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'RA parade prep', category: 'RA Week Ushering In' },
+  { id: 'gal_9', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Conference congregation', category: 'RA Week Ushering In' },
+  { id: 'gal_10', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute inspection', category: 'RA Week Ushering In' },
+  { id: 'gal_11', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Praise and worship service', category: 'RA Week Ushering In' },
+  { id: 'gal_12', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Conference address', category: 'RA Week Ushering In' },
 
-  { id: 'gal_13', url: '/Lagos-West1.jpeg', alt: 'Chapter Inauguration Discussion', category: 'Chapter Inauguration' },
-  { id: 'gal_14', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'Inauguration parade', category: 'Chapter Inauguration' },
-  { id: 'gal_15', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Inauguration congregation', category: 'Chapter Inauguration' },
-  { id: 'gal_16', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute parade', category: 'Chapter Inauguration' },
-  { id: 'gal_17', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration praise', category: 'Chapter Inauguration' },
-  { id: 'gal_18', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration address', category: 'Chapter Inauguration' },
+  { id: 'gal_13', url: '/Lagos-West1.jpeg', alt: 'Chapter Inauguration Discussion', category: 'Convention - in - Session' },
+  { id: 'gal_14', url: '/626663584_18040805231733739_4709563975724227572_n.jpg', alt: 'Inauguration parade', category: 'Convention - in - Session' },
+  { id: 'gal_15', url: '/671245412_18050382983733739_357892051856325748_n.jpg', alt: 'Inauguration congregation', category: 'Convention - in - Session' },
+  { id: 'gal_16', url: '/Lagos-West3.jpeg', alt: 'Ambassador salute parade', category: 'Convention - in - Session' },
+  { id: 'gal_17', url: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration praise', category: 'Convention - in - Session' },
+  { id: 'gal_18', url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&auto=format&fit=crop&q=60', alt: 'Inauguration address', category: 'Convention - in - Session' },
 ];
 
 const DEFAULT_OFFICERS = [
@@ -317,7 +325,27 @@ export const dbService = {
 
   // ── Gallery Operations ────────────────────────────────────────────────────
 
-  getGalleryPhotos() { return getStorageItem('ralwbc_gallery', DEFAULT_GALLERY); },
+  getGalleryPhotos() {
+    let photos = getStorageItem('ralwbc_gallery', DEFAULT_GALLERY);
+    let migrated = false;
+    photos = photos.map(p => {
+      if (p.category === 'Jubilee Experience') {
+        p.category = 'Jamboore Experience';
+        migrated = true;
+      } else if (p.category === '2023 Ushering In') {
+        p.category = 'RA Week Ushering In';
+        migrated = true;
+      } else if (p.category === 'Chapter Inauguration') {
+        p.category = 'Convention - in - Session';
+        migrated = true;
+      }
+      return p;
+    });
+    if (migrated) {
+      setStorageItem('ralwbc_gallery', photos);
+    }
+    return photos;
+  },
   saveGalleryPhoto(photoData) {
     const photos = this.getGalleryPhotos();
     if (photoData.id) {

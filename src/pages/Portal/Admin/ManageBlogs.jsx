@@ -8,14 +8,14 @@ export const ManageBlogs = () => {
   const [editingBlog, setEditingBlog] = useState(null);
   const navigate = useNavigate();
 
+  const loadBlogs = () => {
+    setBlogs(dbService.getBlogs());
+  };
+
   useEffect(() => {
     dbService.init();
     loadBlogs();
   }, []);
-
-  const loadBlogs = () => {
-    setBlogs(dbService.getBlogs());
-  };
 
   const handleStartCreate = () => {
     setEditingBlog({

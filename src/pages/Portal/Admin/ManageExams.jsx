@@ -10,14 +10,14 @@ export const ManageExams = () => {
   const [currentQIndex, setCurrentQIndex] = useState(0); // Current question wizard index
   const navigate = useNavigate();
 
+  const loadExams = () => {
+    setExams(dbService.getExams());
+  };
+
   useEffect(() => {
     dbService.init();
     loadExams();
   }, []);
-
-  const loadExams = () => {
-    setExams(dbService.getExams());
-  };
 
   const handleStartCreate = () => {
     setEditingExam({

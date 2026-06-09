@@ -155,33 +155,7 @@ export const Login = () => {
             Click <span style={{ color: '#ca8a04' }}>here</span> to begin
           </button>
 
-          {/* Quick Demo Populate Button */}
-          <button
-            onClick={async () => {
-              try {
-                await dbService.populateDemoData();
-                window.location.reload();
-              } catch (e) {
-                console.error('Demo populate failed:', e);
-              }
-            }}
-            style={{
-              padding: '0.6rem 1.5rem',
-              backgroundColor: '#ca8a04',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '24px',
-              fontSize: '0.85rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(202,138,4,0.2)',
-              fontFamily: 'var(--font-heading)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}
-          >
-            ⚡ Populate Mock Demo Data
-          </button>
+
         </div>
       ) : (
         /* LOGIN CARD FORM VIEW (Image 3) */

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { dbService, RANK_CATEGORIES, getRankLabel } from '../../../services/db';
+import { dbService, RANK_CATEGORIES, getRankLabel, GALLERY_CATEGORIES } from '../../../services/db';
 import {
   Users, Award, ShieldAlert, FileSpreadsheet, PlusCircle, Settings,
   ClipboardList, UserCheck, Download, Plus, CalendarClock,
@@ -21,28 +21,6 @@ export const AdminDashboard = () => {
     totalUsers: 0, totalSubs: 0, averageScore: 0,
     totalInfractions: 0, totalOfficers: 0
   });
-
-  // Session Settings
-  const [session, setSession] = useState({ startDate: '', endDate: '', startTime: '08:00', isOpen: false });
-  const [sessionSaved, setSessionSaved] = useState(false);
-
-  // Warning Logs & Gallery management states
-  const [selectedSubLogs, setSelectedSubLogs] = useState(null);
-  const [newPhotoAlt, setNewPhotoAlt] = useState('');
-  const [newPhotoCategory, setNewPhotoCategory] = useState('Jubilee Experience');
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const currentTab = queryParams.get('tab');
-
-  useEffect(() => {
-    dbService.init();
-    loadDashboardData();
-    const s = dbService.getSession();
-    setSession({ startDate: s.startDate || '', endDate: s.endDate || '', startTime: s.startTime || '08:00', isOpen: s.isOpen || false });
-  }, [location.search]);
 
   const loadDashboardData = () => {
     const allSubs = dbService.getSubmissions();
@@ -67,6 +45,29 @@ export const AdminDashboard = () => {
       totalOfficers: allOfficers.length
     });
   };
+
+  // Session Settings
+  const [session, setSession] = useState({ startDate: '', endDate: '', startTime: '08:00', isOpen: false });
+  const [sessionSaved, setSessionSaved] = useState(false);
+
+  // Warning Logs & Gallery management states
+  const [selectedSubLogs, setSelectedSubLogs] = useState(null);
+  const [newPhotoAlt, setNewPhotoAlt] = useState('');
+  const [newPhotoCategory, setNewPhotoCategory] = useState(GALLERY_CATEGORIES[0]);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const currentTab = queryParams.get('tab');
+
+  useEffect(() => {
+    dbService.init();
+    loadDashboardData();
+    const s = dbService.getSession();
+    setSession({ startDate: s.startDate || '', endDate: s.endDate || '', startTime: s.startTime || '08:00', isOpen: s.isOpen || false });
+  }, [location.search]);
+
 
   const handleSaveSession = () => {
     dbService.saveSession({ startDate: session.startDate || null, endDate: session.endDate || null, startTime: session.startTime || '08:00', isOpen: session.isOpen });
@@ -167,7 +168,12 @@ export const AdminDashboard = () => {
   // ── GALLERY TAB ────────────────────────────────────────────────────────────
   if (currentTab === 'gallery') {
     const photos = dbService.getGalleryPhotos();
-    const categories = ['Jubilee Experience', '2023 Ushering In', 'Chapter Inauguration'];
+    const categories = [...GALLERY_CATEGORIES];
+    photos.forEach(p => {
+      if (p.category && !categories.includes(p.category)) {
+        categories.push(p.category);
+      }
+    });
 
     const handleUploadPhoto = async (e) => {
       const file = e.target.files[0];
@@ -246,7 +252,7 @@ export const AdminDashboard = () => {
             <div>
               <label style={labelStyle}>Gallery Category Section</label>
               <select value={newPhotoCategory} onChange={(e) => setNewPhotoCategory(e.target.value)} style={inputStyle}>
-                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                {GALLERY_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { dbService } from '../services/db';
+import { dbService, GALLERY_CATEGORIES } from '../services/db';
 
 export const Gallery = () => {
   const [photosList, setPhotosList] = useState([]);
@@ -49,47 +49,58 @@ export const Gallery = () => {
           <div style={{ padding: '4rem 2rem', textAlign: 'center', border: '1px dashed #cbd5e1', borderRadius: '8px', color: '#64748b', margin: '2rem 0' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No photos available in the gallery yet.</p>
           </div>
-        ) : (
-          Object.entries(
-            photosList.reduce((acc, photo) => {
-              const cat = photo.category || 'General';
-              if (!acc[cat]) acc[cat] = [];
-              acc[cat].push(photo);
-              return acc;
-            }, {})
-          ).map(([categoryName, photos]) => (
-            <div key={categoryName} style={{ marginBottom: '4rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
-                <h2 style={{ 
-                  fontSize: '1.1rem', 
-                  fontWeight: '700', 
-                  color: '#000000',
-                  paddingBottom: '0.4rem', 
-                  borderBottom: '2px solid #000000', 
-                  whiteSpace: 'nowrap',
-                  margin: 0
-                }}>
-                  {categoryName}
-                </h2>
-                <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
-              </div>
+        ) : (() => {
+          const grouped = photosList.reduce((acc, photo) => {
+            const cat = photo.category || 'General';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(photo);
+            return acc;
+          }, {});
 
-              {/* Grid of photos */}
-              <div style={gridStyle}>
-                {photos.map((photo) => (
-                  <div 
-                    key={`photo-${photo.id}`} 
-                    style={imgContainerStyle} 
-                    onClick={() => setActivePhoto(photo)}
-                    className="gallery-photo-card"
-                  >
-                    <img src={photo.url} alt={photo.alt} style={imgStyle} />
-                  </div>
-                ))}
+          const orderedCategories = [...GALLERY_CATEGORIES];
+          Object.keys(grouped).forEach(cat => {
+            if (!orderedCategories.includes(cat)) {
+              orderedCategories.push(cat);
+            }
+          });
+
+          return orderedCategories.map((categoryName) => {
+            const photos = grouped[categoryName] || [];
+            if (photos.length === 0) return null;
+            return (
+              <div key={categoryName} style={{ marginBottom: '4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
+                  <h2 style={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: '700', 
+                    color: '#000000',
+                    paddingBottom: '0.4rem', 
+                    borderBottom: '2px solid #000000', 
+                    whiteSpace: 'nowrap',
+                    margin: 0
+                  }}>
+                    {categoryName}
+                  </h2>
+                  <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
+                </div>
+
+                {/* Grid of photos */}
+                <div style={gridStyle}>
+                  {photos.map((photo) => (
+                    <div 
+                      key={`photo-${photo.id}`} 
+                      style={imgContainerStyle} 
+                      onClick={() => setActivePhoto(photo)}
+                      className="gallery-photo-card"
+                    >
+                      <img src={photo.url} alt={photo.alt} style={imgStyle} />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
-        )}
+            );
+          });
+        })()}
 
         {/* Pagination bar divided by line */}
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '3rem' }}>

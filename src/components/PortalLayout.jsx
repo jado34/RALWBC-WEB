@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, User, BookOpen, FileText, LogOut, Menu, X, Trophy, Users, Image } from 'lucide-react';
+import { LayoutDashboard, User, BookOpen, FileText, LogOut, Menu, X, Trophy, Users, Image, Globe } from 'lucide-react';
 
 export const PortalLayout = ({ children }) => {
   const { currentUser, logout } = useAuth();
@@ -239,6 +239,36 @@ export const PortalLayout = ({ children }) => {
             </Link>
           ))}
 
+          {/* Main Website Link */}
+          <Link
+            to="/"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.85rem 1.25rem',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              color: '#475569',
+              fontWeight: '500',
+              fontSize: '0.95rem',
+              marginTop: 'auto',
+              marginBottom: '0.5rem',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#edf2f7';
+              e.currentTarget.style.color = '#002060';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#475569';
+            }}
+          >
+            <span style={{ color: '#64748b' }}><Globe size={20} /></span>
+            <span>Return to Main Website</span>
+          </Link>
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}
@@ -256,7 +286,6 @@ export const PortalLayout = ({ children }) => {
               fontWeight: '600',
               fontSize: '0.95rem',
               cursor: 'pointer',
-              marginTop: 'auto',
               transition: 'background-color 0.15s'
             }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.05)'}

@@ -9,14 +9,14 @@ export const ManageOfficers = () => {
   const [isCompressing, setIsCompressing] = useState(false);
   const navigate = useNavigate();
 
+  const loadOfficers = () => {
+    setOfficers(dbService.getOfficers());
+  };
+
   useEffect(() => {
     dbService.init();
     loadOfficers();
   }, []);
-
-  const loadOfficers = () => {
-    setOfficers(dbService.getOfficers());
-  };
 
   const handleStartCreate = () => {
     setEditingOfficer({
