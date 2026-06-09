@@ -23,7 +23,7 @@ export const AdminDashboard = () => {
   });
 
   // Session Settings
-  const [session, setSession] = useState({ startDate: '', endDate: '', isOpen: false });
+  const [session, setSession] = useState({ startDate: '', endDate: '', startTime: '08:00', isOpen: false });
   const [sessionSaved, setSessionSaved] = useState(false);
 
   // Warning Logs & Gallery management states
@@ -41,7 +41,7 @@ export const AdminDashboard = () => {
     dbService.init();
     loadDashboardData();
     const s = dbService.getSession();
-    setSession({ startDate: s.startDate || '', endDate: s.endDate || '', isOpen: s.isOpen || false });
+    setSession({ startDate: s.startDate || '', endDate: s.endDate || '', startTime: s.startTime || '08:00', isOpen: s.isOpen || false });
   }, [location.search]);
 
   const loadDashboardData = () => {
@@ -69,7 +69,7 @@ export const AdminDashboard = () => {
   };
 
   const handleSaveSession = () => {
-    dbService.saveSession({ startDate: session.startDate || null, endDate: session.endDate || null, isOpen: session.isOpen });
+    dbService.saveSession({ startDate: session.startDate || null, endDate: session.endDate || null, startTime: session.startTime || '08:00', isOpen: session.isOpen });
     setSessionSaved(true);
     setTimeout(() => setSessionSaved(false), 3000);
   };
@@ -104,12 +104,12 @@ export const AdminDashboard = () => {
 
   const handleDownloadReport = () => {
     if (submissions.length === 0) { alert('No submissions to download.'); return; }
-    let csv = 'S/N,Time,Name,Score,Church,Rank,Category,Warnings\n';
+    let csv = 'S/N,Time,Name,Exam,Score,Church,Rank,Category,Warnings\n';
     submissions.forEach((sub, i) => {
       const u = userMap[sub.userId] || {};
-      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${sub.scorePercentage}%,${escapeCSV(u.church || 'N/A')},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${sub.warningsCount}\n`;
+      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${escapeCSV(sub.examTitle || 'N/A')},${sub.scorePercentage}%,${escapeCSV(u.church || 'N/A')},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${sub.warningsCount}\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -126,7 +126,7 @@ export const AdminDashboard = () => {
     candidates.forEach((u, i) => {
       csv += `${i + 1},${escapeCSV(u.name)},${escapeCSV(u.email)},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${escapeCSV(u.rank || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')}\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -168,12 +168,12 @@ export const AdminDashboard = () => {
   if (currentTab === 'gallery') {
     const photos = dbService.getGalleryPhotos();
     const categories = ['Jubilee Experience', '2023 Ushering In', 'Chapter Inauguration'];
-    
+
     const handleUploadPhoto = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
       if (!file.type.startsWith("image/")) { alert("Please upload a valid image file."); return; }
-      
+
       setIsUploadingPhoto(true);
       try {
         const base64 = await compressAndResizePhoto(file);
@@ -186,7 +186,11 @@ export const AdminDashboard = () => {
         alert("Photo added to gallery successfully!");
         loadDashboardData();
       } catch (err) {
-        alert("Error processing photo: " + err.message);
+        if (err.message && err.message.includes('Storage full')) {
+          alert('⚠️ Storage full: The browser storage limit has been reached. Please delete some old gallery photos before adding more.');
+        } else {
+          alert('Error processing photo: ' + err.message);
+        }
       } finally {
         setIsUploadingPhoto(false);
       }
@@ -246,7 +250,7 @@ export const AdminDashboard = () => {
               </select>
             </div>
           </div>
-          
+
           <label style={{ ...navyBtnStyle, display: 'inline-flex', cursor: 'pointer', alignSelf: 'flex-start' }}>
             <ImageIcon size={18} /> {isUploadingPhoto ? "Processing Image..." : "Select File & Upload"}
             <input type="file" accept="image/*" onChange={handleUploadPhoto} style={{ display: 'none' }} disabled={isUploadingPhoto} />
@@ -471,7 +475,7 @@ export const AdminDashboard = () => {
         const u = userMap[sub.userId] || {};
         csv += `${i + 1},${escapeCSV(sub.userName)},${sub.scorePercentage}%,${escapeCSV(u.church || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${sub.warningsCount},${escapeCSV(formatDuration(sub.durationSpent))}\n`;
       });
-      
+
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -614,7 +618,7 @@ export const AdminDashboard = () => {
           <Link to="/admin?tab=candidates" style={shortcutBtnStyle}><Users size={16} /> View Candidates</Link>
           <Link to="/admin?tab=exams" style={shortcutBtnStyle}><FileSpreadsheet size={16} /> View Submissions</Link>
           <Link to="/admin?tab=leaderboard" style={shortcutBtnStyle}><Trophy size={16} /> Leaderboard</Link>
-          <Link to="/admin/exams" style={shortcutBtnStyle}><Settings size={16} /> Manage Quizzes</Link>
+          <Link to="/admin/exams" style={shortcutBtnStyle}><Settings size={16} /> Manage Exams</Link>
           <Link to="/admin/officers" style={shortcutBtnStyle}><UserCheck size={16} /> Manage Officers</Link>
           <Link to="/admin?tab=gallery" style={shortcutBtnStyle}><ImageIcon size={16} /> Manage Gallery</Link>
           <Link to="/admin/blogs" style={{ ...shortcutBtnStyle, backgroundColor: '#0a1141', color: '#ffffff' }}><PlusCircle size={16} /> Post Announcement</Link>
@@ -644,12 +648,13 @@ export const AdminDashboard = () => {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
           {[
-            { label: 'Session Start Date', key: 'startDate' },
-            { label: 'Session End Date', key: 'endDate' }
-          ].map(({ label, key }) => (
+            { label: 'Session Start Date', key: 'startDate', type: 'date' },
+            { label: 'Session End Date', key: 'endDate', type: 'date' },
+            { label: 'Daily Open Time', key: 'startTime', type: 'time' },
+          ].map(({ label, key, type }) => (
             <div key={key}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
-              <input type="date" value={session[key]}
+              <input type={type} value={session[key] || ''}
                 onChange={(e) => setSession(s => ({ ...s, [key]: e.target.value }))}
                 style={{ width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box' }} />
             </div>
@@ -688,8 +693,18 @@ export const AdminDashboard = () => {
       {/* Proctoring Warning Infraction Log Details Modal */}
       {selectedSubLogs && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,15,25,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', zIndex: 10000, backdropFilter: 'blur(4px)' }}>
-          <div className="glass-panel" style={{ maxWidth: '500px', width: '100%', padding: '2.5rem', border: '2px solid var(--border-color)', backgroundColor: '#ffffff', color: '#000000' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>Security Proctoring Infraction Logs</h3>
+          <div style={{
+            maxWidth: '500px',
+            width: '100%',
+            padding: '2.5rem',
+            backgroundColor: '#ffffff',
+            borderRadius: '14px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+            color: '#000000',
+            fontFamily: 'var(--font-body)'
+          }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', fontFamily: 'var(--font-heading)', color: '#0a1141' }}>Security Proctoring Infraction Logs</h3>
             <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem', color: '#475569' }}>
               Infraction details for candidate <strong>{selectedSubLogs.userName}</strong>. Total of <strong>{selectedSubLogs.warningsCount}</strong> warning(s) flagged.
             </p>

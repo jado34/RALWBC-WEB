@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, User, BookOpen, FileText, LogOut, Menu, X, Trophy } from 'lucide-react';
+import { LayoutDashboard, User, BookOpen, FileText, LogOut, Menu, X, Trophy, Users, Image } from 'lucide-react';
 
 export const PortalLayout = ({ children }) => {
   const { currentUser, logout } = useAuth();
@@ -34,17 +34,19 @@ export const PortalLayout = ({ children }) => {
     },
     isAdmin && {
       name: 'Candidates',
-      icon: <User size={20} />,
+      icon: <Users size={20} />,
       path: '/admin?tab=candidates',
       isActive: location.pathname === '/admin' && currentTab === 'candidates'
     },
     {
-      name: 'Examination',
+      // For students: "My Exams" returns to dashboard (where active exam card is shown)
+      // For admins: navigates to the Exams management tab
+      name: isAdmin ? 'Examinations' : 'My Exams',
       icon: <BookOpen size={20} />,
       path: isAdmin ? '/admin?tab=exams' : '/dashboard',
-      isActive: isAdmin 
+      isActive: isAdmin
         ? (location.pathname === '/admin' && currentTab === 'exams')
-        : (location.pathname.startsWith('/exam'))
+        : (location.pathname === '/dashboard'),
     },
     isAdmin && {
       name: 'Leaderboard',
@@ -55,9 +57,15 @@ export const PortalLayout = ({ children }) => {
     {
       name: 'Blogs',
       icon: <FileText size={20} />,
-      path: isAdmin ? '/admin/blogs' : '/blogs', // link back to public blog or admin manage
+      path: isAdmin ? '/admin/blogs' : '/blogs',
       isActive: location.pathname === '/admin/blogs' || location.pathname === '/blogs'
-    }
+    },
+    isAdmin && {
+      name: 'Gallery',
+      icon: <Image size={20} />,
+      path: '/admin?tab=gallery',
+      isActive: location.pathname === '/admin' && currentTab === 'gallery'
+    },
   ].filter(Boolean);
 
   const handleLogout = () => {

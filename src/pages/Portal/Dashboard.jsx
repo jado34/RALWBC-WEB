@@ -6,30 +6,8 @@ import {
   BookOpen, CheckCircle, Clock, ShieldAlert,
   ArrowRight, User, CalendarClock, Lock, Timer
 } from 'lucide-react';
+// seededShuffle is used only in Examination.jsx; import removed (was duplicate dead code)
 
-// ── Seeded deterministic shuffle ─────────────────────────────────────────────
-// Produces a stable question order for a given userId+examId pair so the same
-// student always sees the same shuffled order (even after a page refresh),
-// but different students will see different orders.
-function seededShuffle(array, seed) {
-  const arr = [...array];
-  let s = seed;
-  for (let i = arr.length - 1; i > 0; i--) {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    const j = Math.abs(s) % (i + 1);
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function hashSeed(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const Dashboard = () => {
   const { currentUser } = useAuth();
@@ -74,8 +52,9 @@ export const Dashboard = () => {
     // ── Countdown timer to session open ─────────────────────────────────────
     if (!active && s && s.startDate) {
       const tick = () => {
-        const now = new Date();
-        const target = new Date(s.startDate + 'T00:00:00');
+        const now    = new Date();
+        const time   = s.startTime || '08:00';
+        const target = new Date(s.startDate + 'T' + time + ':00');
         const diff = target - now;
         if (diff <= 0) {
           setCountdown(null);

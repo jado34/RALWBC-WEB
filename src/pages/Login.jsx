@@ -157,10 +157,13 @@ export const Login = () => {
 
           {/* Quick Demo Populate Button */}
           <button
-            onClick={() => {
-              dbService.populateDemoData();
-              alert("Database populated with mock candidates, active exams, announcements, and submissions! Admin: admin@ralwbc.org / adminpassword. Student: samuel@gmail.com / password.");
-              window.location.reload();
+            onClick={async () => {
+              try {
+                await dbService.populateDemoData();
+                window.location.reload();
+              } catch (e) {
+                console.error('Demo populate failed:', e);
+              }
             }}
             style={{
               padding: '0.6rem 1.5rem',
@@ -334,33 +337,18 @@ export const Login = () => {
               </div>
             </div>
 
-            {/* Remember me & Recover Password row */}
+            {/* Recover Password row */}
             <div style={{ 
               display: 'flex', 
-              justifyContent: 'space-between', 
+              justifyContent: 'flex-end', 
               alignItems: 'center', 
               fontSize: '0.85rem',
               color: '#1e293b',
               marginBottom: '2.5rem',
               fontWeight: '500'
             }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{
-                    width: '16px',
-                    height: '16px',
-                    accentColor: '#ca8a04',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                />
-                Remember me
-              </label>
-              <a href="#forgot" onClick={(e) => { e.preventDefault(); alert("Please contact your local conference administrator to reset your exam credentials."); }} style={{ color: '#1e293b' }}>
-                Recover Password
+              <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Please contact your local conference administrator to reset your exam credentials.'); }} style={{ color: '#1e293b' }}>
+                Forgot Password?
               </a>
             </div>
 

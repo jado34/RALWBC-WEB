@@ -3,7 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { RALogo } from './Navbar';
 
 export const Footer = () => {
-  const isPortalRoute = ['/dashboard', '/exam', '/admin', '/profile'].some(path => location.pathname.startsWith(path));
+  const location = useLocation();
+  const isPortalRoute = ['/dashboard', '/exam', '/admin', '/profile'].some(
+    path => location.pathname.startsWith(path)
+  );
   if (isPortalRoute) return null;
 
   const isPublicPage = true;

@@ -47,7 +47,7 @@ export const ManageExams = () => {
   };
 
   const handleDeleteExam = (id) => {
-    if (window.confirm("Are you sure you want to delete this exam? All candidate quiz results might be orphaned!")) {
+    if (window.confirm("Are you sure you want to delete this exam? All candidate exam results might be orphaned!")) {
       dbService.deleteExam(id);
       loadExams();
     }
@@ -113,7 +113,7 @@ export const ManageExams = () => {
         ctx.drawImage(img, 0, 0, width, height);
 
         const base64Jpeg = canvas.toDataURL('image/jpeg', 0.8);
-        
+
         const updated = [...editingExam.questions];
         if (!updated[currentQIndex].optionImages) {
           updated[currentQIndex].optionImages = ["", "", "", ""];
@@ -180,6 +180,8 @@ export const ManageExams = () => {
     }
 
     setCurrentQIndex(currentQIndex + 1);
+    // Scroll back to top of question editor when moving to the next question
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSaveAndExit = () => {
@@ -258,17 +260,17 @@ export const ManageExams = () => {
 
   return (
     <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
-      
+
       {/* Top Header */}
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2.5rem' }}>
         {editingExam ? (
-          <button 
+          <button
             onClick={() => {
               if (window.confirm("Exit editor? Unsaved changes will be lost.")) {
                 setEditingExam(null);
               }
-            }} 
-            className="btn btn-secondary btn-sm" 
+            }}
+            className="btn btn-secondary btn-sm"
             style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
           >
             <ArrowLeft size={16} /> Back to Quizzes
@@ -285,13 +287,13 @@ export const ManageExams = () => {
 
       {editingExam ? (
         wizardStep === 'details' ? (
-          /* Step 1: General Quiz Details Form */
+          /* Step 1: General Exam Details Form */
           <div className="glass-panel" style={{ padding: '2.5rem', maxWidth: '800px', backgroundColor: '#ffffff' }}>
             <h2 style={{ fontSize: '1.5rem', color: '#0a1141', marginBottom: '1.5rem', fontWeight: '700' }}>General Details</h2>
-            
+
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label style={labelStyle}>Exam Title</label>
-              <input 
+              <input
                 type="text"
                 required
                 placeholder="e.g. Royal Ambassadors Senior Ranking Exam"
@@ -303,7 +305,7 @@ export const ManageExams = () => {
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label style={labelStyle}>Instructions / Description</label>
-              <textarea 
+              <textarea
                 rows="4"
                 placeholder="Write specific details, instructions, chapters covered, and rules..."
                 value={editingExam.description}
@@ -331,7 +333,7 @@ export const ManageExams = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
               <div className="form-group">
                 <label style={labelStyle}>Duration (in minutes)</label>
-                <input 
+                <input
                   type="number"
                   min="5"
                   max="180"
@@ -344,7 +346,7 @@ export const ManageExams = () => {
 
               <div style={{ display: 'flex', alignItems: 'center', height: '100%', paddingTop: '1.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: '600' }}>
-                  <input 
+                  <input
                     type="checkbox"
                     checked={editingExam.isActive}
                     onChange={(e) => handleExamChange('isActive', e.target.checked)}
@@ -359,8 +361,8 @@ export const ManageExams = () => {
               <button type="button" onClick={() => setEditingExam(null)} className="btn btn-secondary">
                 Cancel
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleProceedToQuestions}
                 style={{
                   backgroundColor: '#0a1141',
@@ -379,7 +381,7 @@ export const ManageExams = () => {
         ) : (
           /* Step 2: Wizard Question Editor View with Sidebar Navigator (Matches Image 4 Layout) */
           <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start', width: '100%' }}>
-            
+
             {/* Sidebar Navigator */}
             <div style={{
               width: '260px',
@@ -397,13 +399,13 @@ export const ManageExams = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.75rem' }}>
                 <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0a1141', margin: 0 }}>Questions ({editingExam.questions.length})</h4>
               </div>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {editingExam.questions.map((q, idx) => {
                   const isActive = idx === currentQIndex;
                   const snippet = q.text.trim() ? (q.text.length > 25 ? q.text.substring(0, 25) + '...' : q.text) : '(Empty question)';
                   return (
-                    <div 
+                    <div
                       key={q.id}
                       onClick={() => setCurrentQIndex(idx)}
                       style={{
@@ -429,7 +431,7 @@ export const ManageExams = () => {
                           {snippet}
                         </span>
                       </div>
-                      
+
                       {editingExam.questions.length > 1 && (
                         <button
                           onClick={(e) => {
@@ -463,7 +465,7 @@ export const ManageExams = () => {
                   );
                 })}
               </div>
-              
+
               <button
                 type="button"
                 onClick={handleAddNewQuestion}
@@ -498,16 +500,18 @@ export const ManageExams = () => {
 
             {/* Main Question Editor (Right Side) */}
             <div style={{ flex: 1, minWidth: '320px', maxWidth: '850px' }}>
-              
+
               {/* Header info bar */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#000000', margin: 0 }}>Add Question</h3>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#000000', margin: 0 }}>
+                  {currentQIndex < (editingExam?.questions?.length ?? 0) - 1 || (editingExam?.questions?.[currentQIndex]?.text?.trim()) ? 'Edit Question' : 'Add Question'}
+                </h3>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#64748b' }}>
                     Question {currentQIndex + 1} of {editingExam.questions.length}
                   </span>
-                  <button 
-                    onClick={() => handleDeleteQuestion(currentQIndex)} 
+                  <button
+                    onClick={() => handleDeleteQuestion(currentQIndex)}
                     style={{
                       backgroundColor: 'transparent',
                       border: 'none',
@@ -528,7 +532,7 @@ export const ManageExams = () => {
 
               {/* Question Text Area Box (Image 4 Style) */}
               <div style={{ marginBottom: '2rem' }}>
-                <textarea 
+                <textarea
                   value={editingExam.questions[currentQIndex]?.text || ''}
                   onChange={(e) => handleQuestionTextChange(e.target.value)}
                   placeholder="The current Marshal of RAN is..."
@@ -556,8 +560,8 @@ export const ManageExams = () => {
                   const currentOptImg = editingExam.questions[currentQIndex].optionImages?.[optIdx] || '';
 
                   return (
-                    <div 
-                      key={optIdx} 
+                    <div
+                      key={optIdx}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -570,7 +574,7 @@ export const ManageExams = () => {
                       }}
                     >
                       {/* Left: Custom checkmark status indicator */}
-                      <div 
+                      <div
                         onClick={() => handleCorrectAnswerSelect(option)}
                         style={{
                           width: '26px',
@@ -592,7 +596,7 @@ export const ManageExams = () => {
                       </div>
 
                       {/* Middle: Option input field */}
-                      <input 
+                      <input
                         type="text"
                         placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
                         value={option}
@@ -612,13 +616,13 @@ export const ManageExams = () => {
                       {/* Image preview (if uploaded) */}
                       {currentOptImg && (
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <img 
-                            src={currentOptImg} 
-                            alt="option upload" 
+                          <img
+                            src={currentOptImg}
+                            alt="option upload"
                             style={{ height: '36px', maxWidth: '60px', borderRadius: '4px', objectFit: 'contain', border: '1px solid #cbd5e1' }}
                           />
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={() => removeOptionImage(optIdx)}
                             style={{
                               position: 'absolute',
@@ -645,11 +649,11 @@ export const ManageExams = () => {
                       {/* Right: Image attachment trigger */}
                       <label style={{ cursor: 'pointer', padding: '0.25rem', color: '#64748b' }} title="Attach image option">
                         <ImageIcon size={20} />
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           accept="image/*"
                           onChange={(e) => handleOptionImageUpload(e, optIdx)}
-                          style={{ display: 'none' }} 
+                          style={{ display: 'none' }}
                         />
                       </label>
                     </div>
@@ -666,7 +670,7 @@ export const ManageExams = () => {
                 paddingTop: '2rem'
               }}>
                 {/* Previous button (Gold) */}
-                <button 
+                <button
                   onClick={handlePreviousAction}
                   style={{
                     backgroundColor: '#eab308', // Gold
@@ -686,7 +690,7 @@ export const ManageExams = () => {
                 {/* Middle Right: Save & Next (Navy) + Save & Exit (Green) */}
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   {/* Save & Next (Navy) */}
-                  <button 
+                  <button
                     onClick={handleSaveAndNext}
                     style={{
                       backgroundColor: '#0a1141', // Navy
@@ -704,7 +708,7 @@ export const ManageExams = () => {
                   </button>
 
                   {/* Save & Exit (Green) */}
-                  <button 
+                  <button
                     onClick={handleSaveAndExit}
                     style={{
                       backgroundColor: '#16a34a', // Green
@@ -779,7 +783,7 @@ export const ManageExams = () => {
                       <span>Category: <strong>{RANK_CATEGORIES.find(r => r.value === exam.category)?.label || 'Ambassador'}</strong></span>
                     </div>
                   </div>
-                  
+
                   <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0 }}>
                     <button onClick={() => handleStartEdit(exam)} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <Edit3 size={14} /> Edit

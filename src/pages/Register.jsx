@@ -52,7 +52,7 @@ export const Register = () => {
 
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
-      const user = await register(fullName, email, password, '');
+      const user = await register(fullName, email, password);
 
       updateProfile({
         firstName: firstName.trim(),
@@ -235,10 +235,10 @@ export const Register = () => {
   const rankCategoryOptions = Array.isArray(RANK_CATEGORIES)
     ? RANK_CATEGORIES
     : [
-        { value: 'ambassador', label: 'Ambassador' },
-        { value: 'ambassador_extraordinary', label: 'Ambassador Extraordinary' },
-        { value: 'ambassador_plenipotentiary', label: 'Ambassador Plenipotentiary' },
-      ];
+      { value: 'ambassador', label: 'Ambassador' },
+      { value: 'ambassador_extraordinary', label: 'Ambassador Extraordinary' },
+      { value: 'ambassador_plenipotentiary', label: 'Ambassador Plenipotentiary' },
+    ];
 
   /* ─── JSX ────────────────────────────────────────────────── */
   return (
@@ -337,7 +337,7 @@ export const Register = () => {
               type="text"
               value={church}
               onChange={(e) => setChurch(e.target.value)}
-              placeholder="e.g. All Saints Baptist Church"
+              placeholder="e.g. Aalafia Oluwa Baptist Church"
               required
               style={inputStyle}
             />
@@ -369,14 +369,13 @@ export const Register = () => {
                 required
                 style={selectStyle}
               >
-                <option value="" disabled style={{ background: '#302b63', color: 'rgba(255,255,255,0.5)' }}>
+                <option value="" disabled>
                   — Select rank category —
                 </option>
                 {rankCategoryOptions.map((cat) => (
                   <option
                     key={cat.value}
                     value={cat.value}
-                    style={{ background: '#302b63', color: '#fff' }}
                   >
                     {cat.label}
                   </option>
@@ -399,7 +398,7 @@ export const Register = () => {
               type="text"
               value={rank}
               onChange={(e) => setRank(e.target.value)}
-              placeholder='e.g. Counselor, Amb. Extra'
+              placeholder='e.g. Dean, Amb. Extra-Ordinary '
               style={inputStyle}
             />
           </div>

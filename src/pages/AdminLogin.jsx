@@ -108,7 +108,9 @@ export const AdminLogin = () => {
             lineHeight: 1.4,
             textAlign: 'left'
           }}>
-            <strong>Prototype Notice:</strong> Register students as admins using registration code <code>RALWBC-COMMITTEE-2026</code>.
+            <strong>Seeded Admin Credentials:</strong>
+            <div style={{ marginTop: '0.25rem' }}>Email: <code>admin@ralwbc.org</code></div>
+            <div>Password: <code>adminpassword</code></div>
           </div>
         </div>
 
