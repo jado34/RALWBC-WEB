@@ -6,10 +6,14 @@ export const Gallery = () => {
   const [photosList, setPhotosList] = useState([]);
   const [currentPage, setCurrentPage] = useState('01');
   const [activePhoto, setActivePhoto] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     dbService.init();
-    dbService.getGalleryPhotos().then(data => setPhotosList(data));
+    dbService.getGalleryPhotos()
+      .then(data => setPhotosList(data))
+      .catch(err => console.error(err))
+      .finally(() => setIsLoading(false));
   }, []);
 
   // Navigate lightbox images
@@ -45,7 +49,16 @@ export const Gallery = () => {
         </h1>
 
         {/* Dynamic Photo Sections */}
-        {photosList.length === 0 ? (
+        {isLoading ? (
+          <div style={{ padding: '6rem 2rem', textAlign: 'center' }}>
+            <div style={{
+              width: '40px', height: '40px', border: '3px solid rgba(10, 17, 65, 0.1)',
+              borderTopColor: '#ca8a04', borderRadius: '50%',
+              animation: 'spin 1s linear infinite', margin: '0 auto'
+            }} />
+            <p style={{ marginTop: '1.5rem', color: '#64748b', fontSize: '0.95rem', fontWeight: '500' }}>Loading gallery photos...</p>
+          </div>
+        ) : photosList.length === 0 ? (
           <div style={{ padding: '4rem 2rem', textAlign: 'center', border: '1px dashed #cbd5e1', borderRadius: '8px', color: '#64748b', margin: '2rem 0' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No photos available in the gallery yet.</p>
           </div>
@@ -69,19 +82,22 @@ export const Gallery = () => {
             if (photos.length === 0) return null;
             return (
               <div key={categoryName} style={{ marginBottom: '4rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '1.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '2rem' }}>
                   <h2 style={{ 
-                    fontSize: '1.1rem', 
-                    fontWeight: '700', 
-                    color: '#000000',
-                    paddingBottom: '0.4rem', 
-                    borderBottom: '2px solid #000000', 
+                    fontSize: '1rem', 
+                    fontWeight: '800', 
+                    color: '#0a1141',
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
+                    paddingBottom: '0.5rem', 
+                    borderBottom: '3px solid #ca8a04', 
                     whiteSpace: 'nowrap',
-                    margin: 0
+                    margin: 0,
+                    fontFamily: 'var(--font-heading)'
                   }}>
                     {categoryName}
                   </h2>
-                  <div style={{ flex: 1, borderBottom: '1px solid #e2e8f0', marginLeft: '0.5rem' }}></div>
+                  <div style={{ flex: 1, borderBottom: '1px solid rgba(10, 17, 65, 0.1)', marginLeft: '1rem' }}></div>
                 </div>
 
                 {/* Grid of photos */}
@@ -152,16 +168,21 @@ export const Gallery = () => {
       )}
 
       <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
         .gallery-photo-card {
           cursor: pointer;
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          border-radius: 16px;
         }
         .gallery-photo-card:hover {
-          transform: scale(1.03);
-          box-shadow: 0 10px 25px rgba(0, 32, 96, 0.12);
+          transform: translateY(-6px);
+          box-shadow: 0 16px 35px rgba(10, 17, 65, 0.15);
         }
         .gallery-photo-card img {
-          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
         .gallery-photo-card:hover img {
           transform: scale(1.06);
@@ -183,9 +204,10 @@ const imgContainerStyle = {
   width: '100%',
   aspectRatio: '3 / 2',
   overflow: 'hidden',
-  borderRadius: '6px',
+  borderRadius: '16px',
   backgroundColor: '#f1f5f9',
-  border: '1px solid #cbd5e1'
+  border: '1px solid rgba(10, 17, 65, 0.08)',
+  boxShadow: '0 4px 20px rgba(10, 17, 65, 0.02)'
 };
 
 const imgStyle = {

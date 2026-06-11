@@ -276,7 +276,7 @@ export const Register = () => {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Doe"
+                placeholder="David"
                 required
                 style={inputStyle}
               />
@@ -321,7 +321,7 @@ export const Register = () => {
               type="text"
               value={association}
               onChange={(e) => setAssociation(e.target.value)}
-              placeholder="e.g. Lagos Area"
+              placeholder="e.g. Victory Land Baptist Association"
               required
               style={inputStyle}
             />

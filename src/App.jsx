@@ -28,7 +28,7 @@ import { Profile }     from './pages/Profile';
 import { AdminDashboard }  from './pages/Portal/Admin/AdminDashboard';
 import { ManageExams }     from './pages/Portal/Admin/ManageExams';
 import { ManageBlogs }     from './pages/Portal/Admin/ManageBlogs';
-import { ManageOfficers }  from './pages/Portal/Admin/ManageOfficers';
+
 
 import { PortalLayout } from './components/PortalLayout';
 import { Outlet }       from 'react-router-dom';
@@ -109,14 +109,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route
-                    path="/admin/officers"
-                    element={
-                      <ProtectedRoute allowedRoles={['admin']}>
-                        <ManageOfficers />
-                      </ProtectedRoute>
-                    }
-                  />
+
                   <Route
                     path="/admin/profile"
                     element={

@@ -104,7 +104,8 @@ export const Profile = () => {
       setConfirmPassword('');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setMsg({ type: 'error', text: 'Failed to update profile details.' });
+      console.error('Profile update failed error details:', err);
+      setMsg({ type: 'error', text: err.message || 'Failed to update profile details.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -211,7 +212,7 @@ export const Profile = () => {
               </div>
 
               <div>
-                <label style={labelStyle} htmlFor="prof-church">Church</label>
+                <label style={labelStyle} htmlFor="prof-church">Church {currentUser?.role !== 'admin' && '*'}</label>
                 <input
                   id="prof-church"
                   type="text"
@@ -219,7 +220,7 @@ export const Profile = () => {
                   value={church}
                   onChange={(e) => setChurch(e.target.value)}
                   style={inputStyle}
-                  required
+                  required={currentUser?.role !== 'admin'}
                 />
               </div>
 
@@ -275,7 +276,7 @@ export const Profile = () => {
               </div>
 
               <div>
-                <label style={labelStyle} htmlFor="prof-assoc">Association</label>
+                <label style={labelStyle} htmlFor="prof-assoc">Association {currentUser?.role !== 'admin' && '*'}</label>
                 <input
                   id="prof-assoc"
                   type="text"
@@ -283,7 +284,7 @@ export const Profile = () => {
                   value={association}
                   onChange={(e) => setAssociation(e.target.value)}
                   style={inputStyle}
-                  required
+                  required={currentUser?.role !== 'admin'}
                 />
               </div>
 

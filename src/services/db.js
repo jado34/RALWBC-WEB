@@ -46,24 +46,33 @@ export const dbService = {
     const profileFields = {
       id: data.user.id,
       name,
-      role: 'student'
+      role: 'student',
+      email: email
     };
-    if (meta.dob !== undefined) profileFields.dob = meta.dob;
-    if (meta.phone !== undefined) profileFields.phone = meta.phone;
-    if (meta.phoneNumber !== undefined) profileFields.phone_number = meta.phoneNumber;
+    if (meta.dob !== undefined) profileFields.dob = meta.dob || null;
+    if (meta.phone !== undefined) profileFields.phone = meta.phone || null;
+    if (meta.phoneNumber !== undefined) profileFields.phone_number = meta.phoneNumber || null;
     if (meta.church !== undefined) profileFields.church = meta.church;
     if (meta.address !== undefined) profileFields.address = meta.address;
     if (meta.chapterName !== undefined) profileFields.chapter_name = meta.chapterName;
     if (meta.association !== undefined) profileFields.association = meta.association;
-    if (meta.rankCategory !== undefined) profileFields.rank_category = meta.rankCategory;
+    if (meta.rankCategory !== undefined) profileFields.rank_category = meta.rankCategory || null;
     if (meta.rank !== undefined) profileFields.rank = meta.rank;
 
-    // Robust fallback upsert in case SQL trigger is not yet executed/created
-    const { error: profileError } = await supabase
+    // Robust fallback upsert: try saving email as well.
+    // If it fails (e.g. because 'email' column does not exist on profiles yet), retry without it.
+    let { error: profileError } = await supabase
       .from('profiles')
       .upsert(profileFields);
     if (profileError) {
-      console.warn('Profile upsert fallback warning (might be handled by SQL trigger):', profileError);
+      console.warn('Profile upsert with email failed, retrying without email:', profileError);
+      delete profileFields.email;
+      const { error: retryError } = await supabase
+        .from('profiles')
+        .upsert(profileFields);
+      if (retryError) {
+        console.warn('Profile upsert fallback retry failed:', retryError);
+      }
     }
 
     return {
@@ -114,26 +123,45 @@ export const dbService = {
   },
 
   async updateUser(userId, fields) {
-    const dbFields = {};
+    const dbFields = { id: userId };
     if (fields.name !== undefined) dbFields.name = fields.name;
-    if (fields.dob !== undefined) dbFields.dob = fields.dob;
-    if (fields.phone !== undefined) dbFields.phone = fields.phone;
-    if (fields.phoneNumber !== undefined) dbFields.phone_number = fields.phoneNumber;
+    if (fields.dob !== undefined) dbFields.dob = fields.dob || null;
+    if (fields.phone !== undefined) dbFields.phone = fields.phone || null;
+    if (fields.phoneNumber !== undefined) dbFields.phone_number = fields.phoneNumber || null;
     if (fields.church !== undefined) dbFields.church = fields.church;
     if (fields.address !== undefined) dbFields.address = fields.address;
     if (fields.chapterName !== undefined) dbFields.chapter_name = fields.chapterName;
     if (fields.association !== undefined) dbFields.association = fields.association;
-    if (fields.rankCategory !== undefined) dbFields.rank_category = fields.rankCategory;
+    if (fields.rankCategory !== undefined) dbFields.rank_category = fields.rankCategory || null;
     if (fields.rank !== undefined) dbFields.rank = fields.rank;
     if (fields.role !== undefined) dbFields.role = fields.role;
+    if (fields.email !== undefined) dbFields.email = fields.email;
 
-    const { data, error } = await supabase
+    // Use upsert instead of update to work with Supabase RLS policies
+    let { data, error } = await supabase
       .from('profiles')
-      .update(dbFields)
+      .upsert(dbFields)
       .eq('id', userId)
       .select()
       .single();
-    if (error) throw error;
+
+    if (error) {
+      // If upserting with email column failed (column may not exist), retry without it
+      if (dbFields.email !== undefined) {
+        console.warn('Profile upsert with email failed, retrying without email:', error);
+        delete dbFields.email;
+        const retryResult = await supabase
+          .from('profiles')
+          .upsert(dbFields)
+          .eq('id', userId)
+          .select()
+          .single();
+        data = retryResult.data;
+        error = retryResult.error;
+      }
+      if (error) throw error;
+    }
+
     return data ? {
       id: data.id,
       name: data.name,
@@ -146,7 +174,8 @@ export const dbService = {
       chapterName: data.chapter_name,
       association: data.association,
       rankCategory: data.rank_category,
-      rank: data.rank
+      rank: data.rank,
+      email: data.email
     } : null;
   },
 
@@ -164,7 +193,7 @@ export const dbService = {
     if (error) throw error;
   },
 
-  // ── Exam Operations ───────────────────────────────────────────────────────
+  // ── Exam Operations ─────────────────────────────────────
 
   async getExams() {
     const { data, error } = await supabase
@@ -215,7 +244,7 @@ export const dbService = {
       is_active: examData.isActive !== undefined ? examData.isActive : true,
       questions: examData.questions || []
     };
-    
+
     let id = examData.id;
     if (id) {
       const { error } = await supabase
@@ -385,18 +414,56 @@ export const dbService = {
   // ── Blog Operations ───────────────────────────────────────────────────────
 
   async getBlogs() {
-    const { data, error } = await supabase
-      .from('blogs')
-      .select('*')
-      .order('date', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(b => ({
-      id: b.id,
-      title: b.title,
-      author: b.author,
-      date: b.date,
-      content: b.content
-    }));
+    let dbBlogs = [];
+    try {
+      const { data, error } = await supabase
+        .from('blogs')
+        .select('*')
+        .order('date', { ascending: false });
+      if (error) throw error;
+      dbBlogs = (data || []).map(b => ({
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        date: b.date,
+        content: b.content
+      }));
+    } catch (err) {
+      console.warn("Could not load blogs from database, using local blogs only:", err);
+    }
+
+    const defaultBlogs = [
+      {
+        id: 'blog_def1',
+        title: 'Upcoming RA Week Ushering In: Preparing for the Spiritual Journey',
+        author: 'Conference Planning Committee',
+        date: '2026-06-10',
+        content: 'The Royal Ambassadors Lagos West Baptist Conference (RALWBC) is set to embark on our annual RA Week Ushering In. This week-long program is a cornerstone spiritual event designed to inspire dedication, missionary zeal, and community service among all chapters. Under this year\'s theme, we focus on rebuilding the walls of service and rekindling the fire of active evangelism. All chapters are urged to finalize their parade schedules, community clean-up logistics, and special missionary collections. Let us walk in dignity and show the world what it means to be an Ambassador for Christ.'
+      },
+      {
+        id: 'blog_def2',
+        title: 'RAN Leadership Training Conference (LTC): Building Next-Gen Leaders',
+        author: 'Training & Education Directorate',
+        date: '2026-06-08',
+        content: 'Leadership is the foundation of service. The upcoming Royal Ambassadors of Nigeria Leadership Training Conference (RAN LTC) at Abeokuta will gather executives, officers, and aspiring leaders for an intensive weekend of instruction, fellowship, and spiritual growth. The curriculum covers administrative guidelines, mission theology, first aid, disaster management, and advanced leadership skills. Ranks will be examined and certified, including candidate screenings for the prestigious Ambassador Plenipotentiary senior exam. Early registration is advised to secure conference materials.'
+      },
+      {
+        id: 'blog_def3',
+        title: 'Maximizing Your Exam Preparation: A Guide for Royal Ambassadors',
+        author: 'Ranking Officer',
+        date: '2026-06-05',
+        content: 'As the camping session draws near, candidates preparing for their promotional ranks are encouraged to start their study early. This year\'s exams will test theological knowledge, Baptist history, Royal Ambassador manual rules, and practical outdoor tasks. To help you succeed, the online portal offers sample questionnaires, study guides, and mock quiz exercises. Ensure you revise the pledge, declaration, and three ranks structure. Maintain focus, maintain integrity, and study to show yourself approved.'
+      }
+    ];
+
+    const merged = [...dbBlogs];
+    defaultBlogs.forEach(def => {
+      if (!merged.some(b => b.id === def.id || b.title.trim().toLowerCase() === def.title.trim().toLowerCase())) {
+        merged.push(def);
+      }
+    });
+
+    return merged.sort((a, b) => new Date(b.date) - new Date(a.date));
   },
 
   async saveBlog(blogData) {
@@ -405,7 +472,7 @@ export const dbService = {
       author: blogData.author,
       content: blogData.content
     };
-    
+
     let id = blogData.id;
     if (id) {
       const { error } = await supabase
@@ -438,66 +505,146 @@ export const dbService = {
   // ── Officer Operations ────────────────────────────────────────────────────
 
   async getOfficers() {
-    const { data, error } = await supabase
-      .from('officers')
-      .select('*')
-      .order('sort_order', { ascending: true });
-    if (error) throw error;
-    return (data || []).map(o => ({
-      id: o.id,
-      name: o.name,
-      post: o.post,
-      image: o.image || '',
-      sortOrder: o.sort_order
-    }));
+    return [
+      {
+        id: 'off_1',
+        name: 'Coun. Adegbola Thomas',
+        post: 'Director, RALWBC',
+        image: '/Lagos-West1.jpeg',
+        sortOrder: 1
+      },
+      {
+        id: 'off_2',
+        name: 'Amb. Philip Olopade',
+        post: 'Assistant Director, RALWBC',
+        image: '/Lagos-West2.jpeg',
+        sortOrder: 2
+      },
+      {
+        id: 'off_4',
+        name: 'Amb. Akinola Asabisi',
+        post: 'Secretary, RALWBC',
+        image: '',
+        sortOrder: 3
+      },
+      {
+        id: 'off_5',
+        name: 'Amb. Daniel Ojeyomi',
+        post: 'Recording Secretary, RALWBC',
+        image: '',
+        sortOrder: 4
+      },
+      {
+        id: 'off_6',
+        name: 'Amb. Damilola Aderibigbe',
+        post: 'Ranking officer, RALWBC',
+        image: '',
+        sortOrder: 5
+      },
+      {
+        id: 'off_7',
+        name: 'Amb. Emmanuel Akinteye',
+        post: 'Mission Officer, RALWBC',
+        image: '',
+        sortOrder: 6
+      },
+      {
+        id: 'off_8',
+        name: 'Amb. Ayo Balogun',
+        post: 'Custodian, RALWBC',
+        image: '',
+        sortOrder: 7
+      },
+      {
+        id: 'off_9',
+        name: 'Amb. Pelumi Ojo',
+        post: 'Treasurer, RALWBC',
+        image: '',
+        sortOrder: 8
+      },
+      {
+        id: 'off_10',
+        name: 'Amb. Adeleke Adeyemi',
+        post: 'Financial Secretary, RALWBC',
+        image: '',
+        sortOrder: 9
+      },
+      {
+        id: 'off_11',
+        name: 'Amb. Tobi Oni',
+        post: 'Auditor, RALWBC',
+        image: '',
+        sortOrder: 10
+      },
+      {
+        id: 'off_12',
+        name: 'Amb. Segun Adeniji',
+        post: 'ASVC Coordinator, RALWBC',
+        image: '',
+        sortOrder: 11
+      },
+      {
+        id: 'off_13',
+        name: 'Amb. Olamidotun Simidu',
+        post: 'PRO, RALWBC',
+        image: '',
+        sortOrder: 12
+      }
+    ];
   },
 
   async saveOfficer(officerData) {
-    const dbOfficer = {
-      name: officerData.name,
-      post: officerData.post,
-      image: officerData.image || '',
-      sort_order: Number(officerData.sortOrder) || 0
-    };
-    
-    let id = officerData.id;
-    if (id) {
-      const { error } = await supabase
-        .from('officers')
-        .update(dbOfficer)
-        .eq('id', id);
-      if (error) throw error;
-    } else {
-      id = 'off_' + Math.random().toString(36).substr(2, 9);
-      const { error } = await supabase
-        .from('officers')
-        .insert({ id, ...dbOfficer });
-      if (error) throw error;
-    }
-    return { ...officerData, id };
+    // Deprecated for static officers
+    return officerData;
   },
 
   async deleteOfficer(id) {
-    const { error } = await supabase
-      .from('officers')
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+    // Deprecated for static officers
+    return true;
   },
 
   // ── Gallery Operations ────────────────────────────────────────────────────
 
   async getGalleryPhotos() {
-    const { data, error } = await supabase
-      .from('gallery')
-      .select('*');
-    if (error) throw error;
-    return (data || []).map(g => ({
-      id: g.id,
-      url: g.url,
-      alt: g.alt || '',
-      category: g.category
-    }));
+    let dbPhotos = [];
+    try {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('*');
+      if (error) throw error;
+      dbPhotos = (data || []).map(g => ({
+        id: g.id,
+        url: g.url,
+        alt: g.alt || '',
+        category: g.category
+      }));
+    } catch (err) {
+      console.warn("Could not load gallery from database, using local assets only:", err);
+    }
+
+    const localPhotos = [];
+    try {
+      const images = import.meta.glob('/public/gallery/**/*.{jpg,jpeg,png,webp,svg}', { eager: true });
+      Object.keys(images).forEach((key, index) => {
+        const parts = key.split('/');
+        if (parts.length >= 5) {
+          const category = decodeURIComponent(parts[3]);
+          const url = key.replace(/^\/public/, '');
+          const filename = parts[parts.length - 1];
+          const alt = filename.split('.')[0].replace(/[-_]/g, ' ');
+          localPhotos.push({
+            id: `local_${index}`,
+            url,
+            alt,
+            category
+          });
+        }
+      });
+    } catch (err) {
+      console.warn("Could not load local gallery assets:", err);
+    }
+
+    return [...localPhotos, ...dbPhotos];
   },
 
   async saveGalleryPhoto(photoData) {
@@ -506,7 +653,7 @@ export const dbService = {
       alt: photoData.alt || '',
       category: photoData.category
     };
-    
+
     let id = photoData.id;
     if (id) {
       const { error } = await supabase

@@ -126,7 +126,15 @@ export const PortalLayout = ({ children }) => {
       }}>
         {/* Left Side: Logo and Stacked Brand Text */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Link 
+            to="/" 
+            onClick={() => {
+              if (currentUser?.role !== 'admin') {
+                logout();
+              }
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+          >
             <img 
               src="/logo.png" 
               alt="Royal Ambassadors Logo" 
@@ -242,6 +250,12 @@ export const PortalLayout = ({ children }) => {
           {/* Main Website Link */}
           <Link
             to="/"
+            onClick={() => {
+              if (currentUser?.role !== 'admin') {
+                logout();
+              }
+              setMobileMenuOpen(false);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

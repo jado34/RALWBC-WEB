@@ -33,13 +33,21 @@ export const AdminDashboard = () => {
         .select('*');
       if (usersError) throw usersError;
 
-      const studentUsers = (allUsers || []).filter(u => u.role === 'student');
+      // Map snake_case columns from Postgres to camelCase fields used in the UI/CSV
+      const mappedUsers = (allUsers || []).map(u => ({
+        ...u,
+        phoneNumber: u.phone_number || u.phone,
+        rankCategory: u.rank_category,
+        chapterName: u.chapter_name
+      }));
+
+      const studentUsers = mappedUsers.filter(u => u.role === 'student');
       const allOfficers = await dbService.getOfficers();
       const photosData = await dbService.getGalleryPhotos();
       setPhotos(photosData);
 
       const map = {};
-      (allUsers || []).forEach(u => { map[u.id] = u; });
+      mappedUsers.forEach(u => { map[u.id] = u; });
       setUserMap(map);
 
       let totalScore = 0, totalWarnings = 0;
@@ -68,6 +76,8 @@ export const AdminDashboard = () => {
   const [newPhotoAlt, setNewPhotoAlt] = useState('');
   const [newPhotoCategory, setNewPhotoCategory] = useState(GALLERY_CATEGORIES[0]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,10 +143,10 @@ export const AdminDashboard = () => {
 
   const handleDownloadReport = () => {
     if (submissions.length === 0) { alert('No submissions to download.'); return; }
-    let csv = 'S/N,Time,Name,Exam,Score,Church,Rank,Category,Warnings\n';
+    let csv = 'S/N,Time,Name,Email,Phone,Association,Church,Exam,Score,Warnings,Time Spent,Rank Title,Rank Category\n';
     submissions.forEach((sub, i) => {
       const u = userMap[sub.userId] || {};
-      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${escapeCSV(sub.examTitle || 'N/A')},${sub.scorePercentage}%,${escapeCSV(u.church || 'N/A')},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${sub.warningsCount}\n`;
+      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${escapeCSV(u.email || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(sub.examTitle || 'N/A')},${sub.scorePercentage}%,${sub.warningsCount},${escapeCSV(formatDuration(sub.durationSpent))},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -219,15 +229,23 @@ export const AdminDashboard = () => {
       if (!file) return;
       if (!file.type.startsWith("image/")) { alert("Please upload a valid image file."); return; }
 
+      const finalCategory = showCustomCategory ? customCategory.trim() : newPhotoCategory;
+      if (!finalCategory) {
+        alert("Please select or enter a category name!");
+        return;
+      }
+
       setIsUploadingPhoto(true);
       try {
         const base64 = await compressAndResizePhoto(file);
         await dbService.saveGalleryPhoto({
           url: base64,
           alt: newPhotoAlt.trim() || "Gallery Image",
-          category: newPhotoCategory
+          category: finalCategory
         });
         setNewPhotoAlt('');
+        setCustomCategory('');
+        setShowCustomCategory(false);
         alert("Photo added to gallery successfully!");
         loadDashboardData();
       } catch (err) {
@@ -249,9 +267,28 @@ export const AdminDashboard = () => {
           img.onload = () => {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            canvas.width = 600;
-            canvas.height = 400;
-            ctx.drawImage(img, 0, 0, 600, 400);
+            
+            // Limit resolution to a maximum of 900x900 while maintaining aspect ratio
+            const MAX_WIDTH = 900;
+            const MAX_HEIGHT = 900;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width = Math.round((width * MAX_HEIGHT) / height);
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
             const base64 = canvas.toDataURL("image/jpeg", 0.85);
             resolve(base64);
           };
@@ -294,10 +331,34 @@ export const AdminDashboard = () => {
             </div>
             <div>
               <label style={labelStyle}>Gallery Category Section</label>
-              <select value={newPhotoCategory} onChange={(e) => setNewPhotoCategory(e.target.value)} style={inputStyle}>
-                {GALLERY_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              <select 
+                value={showCustomCategory ? "CUSTOM" : newPhotoCategory} 
+                onChange={(e) => {
+                  if (e.target.value === "CUSTOM") {
+                    setShowCustomCategory(true);
+                  } else {
+                    setShowCustomCategory(false);
+                    setNewPhotoCategory(e.target.value);
+                  }
+                }} 
+                style={inputStyle}
+              >
+                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                <option value="CUSTOM">+ Add New Program / Category...</option>
               </select>
             </div>
+            {showCustomCategory && (
+              <div>
+                <label style={labelStyle}>New Program/Category Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Youth Camp 2026" 
+                  value={customCategory} 
+                  onChange={(e) => setCustomCategory(e.target.value)} 
+                  style={inputStyle} 
+                />
+              </div>
+            )}
           </div>
 
           <label style={{ ...navyBtnStyle, display: 'inline-flex', cursor: 'pointer', alignSelf: 'flex-start' }}>
@@ -446,10 +507,10 @@ export const AdminDashboard = () => {
         <div style={{ borderTop: '2px solid #000000', paddingTop: '1rem', overflowX: 'auto' }}>
           {submissions.length > 0 ? (
             <>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1050px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #000000', fontSize: '1rem', color: '#000000', fontFamily: 'var(--font-heading)' }}>
-                    {['S/N', 'Time', 'Name', 'Score', 'Church', 'Category', 'Warnings', 'Duration', 'Action'].map(h => (
+                    {['S/N', 'Time', 'Name', 'Association', 'Church', 'Rank', 'Category', 'Score', 'Warnings', 'Duration', 'Action'].map(h => (
                       <th key={h} style={{ padding: '1rem 0.5rem', fontWeight: '800' }}>{h}</th>
                     ))}
                   </tr>
@@ -462,13 +523,15 @@ export const AdminDashboard = () => {
                         <td style={{ padding: '1rem 0.5rem' }}>{(submissionPage - 1) * itemsPerPage + idx + 1}</td>
                         <td style={{ padding: '1rem', color: '#475569' }}>{formatTime(sub.submittedAt)}</td>
                         <td style={{ padding: '1rem', fontWeight: '500' }}>{sub.userName}</td>
-                        <td style={{ padding: '1rem', fontWeight: '700' }}>{sub.scorePercentage}%</td>
+                        <td style={{ padding: '1rem', color: '#475569' }}>{u.association || 'N/A'}</td>
                         <td style={{ padding: '1rem', color: '#475569' }}>{u.church || 'N/A'}</td>
+                        <td style={{ padding: '1rem', color: '#475569' }}>{u.rank || 'N/A'}</td>
                         <td style={{ padding: '1rem' }}>
                           <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', backgroundColor: 'rgba(10,17,65,0.08)', color: '#0a1141' }}>
                             {getRankLabel(u.rankCategory)}
                           </span>
                         </td>
+                        <td style={{ padding: '1rem', fontWeight: '700' }}>{sub.scorePercentage}%</td>
                         <td style={{ padding: '1rem' }}>
                           <button
                             onClick={() => setSelectedSubLogs(sub)}
@@ -637,7 +700,7 @@ export const AdminDashboard = () => {
       <div style={{ marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000000' }}>Committee Dashboard</h1>
         <p style={{ color: '#475569', fontSize: '1rem', marginTop: '0.25rem' }}>
-          Host examinations, score results, edit church resources, and manage active officers.
+          Host examinations, score results, edit church resources, and manage public gallery.
         </p>
       </div>
 
@@ -668,7 +731,6 @@ export const AdminDashboard = () => {
           <Link to="/admin?tab=exams" style={shortcutBtnStyle}><FileSpreadsheet size={16} /> View Submissions</Link>
           <Link to="/admin?tab=leaderboard" style={shortcutBtnStyle}><Trophy size={16} /> Leaderboard</Link>
           <Link to="/admin/exams" style={shortcutBtnStyle}><Settings size={16} /> Manage Exams</Link>
-          <Link to="/admin/officers" style={shortcutBtnStyle}><UserCheck size={16} /> Manage Officers</Link>
           <Link to="/admin?tab=gallery" style={shortcutBtnStyle}><ImageIcon size={16} /> Manage Gallery</Link>
           <Link to="/admin/blogs" style={{ ...shortcutBtnStyle, backgroundColor: '#0a1141', color: '#ffffff' }}><PlusCircle size={16} /> Post Announcement</Link>
         </div>

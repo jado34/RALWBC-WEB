@@ -90,52 +90,28 @@ export const Officers = () => {
       {/* ── FEATURED TOP 2 (Director + Asst. Director) ─────────────────── */}
       {(director || asstDirector) && (
         <section style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: 'clamp(3rem,6vw,5rem) clamp(1.5rem,5vw,4rem)' }}>
-          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2rem' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2.5rem' }}>
             {[director, asstDirector].filter(Boolean).map((officer) => {
               return (
                 <div
                   key={officer.id}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '3rem 2.5rem',
-                    width: '100%',
-                    maxWidth: '420px',
-                    boxShadow: 'var(--shadow-sm)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    gap: '1.5rem',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                    cursor: 'default',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-5px)';
-                    e.currentTarget.style.borderColor = '#ca8a04';
-                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(10, 17, 65, 0.08)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                  }}
+                  className="officer-card"
+                  style={{ width: '100%', maxWidth: '420px' }}
                 >
                   {/* Photo */}
-                  <div style={{ flexShrink: 0 }}>
+                  <div className="officer-img-wrapper">
                     {officer.image ? (
-                      <img src={officer.image} alt={officer.name} style={{ width: '200px', height: '200px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #ca8a04', boxShadow: '0 8px 24px rgba(202,138,4,0.15)' }} />
+                      <img src={officer.image} alt={officer.name} className="officer-img" />
                     ) : (
                       <Avatar name={officer.name} size={200} />
                     )}
                   </div>
                   {/* Info */}
                   <div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.4rem' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.5rem' }}>
                       {officer.post}
                     </div>
-                    <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem,2vw,1.5rem)', fontWeight: '800', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
+                    <h2 style={{ margin: 0, fontSize: 'clamp(1.3rem,2vw,1.65rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
                       {officer.name}
                     </h2>
                   </div>
@@ -146,68 +122,41 @@ export const Officers = () => {
         </section>
       )}
 
-      {/* ── REST OF OFFICERS ──────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(3rem,6vw,5rem) clamp(1.5rem,5vw,4rem)' }}>
+      {/* ── REST OF OFFICERS ───────────────────────── */}
+      <section style={{ padding: 'clamp(4rem,8vw,6rem) clamp(1.5rem,5vw,4rem)', backgroundColor: '#ffffff' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ marginBottom: '3rem' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
               <div style={{ width: '32px', height: '2px', backgroundColor: '#ca8a04' }} />
               <span style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ca8a04' }}>Executive Committee</span>
             </div>
-            <h2 style={{ margin: 0, fontSize: 'clamp(1.5rem,3vw,2.25rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
+            <h2 style={{ margin: 0, fontSize: 'clamp(1.75rem,3vw,2.5rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em' }}>
               Conference Leadership Team
             </h2>
           </div>
 
           {rest.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '2rem' }}>
               {rest.map((officer) => (
                 <div
                   key={officer.id}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '2.5rem 1.75rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    gap: '1.25rem',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                    cursor: 'default',
-                    boxShadow: 'var(--shadow-sm)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.borderColor = '#ca8a04';
-                    e.currentTarget.style.boxShadow = '0 10px 24px rgba(10, 17, 65, 0.06)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                  }}
+                  className="exec-card"
                 >
                   {/* Photo / Avatar */}
-                  <div>
+                  <div className="exec-img-wrapper">
                     {officer.image ? (
-                      <img src={officer.image} alt={officer.name} style={{
-                        width: '160px', height: '160px', borderRadius: '50%', objectFit: 'cover',
-                        border: '3px solid #e2e8f0',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                      }} />
+                      <img src={officer.image} alt={officer.name} className="exec-img" />
                     ) : (
-                      <Avatar name={officer.name} size={160} />
+                      <Avatar name={officer.name} size={140} />
                     )}
                   </div>
 
                   {/* Info */}
                   <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.35rem' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.4rem' }}>
                       {officer.post}
                     </div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
                       {officer.name}
                     </h3>
                   </div>
@@ -223,27 +172,163 @@ export const Officers = () => {
         </div>
       </section>
 
-      {/* ── BOTTOM DARK STRIP ─────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#0a1141', padding: '3rem clamp(1.5rem,5vw,4rem)', borderTop: '1px solid rgba(202,138,4,0.2)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+      {/* ── BOTTOM DARK STRIP ───────────────*/}
+      <section style={{ backgroundColor: '#0a1141', padding: '3.5rem clamp(1.5rem,5vw,4rem)', borderTop: '1px solid rgba(202,138,4,0.2)' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem' }}>
           <div>
-            <p style={{ margin: '0 0 0.25rem', color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+            <p style={{ margin: '0 0 0.35rem', color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
               RALWBC · {new Date().getFullYear()}
             </p>
-            <p style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: '700', fontFamily: 'var(--font-heading)' }}>
+            <p style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: '800', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}>
               Serving the Lagos West Baptist Conference with honour.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <img src="/logo.png" alt="RA Logo" style={{ width: '48px', objectFit: 'contain', opacity: 0.85 }} />
-            <img src="/lwbc-logo.png" alt="LWBC Logo" style={{ width: '48px', objectFit: 'contain', opacity: 0.85 }} />
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <img src="/logo.png" alt="RA Logo" style={{ width: '52px', objectFit: 'contain', opacity: 0.9 }} />
+            <img src="/lwbc-logo.png" alt="LWBC Logo" style={{ width: '52px', objectFit: 'contain', opacity: 0.9 }} />
           </div>
         </div>
       </section>
 
       <style>{`
+        .officer-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          border-radius: 20px;
+          padding: 3.5rem 2.5rem;
+          box-shadow: 0 4px 30px rgba(10, 17, 65, 0.03);
+          transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 1.5rem;
+          position: relative;
+          overflow: hidden;
+          cursor: default;
+        }
+
+        .officer-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, #0a1141, #ca8a04);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+        }
+
+        .officer-card:hover {
+          transform: translateY(-10px);
+          border-color: rgba(202, 138, 4, 0.35);
+          box-shadow: 0 25px 50px rgba(10, 17, 65, 0.1);
+        }
+
+        .officer-card:hover::before {
+          opacity: 1;
+        }
+
+        .officer-img-wrapper {
+          position: relative;
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 4px solid #ffffff;
+          box-shadow: 0 8px 24px rgba(10, 17, 65, 0.08);
+          transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .officer-card:hover .officer-img-wrapper {
+          border-color: #ca8a04;
+          box-shadow: 0 12px 32px rgba(202, 138, 4, 0.3);
+          transform: scale(1.04);
+        }
+
+        .officer-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .officer-card:hover .officer-img {
+          transform: scale(1.1);
+        }
+
+        /* Secondary Executive Cards */
+        .exec-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          padding: 2.5rem 2rem;
+          box-shadow: 0 4px 15px rgba(10, 17, 65, 0.02);
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 1.25rem;
+          position: relative;
+          cursor: default;
+        }
+
+        .exec-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background: linear-gradient(90deg, #ca8a04, #0a1141);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          border-radius: 18px 18px 0 0;
+        }
+
+        .exec-card:hover {
+          transform: translateY(-8px);
+          border-color: rgba(202, 138, 4, 0.3);
+          box-shadow: 0 20px 40px rgba(10, 17, 65, 0.08);
+        }
+
+        .exec-card:hover::before {
+          opacity: 1;
+        }
+
+        .exec-img-wrapper {
+          position: relative;
+          width: 140px;
+          height: 140px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 3px solid #ffffff;
+          box-shadow: 0 6px 18px rgba(10, 17, 65, 0.06);
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .exec-card:hover .exec-img-wrapper {
+          border-color: #ca8a04;
+          transform: scale(1.04);
+        }
+
+        .exec-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .exec-card:hover .exec-img {
+          transform: scale(1.1);
+        }
+
         @media (max-width: 640px) {
-          .featured-card { flex-direction: column !important; text-align: center; }
+          .officer-card { padding: 2.5rem 1.5rem; }
         }
       `}</style>
     </div>
