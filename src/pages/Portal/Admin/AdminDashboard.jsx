@@ -2,14 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { dbService, RANK_CATEGORIES, getRankLabel, GALLERY_CATEGORIES } from '../../../services/db';
 import { supabase } from '../../../services/supabaseClient';
+import { useAuth } from '../../../context/AuthContext';
+import * as XLSX from 'xlsx';
 import {
   Users, Award, ShieldAlert, FileSpreadsheet, PlusCircle, Settings,
   ClipboardList, UserCheck, Download, Plus, CalendarClock,
   ToggleLeft, ToggleRight, Save, Trash2, RotateCcw, Trophy, Medal,
-  Image as ImageIcon
+  Image as ImageIcon, Upload, FileText, UserPlus, Lock, Unlock,
+  CheckCircle, XCircle, Eye, AlertTriangle, BookOpen
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
+  const { currentUser } = useAuth();
+  const isProAdmin = currentUser?.role === 'pro_admin';
+  const isSuperAdmin = currentUser?.role === 'admin';
+
   const [submissions, setSubmissions] = useState([]);
   const [candidates, setCandidates] = useState([]);
   const [userMap, setUserMap] = useState({});
@@ -19,6 +26,31 @@ export const AdminDashboard = () => {
   const [photos, setPhotos] = useState([]);
   const [sessionActive, setSessionActive] = useState(false);
   const itemsPerPage = 10;
+
+  // Registrations state
+  const [exams, setExams] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const [selectedExamForEnroll, setSelectedExamForEnroll] = useState('');
+  const [enrollSearchQuery, setEnrollSearchQuery] = useState('');
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollMsg, setEnrollMsg] = useState('');
+
+  // Import Candidates state
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+  const [pastCandidates, setPastCandidates] = useState([]);
+  const [pastSearch, setPastSearch] = useState('');
+  const [pastPage, setPastPage] = useState(1);
+
+  // Supervisors state
+  const [supervisors, setSupervisors] = useState([]);
+  const [projectSubs, setProjectSubs] = useState([]);
+  const [ambExCandidates, setAmbExCandidates] = useState([]);
+  const [supervisorForm, setSupervisorForm] = useState({ candidateUserId: '', supervisorName: '', supervisorContact: '', projectTitle: '' });
+  const [savingSupervisor, setSavingSupervisor] = useState(false);
+  const [supervisorMsg, setSupervisorMsg] = useState('');
 
   const [stats, setStats] = useState({
     totalUsers: 0, totalSubs: 0, averageScore: 0,
@@ -33,7 +65,7 @@ export const AdminDashboard = () => {
         .select('*');
       if (usersError) throw usersError;
 
-      // Map snake_case columns from Postgres to camelCase fields used in the UI/CSV
+      // Map snake_case columns from Postgres to camelCase
       const mappedUsers = (allUsers || []).map(u => ({
         ...u,
         phoneNumber: u.phone_number || u.phone,
@@ -62,8 +94,39 @@ export const AdminDashboard = () => {
         totalInfractions: totalWarnings,
         totalOfficers: allOfficers.length
       });
+
+      // Amb. Extraordinary candidates for supervisor assignment
+      const ambEx = studentUsers.filter(u => u.rank_category === 'ambassador_extraordinary');
+      setAmbExCandidates(ambEx);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
+    }
+  };
+
+  const loadExtraData = async () => {
+    try {
+      const examsData = await dbService.getExams();
+      setExams(examsData);
+      if (examsData.length > 0 && !selectedExamForEnroll) {
+        setSelectedExamForEnroll(examsData[0].id);
+      }
+      const allEnrollments = await dbService.getAllEnrollments();
+      setEnrollments(allEnrollments);
+      const svs = await dbService.getProjectSupervisors();
+      setSupervisors(svs);
+      const projSubs = await dbService.getProjectSubmissions();
+      setProjectSubs(projSubs);
+    } catch (err) {
+      console.warn('Failed to load extra data:', err);
+    }
+  };
+
+  const loadPastCandidates = async (q = '') => {
+    try {
+      const data = await dbService.getPastCandidates(q);
+      setPastCandidates(data);
+    } catch (err) {
+      console.warn('Failed to load past candidates:', err);
     }
   };
 
@@ -87,6 +150,10 @@ export const AdminDashboard = () => {
   useEffect(() => {
     dbService.init();
     loadDashboardData();
+    if (isSuperAdmin) {
+      loadExtraData();
+      loadPastCandidates();
+    }
     const loadSession = async () => {
       try {
         const s = await dbService.getSession();
@@ -100,6 +167,122 @@ export const AdminDashboard = () => {
     loadSession();
   }, [location.search]);
 
+  // ── Enrollment Handlers ────────────────────────────────────────────────────
+  const handleEnrollCandidate = async (userId, userName) => {
+    if (!selectedExamForEnroll) { setEnrollMsg('Please select an exam first.'); return; }
+    setEnrolling(true);
+    setEnrollMsg('');
+    try {
+      // Check 1-year rule for Amb. Extraordinary
+      const targetExam = exams.find(e => e.id === selectedExamForEnroll);
+      if (targetExam?.category === 'ambassador_extraordinary') {
+        const hasRecent = await dbService.hasRecentAmbassadorSubmission(userId);
+        if (hasRecent) {
+          const eligDate = await dbService.getAmbassadorExtraordinaryEligibilityDate(userId);
+          setEnrollMsg(`❌ Cannot enroll ${userName}: They wrote an Ambassador exam within the last year. Eligible from ${eligDate ? eligDate.toLocaleDateString('en-GB') : 'N/A'}.`);
+          setEnrolling(false);
+          return;
+        }
+      }
+      await dbService.enrollCandidateInExam(userId, selectedExamForEnroll, currentUser?.id);
+      setEnrollMsg(`✅ ${userName} successfully enrolled in the exam!`);
+      loadExtraData();
+    } catch (err) {
+      setEnrollMsg(`❌ ${err.message || 'Enrollment failed. They may already be enrolled in this exam.'}`); 
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleRemoveEnrollment = async (userId, examId, userName) => {
+    if (!window.confirm(`Remove ${userName}'s enrollment from this exam?`)) return;
+    try {
+      await dbService.removeEnrollment(userId, examId);
+      loadExtraData();
+    } catch (err) {
+      alert('Failed to remove enrollment: ' + err.message);
+    }
+  };
+
+  const handleToggleRegistration = async (examId, currentlyOpen) => {
+    try {
+      if (currentlyOpen) {
+        await dbService.closeExamRegistration(examId);
+      } else {
+        await dbService.openExamRegistration(examId);
+      }
+      loadExtraData();
+    } catch (err) {
+      alert('Failed to update registration status: ' + err.message);
+    }
+  };
+
+  // ── Excel Import Handlers ─────────────────────────────────────────────────
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportFile(file);
+    setImportMsg('');
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const wb = XLSX.read(event.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        setImportPreview(rows.slice(0, 5)); // Preview first 5 rows
+      } catch (err) {
+        setImportMsg('❌ Could not read file. Please use .xlsx or .csv format.');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleImportSubmit = async () => {
+    if (!importFile) { setImportMsg('Please select a file first.'); return; }
+    setImporting(true);
+    setImportMsg('');
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const wb = XLSX.read(event.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const result = await dbService.importPastCandidates(rows);
+        setImportMsg(`✅ Imported ${result.inserted} candidates successfully!${result.errors.length > 0 ? ` (${result.errors.length} errors)` : ''}`);
+        setImportPreview([]);
+        setImportFile(null);
+        loadPastCandidates();
+        setImporting(false);
+      };
+      reader.readAsBinaryString(importFile);
+    } catch (err) {
+      setImportMsg('❌ Import failed: ' + err.message);
+      setImporting(false);
+    }
+  };
+
+  // ── Supervisor Handlers ───────────────────────────────────────────────────
+  const handleSaveSupervisor = async () => {
+    if (!supervisorForm.candidateUserId || !supervisorForm.supervisorName) {
+      setSupervisorMsg('❌ Please select a candidate and enter supervisor name.');
+      return;
+    }
+    setSavingSupervisor(true);
+    setSupervisorMsg('');
+    try {
+      await dbService.assignProjectSupervisor({
+        ...supervisorForm,
+        assignedBy: currentUser?.id
+      });
+      setSupervisorMsg('✅ Supervisor assigned successfully!');
+      setSupervisorForm({ candidateUserId: '', supervisorName: '', supervisorContact: '', projectTitle: '' });
+      loadExtraData();
+    } catch (err) {
+      setSupervisorMsg('❌ ' + (err.message || 'Failed to assign supervisor.'));
+    } finally {
+      setSavingSupervisor(false);
+    }
+  };
 
   const handleSaveSession = async () => {
     try {
@@ -143,10 +326,10 @@ export const AdminDashboard = () => {
 
   const handleDownloadReport = () => {
     if (submissions.length === 0) { alert('No submissions to download.'); return; }
-    let csv = 'S/N,Time,Name,Email,Phone,Association,Church,Exam,Score,Warnings,Time Spent,Rank Title,Rank Category\n';
+    let csv = 'S/N,Submitted At,Name,Email,DOB,Phone,Association,Church,Chapter,Address,Exam,Score,Warnings,Time Spent,Current Rank,Rank Category\n';
     submissions.forEach((sub, i) => {
       const u = userMap[sub.userId] || {};
-      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${escapeCSV(u.email || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(sub.examTitle || 'N/A')},${sub.scorePercentage}%,${sub.warningsCount},${escapeCSV(formatDuration(sub.durationSpent))},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))}\n`;
+      csv += `${i + 1},${escapeCSV(formatTime(sub.submittedAt))},${escapeCSV(sub.userName)},${escapeCSV(u.email || 'N/A')},${escapeCSV(u.dob || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(u.chapterName || 'N/A')},${escapeCSV(u.address || 'N/A')},${escapeCSV(sub.examTitle || 'N/A')},${sub.scorePercentage}%,${sub.warningsCount},${escapeCSV(formatDuration(sub.durationSpent))},${escapeCSV(u.rank || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -161,9 +344,9 @@ export const AdminDashboard = () => {
 
   const handleDownloadCandidates = () => {
     if (candidates.length === 0) { alert('No candidates to download.'); return; }
-    let csv = 'S/N,Name,Email,Association,Church,Rank Category,Rank Title,Phone\n';
+    let csv = 'S/N,Name,Email,DOB,Phone,Association,Church,Chapter,Address,Rank Category,Current Rank\n';
     candidates.forEach((u, i) => {
-      csv += `${i + 1},${escapeCSV(u.name)},${escapeCSV(u.email)},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${escapeCSV(u.rank || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')}\n`;
+      csv += `${i + 1},${escapeCSV(u.name)},${escapeCSV(u.email || 'N/A')},${escapeCSV(u.dob || 'N/A')},${escapeCSV(u.phoneNumber || 'N/A')},${escapeCSV(u.association || 'N/A')},${escapeCSV(u.church || 'N/A')},${escapeCSV(u.chapterName || 'N/A')},${escapeCSV(u.address || 'N/A')},${escapeCSV(getRankLabel(u.rankCategory))},${escapeCSV(u.rank || 'N/A')}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -215,8 +398,479 @@ export const AdminDashboard = () => {
     return '#10b981';
   };
 
+  // ── Shared Styles (local additions) ───────────────────────────────────────
+  const shortcutCardStyle = {
+    display: 'flex', alignItems: 'center', gap: '1.25rem',
+    padding: '2rem', border: '1px solid #e2e8f0', borderRadius: '12px',
+    textDecoration: 'none', backgroundColor: '#ffffff',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s'
+  };
+  const PaginationControlsSimple = ({ page, total, onPrev, onNext }) => (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', fontSize: '0.85rem' }}>
+      <button onClick={onPrev} disabled={page <= 1}
+        style={{ padding: '0.4rem 0.85rem', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: page <= 1 ? '#f8fafc' : '#ffffff', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontWeight: '600', color: '#475569' }}>
+        ← Prev
+      </button>
+      <span style={{ color: '#475569' }}>Page {page} of {total}</span>
+      <button onClick={onNext} disabled={page >= total}
+        style={{ padding: '0.4rem 0.85rem', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: page >= total ? '#f8fafc' : '#ffffff', cursor: page >= total ? 'not-allowed' : 'pointer', fontWeight: '600', color: '#475569' }}>
+        Next →
+      </button>
+    </div>
+  );
+
+  // ── PRO ADMIN VIEW ─────────────────────────────────────────────────────────
+  if (isProAdmin && currentTab !== 'gallery') {
+    return (
+      <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
+        <div style={{ marginBottom: '2.5rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000000' }}>PRO Admin Dashboard</h1>
+          <p style={{ color: '#475569', fontSize: '1rem', marginTop: '0.25rem' }}>
+            Manage public-facing content — blogs and gallery.
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+          <Link to="/admin/blogs" style={{ ...shortcutCardStyle, borderLeft: '4px solid #0a1141' }}>
+            <FileText size={32} color="#0a1141" />
+            <div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#000', margin: 0 }}>Manage Blogs</h3>
+              <p style={{ color: '#475569', fontSize: '0.88rem', marginTop: '0.25rem', margin: 0 }}>Create, edit, and publish announcements &amp; news posts.</p>
+            </div>
+          </Link>
+          <Link to="/admin?tab=gallery" style={{ ...shortcutCardStyle, borderLeft: '4px solid #ca8a04' }}>
+            <ImageIcon size={32} color="#ca8a04" />
+            <div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#000', margin: 0 }}>Manage Gallery</h3>
+              <p style={{ color: '#475569', fontSize: '0.88rem', marginTop: '0.25rem', margin: 0 }}>Upload photos and organize them by program category.</p>
+            </div>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ── REGISTRATIONS TAB (Super Admin) ────────────────────────────────────────
+  if (currentTab === 'registrations') {
+    const filteredCandidates = candidates.filter(u => {
+      const q = enrollSearchQuery.toLowerCase();
+      return (u.name || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.church || '').toLowerCase().includes(q) ||
+        (u.association || '').toLowerCase().includes(q);
+    });
+
+    return (
+      <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#000000' }}>Exam Registrations</h1>
+          <p style={{ color: '#475569', fontSize: '0.95rem' }}>
+            Enroll candidates into specific exams and control registration status. The 1-year rule is enforced automatically.
+          </p>
+        </div>
+
+        {/* Exam Selector & Registration Toggle */}
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem', marginBottom: '2rem', backgroundColor: '#f8fafc' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', marginBottom: '1.25rem' }}>Exam Registration Control</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {exams.map(exam => (
+              <div key={exam.id} style={{ padding: '1.25rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#000' }}>{exam.title}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    {RANK_CATEGORIES.find(r => r.value === exam.category)?.label} &bull; {enrollments.filter(e => e.examId === exam.id).length} enrolled
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleRegistration(exam.id, exam.registrationOpen !== false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                    padding: '0.45rem 0.9rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.8rem',
+                    border: 'none', cursor: 'pointer',
+                    backgroundColor: exam.registrationOpen !== false ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                    color: exam.registrationOpen !== false ? '#ef4444' : '#10b981'
+                  }}
+                >
+                  {exam.registrationOpen !== false ? <><Lock size={13} /> Close Registration</> : <><Unlock size={13} /> Open Registration</>}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Enroll Candidate */}
+        <div style={{ border: '2px solid #0a1141', borderRadius: '12px', padding: '1.75rem', marginBottom: '2rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', marginBottom: '1.25rem' }}>Enroll a Candidate</h3>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <select
+              value={selectedExamForEnroll}
+              onChange={e => setSelectedExamForEnroll(e.target.value)}
+              style={{ ...inputStyle, maxWidth: '320px', flex: 1 }}
+            >
+              <option value="">— Select Exam —</option>
+              {exams.map(e => (
+                <option key={e.id} value={e.id}>{e.title} ({RANK_CATEGORIES.find(r => r.value === e.category)?.label})</option>
+              ))}
+            </select>
+            <input
+              type="text" placeholder="Search candidates by name, email, church..."
+              value={enrollSearchQuery}
+              onChange={e => setEnrollSearchQuery(e.target.value)}
+              style={{ ...inputStyle, flex: 1 }}
+            />
+          </div>
+          {enrollMsg && (
+            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.88rem', fontWeight: '600',
+              backgroundColor: enrollMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              color: enrollMsg.startsWith('✅') ? '#059669' : '#dc2626',
+              border: `1px solid ${enrollMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
+            }}>{enrollMsg}</div>
+          )}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #000', fontSize: '0.82rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+                  {['Name', 'Email', 'Church', 'Association', 'Rank Category', 'Phone', 'DOB', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '0.75rem 0.5rem', textAlign: 'left', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCandidates.slice(0, 20).map(u => {
+                  const alreadyEnrolled = enrollments.some(e => e.userId === u.id && e.examId === selectedExamForEnroll);
+                  return (
+                    <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '0.88rem' }}>
+                      <td style={{ padding: '0.85rem 0.5rem', fontWeight: '600' }}>{u.name}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.email || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.church || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.association || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem' }}>
+                        <span style={{ padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', backgroundColor: 'rgba(10,17,65,0.08)', color: '#0a1141' }}>
+                          {getRankLabel(u.rankCategory)}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.phoneNumber || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.dob || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem' }}>
+                        {alreadyEnrolled ? (
+                          <span style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <CheckCircle size={13} /> Enrolled
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleEnrollCandidate(u.id, u.name)}
+                            disabled={enrolling || !selectedExamForEnroll}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: '#0a1141', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', opacity: enrolling ? 0.7 : 1 }}
+                          >
+                            <UserPlus size={13} /> Enroll
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Current Enrollments */}
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', marginBottom: '1.25rem' }}>
+            All Current Enrollments ({enrollments.length})
+          </h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #000', fontSize: '0.82rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+                  {['Candidate', 'Email', 'Church', 'Exam', 'Category', 'Enrolled', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '0.75rem 0.5rem', textAlign: 'left', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {enrollments.length > 0 ? enrollments.map(enr => (
+                  <tr key={enr.enrollmentId} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '0.88rem' }}>
+                    <td style={{ padding: '0.85rem 0.5rem', fontWeight: '600' }}>{enr.profile?.name || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{enr.profile?.email || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{enr.profile?.church || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', fontWeight: '600' }}>{enr.examTitle}</td>
+                    <td style={{ padding: '0.85rem 0.5rem' }}>
+                      <span style={{ padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', backgroundColor: 'rgba(10,17,65,0.08)', color: '#0a1141' }}>
+                        {getRankLabel(enr.examCategory)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#64748b', fontSize: '0.8rem' }}>
+                      {enr.registeredAt ? new Date(enr.registeredAt).toLocaleDateString('en-GB') : 'N/A'}
+                    </td>
+                    <td style={{ padding: '0.85rem 0.5rem' }}>
+                      <button
+                        onClick={() => handleRemoveEnrollment(enr.userId, enr.examId, enr.profile?.name)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '6px', padding: '0.35rem 0.65rem', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={12} /> Remove
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontStyle: 'italic' }}>No enrollments yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── IMPORT CANDIDATES TAB (Super Admin) ────────────────────────────────────
+  if (currentTab === 'import') {
+    const pagedPast = pastCandidates.slice((pastPage - 1) * itemsPerPage, pastPage * itemsPerPage);
+    const totalPastPages = Math.ceil(pastCandidates.length / itemsPerPage) || 1;
+
+    return (
+      <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#000000' }}>Import Past Candidates</h1>
+          <p style={{ color: '#475569', fontSize: '0.95rem' }}>
+            Upload an Excel or CSV file of past candidates. Required columns: <strong>Name, Email, Church, Association, RankCategory, Rank, Phone, Year</strong>
+          </p>
+        </div>
+
+        {/* Upload Panel */}
+        <div style={{ border: '2px solid #0a1141', borderRadius: '12px', padding: '2rem', marginBottom: '2rem', backgroundColor: '#ffffff' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', marginBottom: '1.25rem' }}>Upload File</h3>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#0a1141', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <Upload size={16} /> {importFile ? importFile.name : 'Select Excel / CSV File'}
+              <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} style={{ display: 'none' }} />
+            </label>
+            {importFile && (
+              <button onClick={handleImportSubmit} disabled={importing}
+                style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.75rem 1.5rem', fontWeight: '700', cursor: 'pointer', opacity: importing ? 0.7 : 1 }}>
+                {importing ? 'Importing...' : '✅ Confirm & Import'}
+              </button>
+            )}
+          </div>
+          {importMsg && (
+            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '600',
+              backgroundColor: importMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              color: importMsg.startsWith('✅') ? '#059669' : '#dc2626',
+              border: `1px solid ${importMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
+            }}>{importMsg}</div>
+          )}
+
+          {/* Preview */}
+          {importPreview.length > 0 && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <p style={{ fontSize: '0.82rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                Preview (first {importPreview.length} rows)
+              </p>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '700px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                      {Object.keys(importPreview[0] || {}).map(k => (
+                        <th key={k} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: '700', color: '#475569' }}>{k}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPreview.map((row, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        {Object.values(row).map((v, j) => (
+                          <td key={j} style={{ padding: '0.5rem 0.75rem', color: '#0f172a' }}>{String(v)}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Past Candidates Archive */}
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', margin: 0 }}>
+              Past Candidates Archive ({pastCandidates.length})
+            </h3>
+            <input type="text" placeholder="Search archive..." value={pastSearch}
+              onChange={e => { setPastSearch(e.target.value); setPastPage(1); loadPastCandidates(e.target.value); }}
+              style={{ ...inputStyle, maxWidth: '280px' }} />
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #000', fontSize: '0.82rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+                  {['S/N', 'Name', 'Email', 'Church', 'Association', 'Rank Category', 'Rank', 'Phone', 'Year', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '0.75rem 0.5rem', textAlign: 'left' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pagedPast.length > 0 ? pagedPast.map((pc, idx) => (
+                  <tr key={pc.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '0.85rem' }}>
+                    <td style={{ padding: '0.85rem 0.5rem' }}>{(pastPage - 1) * itemsPerPage + idx + 1}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', fontWeight: '600' }}>{pc.name}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{pc.email || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{pc.church || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{pc.association || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem' }}>
+                      <span style={{ padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', backgroundColor: 'rgba(10,17,65,0.08)', color: '#0a1141' }}>
+                        {getRankLabel(pc.rankCategory)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{pc.rank || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{pc.phone || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569', fontWeight: '700' }}>{pc.year || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem' }}>
+                      <button onClick={async () => { if (window.confirm(`Delete ${pc.name}?`)) { await dbService.deletePastCandidate(pc.id); loadPastCandidates(pastSearch); } }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', backgroundColor: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '6px', padding: '0.35rem 0.65rem', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}>
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={10} style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontStyle: 'italic' }}>No past candidates imported yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <PaginationControlsSimple page={pastPage} total={totalPastPages} onPrev={() => setPastPage(p => Math.max(1, p - 1))} onNext={() => setPastPage(p => Math.min(totalPastPages, p + 1))} />
+        </div>
+      </div>
+    );
+  }
+
+  // ── SUPERVISORS TAB (Super Admin) ──────────────────────────────────────────
+  if (currentTab === 'supervisors') {
+    return (
+      <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#000000' }}>Project Supervisors</h1>
+          <p style={{ color: '#475569', fontSize: '0.95rem' }}>
+            Assign supervisors to Ambassador Extraordinary candidates and view their uploaded project documents.
+          </p>
+        </div>
+
+        {/* Assign Supervisor Form */}
+        <div style={{ border: '2px solid #9333ea', borderRadius: '12px', padding: '2rem', marginBottom: '2rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#9333ea', marginBottom: '1.25rem' }}>Assign New Supervisor</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <label style={labelStyle}>Candidate (Amb. Extraordinary)</label>
+              <select value={supervisorForm.candidateUserId}
+                onChange={e => setSupervisorForm(f => ({ ...f, candidateUserId: e.target.value }))}
+                style={inputStyle}>
+                <option value="">— Select Candidate —</option>
+                {ambExCandidates.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} — {c.church || 'N/A'}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Supervisor Name *</label>
+              <input type="text" placeholder="e.g. Amb. Adewale Ogun" value={supervisorForm.supervisorName}
+                onChange={e => setSupervisorForm(f => ({ ...f, supervisorName: e.target.value }))}
+                style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Supervisor Contact</label>
+              <input type="text" placeholder="Phone or email" value={supervisorForm.supervisorContact}
+                onChange={e => setSupervisorForm(f => ({ ...f, supervisorContact: e.target.value }))}
+                style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Project Title</label>
+              <input type="text" placeholder="e.g. Evangelism Strategies in Urban Lagos" value={supervisorForm.projectTitle}
+                onChange={e => setSupervisorForm(f => ({ ...f, projectTitle: e.target.value }))}
+                style={inputStyle} />
+            </div>
+          </div>
+          {supervisorMsg && (
+            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.88rem', fontWeight: '600',
+              backgroundColor: supervisorMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              color: supervisorMsg.startsWith('✅') ? '#059669' : '#dc2626',
+              border: `1px solid ${supervisorMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
+            }}>{supervisorMsg}</div>
+          )}
+          <button onClick={handleSaveSupervisor} disabled={savingSupervisor}
+            style={{ backgroundColor: '#9333ea', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.8rem 2rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: savingSupervisor ? 0.7 : 1 }}>
+            <Save size={16} /> {savingSupervisor ? 'Saving...' : 'Assign Supervisor'}
+          </button>
+        </div>
+
+        {/* Supervisor Assignments */}
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem', marginBottom: '2rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', marginBottom: '1.25rem' }}>Current Assignments ({supervisors.length})</h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #000', fontSize: '0.82rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+                  {['Candidate', 'Church', 'Supervisor', 'Contact', 'Project Title', 'Date', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '0.75rem 0.5rem', textAlign: 'left' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {supervisors.length > 0 ? supervisors.map(sv => (
+                  <tr key={sv.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '0.88rem' }}>
+                    <td style={{ padding: '0.85rem 0.5rem', fontWeight: '600' }}>{sv.candidate?.name || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{sv.candidate?.church || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', fontWeight: '600', color: '#9333ea' }}>{sv.supervisorName}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{sv.supervisorContact || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{sv.projectTitle || 'N/A'}</td>
+                    <td style={{ padding: '0.85rem 0.5rem', color: '#64748b', fontSize: '0.8rem' }}>
+                      {sv.assignedAt ? new Date(sv.assignedAt).toLocaleDateString('en-GB') : 'N/A'}
+                    </td>
+                    <td style={{ padding: '0.85rem 0.5rem' }}>
+                      <button onClick={async () => { if (window.confirm('Remove this supervisor assignment?')) { await dbService.deleteProjectSupervisor(sv.id); loadExtraData(); } }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', backgroundColor: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '6px', padding: '0.35rem 0.65rem', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer' }}>
+                        <Trash2 size={12} /> Remove
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontStyle: 'italic' }}>No supervisor assignments yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Project Submissions */}
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', marginBottom: '1.25rem' }}>
+            Submitted Projects ({projectSubs.length})
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {projectSubs.length > 0 ? projectSubs.map(ps => (
+              <div key={ps.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>{ps.candidate?.name || 'N/A'}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.15rem' }}>
+                    {ps.candidate?.church || 'N/A'} &bull; Uploaded {ps.uploadedAt ? new Date(ps.uploadedAt).toLocaleDateString('en-GB') : 'N/A'}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.15rem' }}>{ps.fileName}</div>
+                </div>
+                <a href={ps.fileUrl} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#9333ea', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.82rem', textDecoration: 'none' }}>
+                  <Eye size={13} /> View Project
+                </a>
+              </div>
+            )) : (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', fontStyle: 'italic' }}>No project files uploaded yet.</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── GALLERY TAB ────────────────────────────────────────────────────────────
   if (currentTab === 'gallery') {
+
     const categories = [...GALLERY_CATEGORIES];
     photos.forEach(p => {
       if (p.category && !categories.includes(p.category)) {
@@ -430,29 +1084,31 @@ export const AdminDashboard = () => {
         <div style={{ borderTop: '2px solid #000000', paddingTop: '1rem', overflowX: 'auto' }}>
           {filtered.length > 0 ? (
             <>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1200px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #000000', fontSize: '1rem', color: '#000000', fontFamily: 'var(--font-heading)' }}>
-                    {['S/N', 'Name', 'Email', 'Association', 'Church', 'Rank Category', 'Phone', 'Action'].map(h => (
-                      <th key={h} style={{ padding: '1rem 0.5rem', fontWeight: '800' }}>{h}</th>
+                  <tr style={{ borderBottom: '2px solid #000000', fontSize: '0.8rem', color: '#475569', fontFamily: 'var(--font-heading)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {['S/N', 'Name', 'Email', 'DOB', 'Phone', 'Association', 'Church', 'Rank Category', 'Current Rank / Title', 'Action'].map(h => (
+                      <th key={h} style={{ padding: '0.85rem 0.5rem', fontWeight: '800' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((u, idx) => (
-                    <tr key={u.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#000000' }}>
-                      <td style={{ padding: '1rem 0.5rem' }}>{(candidatePage - 1) * itemsPerPage + idx + 1}</td>
-                      <td style={{ padding: '1rem', fontWeight: '500' }}>{u.name}</td>
-                      <td style={{ padding: '1rem', color: '#475569' }}>{u.email}</td>
-                      <td style={{ padding: '1rem', color: '#475569' }}>{u.association || 'N/A'}</td>
-                      <td style={{ padding: '1rem', color: '#475569' }}>{u.church || 'N/A'}</td>
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: 'rgba(10,17,65,0.08)', color: '#0a1141' }}>
+                    <tr key={u.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '0.88rem', color: '#000000' }}>
+                      <td style={{ padding: '0.85rem 0.5rem' }}>{(candidatePage - 1) * itemsPerPage + idx + 1}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', fontWeight: '700' }}>{u.name}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.email || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.dob || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.phoneNumber || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.association || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#475569' }}>{u.church || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem' }}>
+                        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', backgroundColor: 'rgba(10,17,65,0.08)', color: '#0a1141' }}>
                           {getRankLabel(u.rankCategory)}
                         </span>
                       </td>
-                      <td style={{ padding: '1rem', color: '#475569' }}>{u.phoneNumber || 'N/A'}</td>
-                      <td style={{ padding: '1rem' }}>
+                      <td style={{ padding: '0.85rem 0.5rem', color: '#64748b', fontSize: '0.83rem' }}>{u.rank || 'N/A'}</td>
+                      <td style={{ padding: '0.85rem 0.5rem' }}>
                         <button
                           onClick={() => handleDeleteCandidate(u.id, u.name)}
                           style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}
@@ -465,6 +1121,7 @@ export const AdminDashboard = () => {
                 </tbody>
               </table>
               <PaginationControls page={candidatePage} total={totalPages} onPrev={() => setCandidatePage(p => Math.max(1, p - 1))} onNext={() => setCandidatePage(p => Math.min(totalPages, p + 1))} />
+
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b', fontStyle: 'italic' }}>No candidates found.</div>

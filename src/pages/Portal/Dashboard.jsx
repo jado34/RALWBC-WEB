@@ -4,10 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { dbService, getRankLabel } from '../../services/db';
 import {
   BookOpen, CheckCircle, Clock, ShieldAlert,
-  ArrowRight, User, CalendarClock, Lock, Timer
+  ArrowRight, User, CalendarClock, Lock, Timer, AlertTriangle, Upload
 } from 'lucide-react';
-// seededShuffle is used only in Examination.jsx; import removed (was duplicate dead code)
-
 
 export const Dashboard = () => {
   const { currentUser } = useAuth();
@@ -17,7 +15,9 @@ export const Dashboard = () => {
   const [selectedExamId, setSelectedExamId] = useState(null);
   const [session, setSession] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
-  const [countdown, setCountdown] = useState(null); // { d, h, m, s }
+  const [countdown, setCountdown] = useState(null);
+  const [eligibilityDate, setEligibilityDate] = useState(null); // 1-year rule
+  const [projectSubmissions, setProjectSubmissions] = useState([]);
   const navigate = useNavigate();
   const countdownRef = useRef(null);
   const sessionPollRef = useRef(null);
@@ -27,16 +27,38 @@ export const Dashboard = () => {
 
     const loadData = async () => {
       try {
-        const examsData = await dbService.getExams();
-        const allExams = examsData.filter(
-          e => e.isActive && (!e.category || !currentUser.rankCategory || e.category === currentUser.rankCategory)
-        );
-        setExams(allExams);
+        // Get exams the admin has enrolled this student in
+        const enrolledList = await dbService.getEnrolledExamsForUser(currentUser.id);
+        const enrolledIds = new Set(enrolledList.map(e => e.examId));
 
+        if (enrolledIds.size === 0) {
+          setExams([]);
+        } else {
+          const allExams = await dbService.getExams();
+          // Only show enrolled active exams
+          const myExams = allExams.filter(e => e.isActive && enrolledIds.has(e.id));
+          setExams(myExams);
+        }
+
+        // Submissions map
         const subs = await dbService.getSubmissionsByUser(currentUser.id);
         const subMap = {};
         subs.forEach(s => { subMap[s.examId] = s; });
         setSubmissions(subMap);
+
+        // Check 1-year cooldown (for Amb. Extraordinary candidates)
+        if (currentUser.rankCategory === 'ambassador_extraordinary') {
+          const date = await dbService.getAmbassadorExtraordinaryEligibilityDate(currentUser.id);
+          if (date && date > new Date()) {
+            setEligibilityDate(date);
+          }
+        }
+
+        // Load project submissions if Amb. Extraordinary
+        if (currentUser.rankCategory === 'ambassador_extraordinary') {
+          const projSubs = await dbService.getProjectSubmissions(currentUser.id);
+          setProjectSubmissions(projSubs);
+        }
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
       }
@@ -59,7 +81,7 @@ export const Dashboard = () => {
       await loadData();
       const { session: s, active } = await loadSession();
 
-      // ── Countdown timer to session open ─────────────────────────────────────
+      // Countdown timer to session open
       if (!active && s && s.startDate) {
         const tick = () => {
           const now    = new Date();
@@ -84,14 +106,13 @@ export const Dashboard = () => {
 
     initDashboard();
 
-    // ── Session polling — re-check every 60s ────────────────────────────────
+    // Session polling — re-check every 60s
     sessionPollRef.current = setInterval(async () => {
       const newActive = await dbService.isSessionActive();
       setSessionActive(newActive);
       if (newActive) {
         clearInterval(countdownRef.current);
         setCountdown(null);
-        // Reload exams when session opens
         loadData();
       }
     }, 60000);
@@ -120,6 +141,8 @@ export const Dashboard = () => {
 
   const pad = (n) => String(n).padStart(2, '0');
 
+  const isAmbExtraordinaryLocked = eligibilityDate && eligibilityDate > new Date();
+
   return (
     <div className="animate-fade-in" style={{ padding: '3rem 0' }}>
       <section className="container">
@@ -145,15 +168,35 @@ export const Dashboard = () => {
           </Link>
         </div>
 
-        {/* ── Session Status Banner ───────────────────────────────────────── */}
+        {/* 1-Year Wait Banner for Amb. Extraordinary */}
+        {isAmbExtraordinaryLocked && (
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: '1rem',
+            padding: '1.25rem 1.75rem', marginBottom: '2rem', borderRadius: '12px',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            background: 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(18,24,38,0.7) 100%)',
+          }}>
+            <AlertTriangle size={22} color="#ef4444" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+            <div>
+              <p style={{ fontWeight: '700', fontSize: '1rem', color: '#ef4444', marginBottom: '0.25rem' }}>
+                Ambassador Extraordinary Exam — 1 Year Wait Active
+              </p>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                You wrote the Ambassador exam within the last year. You will be eligible to sit the
+                Ambassador Extraordinary exam from{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {eligibilityDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Session Status Banner */}
         {!sessionActive && (
           <div style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '1rem',
-            padding: '1.25rem 1.75rem',
-            marginBottom: '2rem',
-            borderRadius: '12px',
+            display: 'flex', alignItems: 'flex-start', gap: '1rem',
+            padding: '1.25rem 1.75rem', marginBottom: '2rem', borderRadius: '12px',
             border: '1px solid rgba(234, 179, 8, 0.35)',
             background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(18, 24, 38, 0.7) 100%)',
             boxShadow: '0 4px 20px rgba(234, 179, 8, 0.08)'
@@ -186,12 +229,9 @@ export const Dashboard = () => {
                     { label: 'Secs', val: countdown.s }
                   ].map(({ label, val }) => (
                     <div key={label} style={{
-                      textAlign: 'center',
-                      padding: '0.5rem 0.85rem',
-                      borderRadius: '8px',
+                      textAlign: 'center', padding: '0.5rem 0.85rem', borderRadius: '8px',
                       backgroundColor: 'rgba(234, 179, 8, 0.12)',
-                      border: '1px solid rgba(234,179,8,0.3)',
-                      minWidth: '56px'
+                      border: '1px solid rgba(234,179,8,0.3)', minWidth: '56px'
                     }}>
                       <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#eab308', fontFamily: 'monospace', lineHeight: 1 }}>
                         {pad(val)}
@@ -220,7 +260,7 @@ export const Dashboard = () => {
           {/* Main Exams List */}
           <div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <BookOpen size={20} color="var(--accent)" /> Available Ranking Exams
+              <BookOpen size={20} color="var(--accent)" /> My Registered Exams
             </h2>
 
             {exams.length > 0 ? (
@@ -228,18 +268,19 @@ export const Dashboard = () => {
                 {exams.map(exam => {
                   const submission = submissions[exam.id];
                   const isSubmitted = !!submission;
+                  const isAmbExtraordinary = exam.category === 'ambassador_extraordinary';
+                  const isLocked = isAmbExtraordinary && isAmbExtraordinaryLocked;
 
-                  // Generate deterministic shuffled question order for preview count (actual shuffle in Examination.jsx)
                   return (
                     <div
                       key={exam.id}
                       className="glass-panel"
                       style={{
                         padding: '2rem',
-                        borderLeft: isSubmitted ? '4px solid var(--success)' : '4px solid var(--primary)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem'
+                        borderLeft: isLocked
+                          ? '4px solid #ef4444'
+                          : isSubmitted ? '4px solid var(--success)' : '4px solid var(--primary)',
+                        display: 'flex', flexDirection: 'column', gap: '1rem'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -247,6 +288,10 @@ export const Dashboard = () => {
                         {isSubmitted ? (
                           <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                             <CheckCircle size={12} /> Submitted &amp; Marked
+                          </span>
+                        ) : isLocked ? (
+                          <span style={{ padding: '0.25rem 0.65rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                            Eligibility Lock Active
                           </span>
                         ) : (
                           <span className="badge badge-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -260,14 +305,9 @@ export const Dashboard = () => {
                       </p>
 
                       <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        borderTop: '1px solid var(--border-color)',
-                        paddingTop: '1rem',
-                        marginTop: '0.5rem',
-                        flexWrap: 'wrap',
-                        gap: '1rem'
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem',
+                        flexWrap: 'wrap', gap: '1rem'
                       }}>
                         <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                           <div><strong>Questions:</strong> {exam.questions.length} items</div>
@@ -283,6 +323,11 @@ export const Dashboard = () => {
                               Submitted on {new Date(submission.submittedAt).toLocaleDateString()}
                             </span>
                           </div>
+                        ) : isLocked ? (
+                          <button disabled className="btn btn-secondary btn-sm"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', opacity: 0.55, cursor: 'not-allowed' }}>
+                            <Lock size={13} /> Locked — Wait until {eligibilityDate.toLocaleDateString('en-GB')}
+                          </button>
                         ) : sessionActive ? (
                           <button
                             onClick={() => handleStartExam(exam.id)}
@@ -308,12 +353,55 @@ export const Dashboard = () => {
             ) : (
               <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
                 <Clock size={40} style={{ marginBottom: '1rem', color: 'var(--text-muted)' }} />
-                <p>No active exams are assigned to your rank at this moment.</p>
+                <p>You have not been enrolled in any exams yet.</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  Please check back during the designated annual conference calendar dates.
+                  Please contact the conference Ranking Officer to be enrolled in your examination.
                 </p>
               </div>
             )}
+
+            {/* Project Quick-Action Card (Amb. Extraordinary only) */}
+            {currentUser.rankCategory === 'ambassador_extraordinary' && (
+              <div className="glass-panel" style={{
+                padding: '2rem', marginTop: '2rem',
+                borderLeft: '4px solid #9333ea',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                flexWrap: 'wrap', gap: '1.25rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{
+                    width: '48px', height: '48px', borderRadius: '12px',
+                    backgroundColor: 'rgba(147,51,234,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                  }}>
+                    <Upload size={22} color="#9333ea" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: '800', margin: '0 0 0.2rem 0' }}>
+                      Project Document Submission
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                      {projectSubmissions.length > 0
+                        ? `${projectSubmissions.length} document${projectSubmissions.length > 1 ? 's' : ''} uploaded — submit your final reviewed version`
+                        : 'Upload your reviewed Ambassador Extraordinary project document'}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/project"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                    backgroundColor: '#9333ea', color: '#fff',
+                    padding: '0.7rem 1.5rem', borderRadius: '8px',
+                    fontWeight: '700', fontSize: '0.9rem', textDecoration: 'none',
+                    flexShrink: 0
+                  }}
+                >
+                  <Upload size={15} /> {projectSubmissions.length > 0 ? 'Manage Submissions' : 'Upload Project'}
+                </Link>
+              </div>
+            )}
+
           </div>
 
           {/* Sidebar Guidelines */}
@@ -335,16 +423,11 @@ export const Dashboard = () => {
 
             {/* Live status pill */}
             <div style={{
-              marginTop: '0.5rem',
-              padding: '0.75rem',
-              borderRadius: '8px',
+              marginTop: '0.5rem', padding: '0.75rem', borderRadius: '8px',
               backgroundColor: sessionActive ? 'rgba(16, 185, 129, 0.08)' : 'rgba(234, 179, 8, 0.08)',
               border: `1px solid ${sessionActive ? 'rgba(16,185,129,0.25)' : 'rgba(234,179,8,0.25)'}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.8rem',
-              fontWeight: '600',
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              fontSize: '0.8rem', fontWeight: '600',
               color: sessionActive ? '#10b981' : '#eab308'
             }}>
               <span style={{

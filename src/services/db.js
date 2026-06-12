@@ -132,6 +132,7 @@ export const dbService = {
     if (fields.address !== undefined) dbFields.address = fields.address;
     if (fields.chapterName !== undefined) dbFields.chapter_name = fields.chapterName;
     if (fields.association !== undefined) dbFields.association = fields.association;
+    if (fields.avatar !== undefined) dbFields.avatar = fields.avatar;
     if (fields.rankCategory !== undefined) dbFields.rank_category = fields.rankCategory || null;
     if (fields.rank !== undefined) dbFields.rank = fields.rank;
     if (fields.role !== undefined) dbFields.role = fields.role;
@@ -173,6 +174,7 @@ export const dbService = {
       address: data.address,
       chapterName: data.chapter_name,
       association: data.association,
+      avatar: data.avatar,
       rankCategory: data.rank_category,
       rank: data.rank,
       email: data.email
@@ -242,7 +244,9 @@ export const dbService = {
       category: examData.category,
       duration: examData.duration,
       is_active: examData.isActive !== undefined ? examData.isActive : true,
-      questions: examData.questions || []
+      questions: examData.questions || [],
+      registration_open: examData.registrationOpen !== undefined ? examData.registrationOpen : true,
+      registration_deadline: examData.registrationDeadline || null,
     };
 
     let id = examData.id;
@@ -268,6 +272,304 @@ export const dbService = {
       .delete()
       .eq('id', id);
     if (error) throw error;
+  },
+
+  // ── Exam Enrollment Operations (Super Admin Controlled) ───────────────────
+
+  async enrollCandidateInExam(userId, examId, enrolledBy = null) {
+    const id = 'enr_' + Math.random().toString(36).substr(2, 9);
+    const { error } = await supabase
+      .from('exam_registrations')
+      .upsert({ id, user_id: userId, exam_id: examId, enrolled_by: enrolledBy });
+    if (error) throw error;
+    return { id, userId, examId };
+  },
+
+  async removeEnrollment(userId, examId) {
+    const { error } = await supabase
+      .from('exam_registrations')
+      .delete()
+      .eq('user_id', userId)
+      .eq('exam_id', examId);
+    if (error) throw error;
+  },
+
+  async getEnrolledExamsForUser(userId) {
+    const { data, error } = await supabase
+      .from('exam_registrations')
+      .select('exam_id, registered_at')
+      .eq('user_id', userId);
+    if (error) throw error;
+    return (data || []).map(r => ({ examId: r.exam_id, registeredAt: r.registered_at }));
+  },
+
+  async getEnrollmentsForExam(examId) {
+    const { data, error } = await supabase
+      .from('exam_registrations')
+      .select('*, profiles(*)')
+      .eq('exam_id', examId);
+    if (error) throw error;
+    return (data || []).map(r => ({
+      enrollmentId: r.id,
+      userId: r.user_id,
+      examId: r.exam_id,
+      registeredAt: r.registered_at,
+      profile: r.profiles ? {
+        id: r.profiles.id,
+        name: r.profiles.name,
+        email: r.profiles.email,
+        phone: r.profiles.phone || r.profiles.phone_number,
+        church: r.profiles.church,
+        association: r.profiles.association,
+        rankCategory: r.profiles.rank_category,
+        rank: r.profiles.rank,
+        dob: r.profiles.dob,
+        address: r.profiles.address,
+        chapterName: r.profiles.chapter_name,
+      } : {}
+    }));
+  },
+
+  async getAllEnrollments() {
+    const { data, error } = await supabase
+      .from('exam_registrations')
+      .select('*, profiles(*), exams(id, title, category)')
+      .order('registered_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(r => ({
+      enrollmentId: r.id,
+      userId: r.user_id,
+      examId: r.exam_id,
+      registeredAt: r.registered_at,
+      examTitle: r.exams?.title || 'N/A',
+      examCategory: r.exams?.category || 'N/A',
+      profile: r.profiles ? {
+        id: r.profiles.id,
+        name: r.profiles.name,
+        email: r.profiles.email,
+        phone: r.profiles.phone || r.profiles.phone_number,
+        church: r.profiles.church,
+        association: r.profiles.association,
+        rankCategory: r.profiles.rank_category,
+        rank: r.profiles.rank,
+        dob: r.profiles.dob,
+        address: r.profiles.address,
+        chapterName: r.profiles.chapter_name,
+      } : {}
+    }));
+  },
+
+  async closeExamRegistration(examId) {
+    const { error } = await supabase
+      .from('exams')
+      .update({ registration_open: false })
+      .eq('id', examId);
+    if (error) throw error;
+  },
+
+  async openExamRegistration(examId) {
+    const { error } = await supabase
+      .from('exams')
+      .update({ registration_open: true })
+      .eq('id', examId);
+    if (error) throw error;
+  },
+
+  // Check if registration is open for an exam (considers deadline + manual toggle)
+  async isRegistrationOpen(examId) {
+    const { data, error } = await supabase
+      .from('exams')
+      .select('registration_open, registration_deadline')
+      .eq('id', examId)
+      .maybeSingle();
+    if (error || !data) return false;
+    if (!data.registration_open) return false;
+    if (data.registration_deadline) {
+      const deadline = new Date(data.registration_deadline);
+      if (new Date() > deadline) return false;
+    }
+    return true;
+  },
+
+  // Check if a candidate wrote Ambassador exam within the last 365 days
+  async hasRecentAmbassadorSubmission(userId) {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('submitted_at, exam_id, exams(category)')
+      .eq('user_id', userId);
+    if (error) return false;
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    return (data || []).some(s => {
+      const isAmbassador = s.exams?.category === 'ambassador';
+      const submittedRecently = new Date(s.submitted_at) > oneYearAgo;
+      return isAmbassador && submittedRecently;
+    });
+  },
+
+  // Get the date when a candidate becomes eligible for Ambassador Extraordinary
+  async getAmbassadorExtraordinaryEligibilityDate(userId) {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('submitted_at, exams(category)')
+      .eq('user_id', userId)
+      .order('submitted_at', { ascending: false });
+    if (error || !data) return null;
+    const latest = (data || []).find(s => s.exams?.category === 'ambassador');
+    if (!latest) return null;
+    const eligibleDate = new Date(latest.submitted_at);
+    eligibleDate.setFullYear(eligibleDate.getFullYear() + 1);
+    return eligibleDate;
+  },
+
+  // ── Past Candidates Import ────────────────────────────────────────────────
+
+  async importPastCandidates(rows) {
+    const records = rows.map(row => ({
+      id: 'pc_' + Math.random().toString(36).substr(2, 9),
+      name: row.name || row.Name || '',
+      email: row.email || row.Email || '',
+      church: row.church || row.Church || '',
+      association: row.association || row.Association || '',
+      rank_category: row.rankCategory || row.RankCategory || row['Rank Category'] || '',
+      rank: row.rank || row.Rank || '',
+      phone: row.phone || row.Phone || '',
+      year: parseInt(row.year || row.Year || new Date().getFullYear()) || null,
+    })).filter(r => r.name.trim());
+
+    if (records.length === 0) return { inserted: 0, errors: [] };
+
+    const errors = [];
+    let inserted = 0;
+    // Batch insert in chunks of 50
+    for (let i = 0; i < records.length; i += 50) {
+      const chunk = records.slice(i, i + 50);
+      const { error } = await supabase.from('past_candidates').insert(chunk);
+      if (error) {
+        errors.push(error.message);
+      } else {
+        inserted += chunk.length;
+      }
+    }
+    return { inserted, errors };
+  },
+
+  async getPastCandidates(searchQuery = '') {
+    let query = supabase.from('past_candidates').select('*').order('year', { ascending: false });
+    if (searchQuery) {
+      query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,church.ilike.%${searchQuery}%,association.ilike.%${searchQuery}%`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(r => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      church: r.church,
+      association: r.association,
+      rankCategory: r.rank_category,
+      rank: r.rank,
+      phone: r.phone,
+      year: r.year,
+      importedAt: r.imported_at,
+    }));
+  },
+
+  async deletePastCandidate(id) {
+    const { error } = await supabase.from('past_candidates').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  // ── Project Supervisors ───────────────────────────────────────────────────
+
+  async assignProjectSupervisor(data) {
+    const id = data.id || ('ps_' + Math.random().toString(36).substr(2, 9));
+    const record = {
+      id,
+      candidate_user_id: data.candidateUserId,
+      supervisor_name: data.supervisorName,
+      supervisor_contact: data.supervisorContact || '',
+      project_title: data.projectTitle || '',
+      assigned_by: data.assignedBy || null,
+    };
+    const { error } = await supabase.from('project_supervisors').upsert(record);
+    if (error) throw error;
+    return { ...data, id };
+  },
+
+  async getProjectSupervisors() {
+    const { data, error } = await supabase
+      .from('project_supervisors')
+      .select('*, profiles!candidate_user_id(id, name, email, church, association, rank_category)')
+      .order('assigned_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(r => ({
+      id: r.id,
+      candidateUserId: r.candidate_user_id,
+      supervisorName: r.supervisor_name,
+      supervisorContact: r.supervisor_contact,
+      projectTitle: r.project_title,
+      assignedAt: r.assigned_at,
+      candidate: r.profiles ? {
+        name: r.profiles.name,
+        email: r.profiles.email,
+        church: r.profiles.church,
+        association: r.profiles.association,
+        rankCategory: r.profiles.rank_category,
+      } : null,
+    }));
+  },
+
+  async deleteProjectSupervisor(id) {
+    const { error } = await supabase.from('project_supervisors').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  // ── Project File Uploads ──────────────────────────────────────────────────
+
+  async uploadProjectFile(userId, file) {
+    const ext = file.name.split('.').pop();
+    const path = `projects/${userId}/${Date.now()}.${ext}`;
+    const { data, error } = await supabase.storage
+      .from('project-files')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage.from('project-files').getPublicUrl(path);
+    // Save reference in project_submissions table
+    const subId = 'pf_' + Math.random().toString(36).substr(2, 9);
+    await supabase.from('project_submissions').upsert({
+      id: subId,
+      user_id: userId,
+      file_url: publicUrl,
+      file_name: file.name,
+      file_path: path,
+      uploaded_at: new Date().toISOString(),
+    });
+    return { url: publicUrl, fileName: file.name, path };
+  },
+
+  async getProjectSubmissions(userId = null) {
+    let query = supabase
+      .from('project_submissions')
+      .select('*, profiles(id, name, email, church, association, rank_category)')
+      .order('uploaded_at', { ascending: false });
+    if (userId) query = query.eq('user_id', userId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(r => ({
+      id: r.id,
+      userId: r.user_id,
+      fileUrl: r.file_url,
+      fileName: r.file_name,
+      uploadedAt: r.uploaded_at,
+      candidate: r.profiles ? {
+        name: r.profiles.name,
+        email: r.profiles.email,
+        church: r.profiles.church,
+        association: r.profiles.association,
+        rankCategory: r.profiles.rank_category,
+      } : null,
+    }));
   },
 
   // ── Submission Operations ─────────────────────────────────────────────────

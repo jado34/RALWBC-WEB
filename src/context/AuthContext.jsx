@@ -37,7 +37,8 @@ export const AuthProvider = ({ children }) => {
               chapterName: profile.chapter_name,
               association: profile.association,
               rankCategory: profile.rank_category,
-              rank: profile.rank
+              rank: profile.rank,
+              avatar: profile.avatar
             });
           }
         }
@@ -73,7 +74,8 @@ export const AuthProvider = ({ children }) => {
             chapterName: profile.chapter_name,
             association: profile.association,
             rankCategory: profile.rank_category,
-            rank: profile.rank
+            rank: profile.rank,
+            avatar: profile.avatar
           });
         }
       } else {

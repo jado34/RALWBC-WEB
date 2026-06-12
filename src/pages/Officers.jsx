@@ -166,7 +166,7 @@ export const Officers = () => {
           ) : (
             <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
               <Shield size={40} color="#e2e8f0" style={{ marginBottom: '1rem' }} />
-              <p style={{ fontSize: '0.9rem' }}>No additional officers registered yet.</p>
+              <p style={{ fontSize: '0.9rem' }}>No officers yet.</p>
             </div>
           )}
         </div>
@@ -180,7 +180,7 @@ export const Officers = () => {
               RALWBC · {new Date().getFullYear()}
             </p>
             <p style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: '800', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}>
-              Serving the Lagos West Baptist Conference with honour.
+              Serving the Royal Ambassador Lagos West Baptist Conference with honour.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>

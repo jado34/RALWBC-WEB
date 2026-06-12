@@ -357,7 +357,7 @@ export const ManageExams = () => {
                 />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', height: '100%', paddingTop: '1.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: '600' }}>
                   <input
                     type="checkbox"
@@ -365,9 +365,33 @@ export const ManageExams = () => {
                     onChange={(e) => handleExamChange('isActive', e.target.checked)}
                     style={{ width: '1.25rem', height: '1.25rem', accentColor: '#0a1141' }}
                   />
-                  <span>Active & Live (Candidates can access it)</span>
+                  <span>Active &amp; Live (Candidates can access it)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: '600' }}>
+                  <input
+                    type="checkbox"
+                    checked={editingExam.registrationOpen !== false}
+                    onChange={(e) => handleExamChange('registrationOpen', e.target.checked)}
+                    style={{ width: '1.25rem', height: '1.25rem', accentColor: '#16a34a' }}
+                  />
+                  <span style={{ color: editingExam.registrationOpen !== false ? '#16a34a' : '#ef4444' }}>
+                    Registration Open
+                  </span>
                 </label>
               </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '2rem' }}>
+              <label style={labelStyle}>Registration Deadline (optional)</label>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem', marginTop: '-0.25rem' }}>
+                After this date/time, no new enrollments can be made. Leave blank for no deadline.
+              </p>
+              <input
+                type="datetime-local"
+                value={editingExam.registrationDeadline ? editingExam.registrationDeadline.replace('Z', '') : ''}
+                onChange={(e) => handleExamChange('registrationDeadline', e.target.value ? new Date(e.target.value).toISOString() : null)}
+                style={inputStyle}
+              />
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>

@@ -15,7 +15,7 @@ export const AdminLogin = () => {
   // Redirect if already logged in
   React.useEffect(() => {
     if (currentUser) {
-      navigate(currentUser.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+      navigate(currentUser.role === 'admin' || currentUser.role === 'pro_admin' ? '/admin' : '/dashboard', { replace: true });
     }
   }, [currentUser, navigate]);
 
@@ -25,7 +25,7 @@ export const AdminLogin = () => {
     setIsSubmitting(true);
     try {
       const user = await login(email, password);
-      if (user.role !== 'admin') {
+      if (user.role !== 'admin' && user.role !== 'pro_admin') {
         // Block non-admin accounts from this portal
         setError('This portal is for conference administrators only. Please use the Member Portal to sign in.');
         localStorage.removeItem('ralwbc_current_user');

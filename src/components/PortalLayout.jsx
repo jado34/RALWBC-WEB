@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, User, BookOpen, FileText, LogOut, Menu, X, Trophy, Users, Image, Globe } from 'lucide-react';
+import { LayoutDashboard, User, BookOpen, FileText, LogOut, Menu, X, Trophy, Users, Image, Globe, FolderOpen } from 'lucide-react';
 
 export const PortalLayout = ({ children }) => {
   const { currentUser, logout } = useAuth();
@@ -13,40 +13,46 @@ export const PortalLayout = ({ children }) => {
   if (!currentUser) return <>{children}</>;
 
   const isAdmin = currentUser.role === 'admin';
+  const isProAdmin = currentUser.role === 'pro_admin';
+  const isAnyAdmin = isAdmin || isProAdmin;
   const queryParams = new URLSearchParams(location.search);
   const currentTab = queryParams.get('tab');
 
-  // Define sidebar menu options and active states
+  // PRO Admin sees only: Dashboard, Blogs, Gallery, Profile
+  // Super Admin sees everything
   const menuItems = [
     {
       name: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
-      path: isAdmin ? '/admin' : '/dashboard',
-      isActive: isAdmin 
-        ? (location.pathname === '/admin' && currentTab !== 'exams' && currentTab !== 'candidates' && currentTab !== 'leaderboard')
+      path: isAnyAdmin ? '/admin' : '/dashboard',
+      isActive: isAnyAdmin
+        ? (location.pathname === '/admin' && !currentTab)
         : location.pathname === '/dashboard'
     },
     {
       name: 'Profile',
       icon: <User size={20} />,
-      path: isAdmin ? '/admin/profile' : '/profile',
+      path: isAnyAdmin ? '/admin/profile' : '/profile',
       isActive: location.pathname === '/profile' || location.pathname === '/admin/profile'
     },
+    // Super Admin only items
     isAdmin && {
       name: 'Candidates',
       icon: <Users size={20} />,
       path: '/admin?tab=candidates',
       isActive: location.pathname === '/admin' && currentTab === 'candidates'
     },
-    {
-      // For students: "My Exams" returns to dashboard (where active exam card is shown)
-      // For admins: navigates to the Exams management tab
-      name: isAdmin ? 'Examinations' : 'My Exams',
+    isAdmin && {
+      name: 'Registrations',
       icon: <BookOpen size={20} />,
-      path: isAdmin ? '/admin?tab=exams' : '/dashboard',
-      isActive: isAdmin
-        ? (location.pathname === '/admin' && currentTab === 'exams')
-        : (location.pathname === '/dashboard'),
+      path: '/admin?tab=registrations',
+      isActive: location.pathname === '/admin' && currentTab === 'registrations'
+    },
+    isAdmin && {
+      name: 'Examinations',
+      icon: <FileText size={20} />,
+      path: '/admin?tab=exams',
+      isActive: location.pathname === '/admin' && currentTab === 'exams'
     },
     isAdmin && {
       name: 'Leaderboard',
@@ -54,17 +60,44 @@ export const PortalLayout = ({ children }) => {
       path: '/admin?tab=leaderboard',
       isActive: location.pathname === '/admin' && currentTab === 'leaderboard'
     },
+    isAdmin && {
+      name: 'Import Candidates',
+      icon: <FileText size={20} />,
+      path: '/admin?tab=import',
+      isActive: location.pathname === '/admin' && currentTab === 'import'
+    },
+    isAdmin && {
+      name: 'Project Supervisors',
+      icon: <Users size={20} />,
+      path: '/admin?tab=supervisors',
+      isActive: location.pathname === '/admin' && currentTab === 'supervisors'
+    },
+    // PRO Admin + Super Admin items
     {
       name: 'Blogs',
       icon: <FileText size={20} />,
-      path: isAdmin ? '/admin/blogs' : '/blogs',
+      path: isAnyAdmin ? '/admin/blogs' : '/blogs',
       isActive: location.pathname === '/admin/blogs' || location.pathname === '/blogs'
     },
-    isAdmin && {
+    {
       name: 'Gallery',
       icon: <Image size={20} />,
       path: '/admin?tab=gallery',
       isActive: location.pathname === '/admin' && currentTab === 'gallery'
+    },
+    // Student only: My Project (Amb. Extraordinary only)
+    (!isAnyAdmin && currentUser.rankCategory === 'ambassador_extraordinary') && {
+      name: 'My Project',
+      icon: <FolderOpen size={20} />,
+      path: '/project',
+      isActive: location.pathname === '/project'
+    },
+    // Student only: My Exams
+    !isAnyAdmin && {
+      name: 'My Exams',
+      icon: <BookOpen size={20} />,
+      path: '/dashboard',
+      isActive: location.pathname === '/dashboard'
     },
   ].filter(Boolean);
 
@@ -129,7 +162,7 @@ export const PortalLayout = ({ children }) => {
           <Link 
             to="/" 
             onClick={() => {
-              if (currentUser?.role !== 'admin') {
+              if (!isAnyAdmin) {
                 logout();
               }
             }}
@@ -251,7 +284,7 @@ export const PortalLayout = ({ children }) => {
           <Link
             to="/"
             onClick={() => {
-              if (currentUser?.role !== 'admin') {
+              if (!isAnyAdmin) {
                 logout();
               }
               setMobileMenuOpen(false);

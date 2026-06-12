@@ -20,15 +20,15 @@ import { Officers }   from './pages/Officers';
 import { AdminLogin } from './pages/AdminLogin';
 
 // Protected Student pages
-import { Dashboard }   from './pages/Portal/Dashboard';
-import { Examination } from './pages/Portal/Examination';
-import { Profile }     from './pages/Profile';
+import { Dashboard }        from './pages/Portal/Dashboard';
+import { Examination }      from './pages/Portal/Examination';
+import { Profile }          from './pages/Profile';
+import { ProjectSubmission } from './pages/Portal/ProjectSubmission';
 
 // Protected Admin pages
 import { AdminDashboard }  from './pages/Portal/Admin/AdminDashboard';
 import { ManageExams }     from './pages/Portal/Admin/ManageExams';
 import { ManageBlogs }     from './pages/Portal/Admin/ManageBlogs';
-
 
 import { PortalLayout } from './components/PortalLayout';
 import { Outlet }       from 'react-router-dom';
@@ -58,7 +58,6 @@ function App() {
                 <Route path="/blogs"      element={<Blogs />}     />
                 <Route path="/gallery"    element={<Gallery />}   />
                 <Route path="/contact"    element={<Contact />}   />
-                {/* Fixed: was incorrectly rendering Contact component */}
                 <Route path="/resources"  element={<Resources />} />
                 <Route path="/login"       element={<Login />}      />
                 <Route path="/register"    element={<Register />}   />
@@ -76,6 +75,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/project"
+                    element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <ProjectSubmission />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/profile"
                     element={
                       <ProtectedRoute allowedRoles={['student']}>
@@ -84,15 +91,16 @@ function App() {
                     }
                   />
 
-                  {/* Admin Committee Protected Routes */}
+                  {/* ── Admin Routes: Super Admin only ────────────────────────── */}
                   <Route
                     path="/admin"
                     element={
-                      <ProtectedRoute allowedRoles={['admin']}>
+                      <ProtectedRoute allowedRoles={['admin', 'pro_admin']}>
                         <AdminDashboard />
                       </ProtectedRoute>
                     }
                   />
+                  {/* Super Admin only routes */}
                   <Route
                     path="/admin/exams"
                     element={
@@ -101,19 +109,20 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  {/* PRO Admin + Super Admin: Blogs */}
                   <Route
                     path="/admin/blogs"
                     element={
-                      <ProtectedRoute allowedRoles={['admin']}>
+                      <ProtectedRoute allowedRoles={['admin', 'pro_admin']}>
                         <ManageBlogs />
                       </ProtectedRoute>
                     }
                   />
-
+                  {/* Profile for both admin types */}
                   <Route
                     path="/admin/profile"
                     element={
-                      <ProtectedRoute allowedRoles={['admin']}>
+                      <ProtectedRoute allowedRoles={['admin', 'pro_admin']}>
                         <Profile />
                       </ProtectedRoute>
                     }
