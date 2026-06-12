@@ -427,7 +427,7 @@ export const Home = () => {
 
           <blockquote style={{ margin: '0 0 1.5rem', padding: 0, border: 'none' }}>
             <p style={{ fontSize: 'clamp(1.1rem,2.2vw,1.4rem)', fontStyle: 'italic', color: '#1e293b', lineHeight: 1.85, fontWeight: '500', marginBottom: '1.5rem' }}>
-              "Go ye therefore, and teach all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Ghost: Teaching them to observe all things whatsoever I have commanded you: and, lo, I am with you alway, even unto the end of the world. Amen."
+              "Go ye therefore, and make disciples of all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Ghost: Teaching them to obey everything I have commanded you: and, surely I will be with you, even unto the end of the age."
             </p>
           </blockquote>
 

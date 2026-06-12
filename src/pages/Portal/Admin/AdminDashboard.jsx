@@ -188,7 +188,7 @@ export const AdminDashboard = () => {
       setEnrollMsg(`✅ ${userName} successfully enrolled in the exam!`);
       loadExtraData();
     } catch (err) {
-      setEnrollMsg(`❌ ${err.message || 'Enrollment failed. They may already be enrolled in this exam.'}`); 
+      setEnrollMsg(`❌ ${err.message || 'Enrollment failed. They may already be enrolled in this exam.'}`);
     } finally {
       setEnrolling(false);
     }
@@ -519,7 +519,8 @@ export const AdminDashboard = () => {
             />
           </div>
           {enrollMsg && (
-            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.88rem', fontWeight: '600',
+            <div style={{
+              padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.88rem', fontWeight: '600',
               backgroundColor: enrollMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
               color: enrollMsg.startsWith('✅') ? '#059669' : '#dc2626',
               border: `1px solid ${enrollMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
@@ -652,7 +653,8 @@ export const AdminDashboard = () => {
             )}
           </div>
           {importMsg && (
-            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '600',
+            <div style={{
+              padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '600',
               backgroundColor: importMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
               color: importMsg.startsWith('✅') ? '#059669' : '#dc2626',
               border: `1px solid ${importMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
@@ -789,7 +791,8 @@ export const AdminDashboard = () => {
             </div>
           </div>
           {supervisorMsg && (
-            <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.88rem', fontWeight: '600',
+            <div style={{
+              padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.88rem', fontWeight: '600',
               backgroundColor: supervisorMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
               color: supervisorMsg.startsWith('✅') ? '#059669' : '#dc2626',
               border: `1px solid ${supervisorMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
@@ -921,7 +924,7 @@ export const AdminDashboard = () => {
           img.onload = () => {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            
+
             // Limit resolution to a maximum of 900x900 while maintaining aspect ratio
             const MAX_WIDTH = 900;
             const MAX_HEIGHT = 900;
@@ -985,8 +988,8 @@ export const AdminDashboard = () => {
             </div>
             <div>
               <label style={labelStyle}>Gallery Category Section</label>
-              <select 
-                value={showCustomCategory ? "CUSTOM" : newPhotoCategory} 
+              <select
+                value={showCustomCategory ? "CUSTOM" : newPhotoCategory}
                 onChange={(e) => {
                   if (e.target.value === "CUSTOM") {
                     setShowCustomCategory(true);
@@ -994,7 +997,7 @@ export const AdminDashboard = () => {
                     setShowCustomCategory(false);
                     setNewPhotoCategory(e.target.value);
                   }
-                }} 
+                }}
                 style={inputStyle}
               >
                 {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -1004,12 +1007,12 @@ export const AdminDashboard = () => {
             {showCustomCategory && (
               <div>
                 <label style={labelStyle}>New Program/Category Name</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Youth Camp 2026" 
-                  value={customCategory} 
-                  onChange={(e) => setCustomCategory(e.target.value)} 
-                  style={inputStyle} 
+                <input
+                  type="text"
+                  placeholder="e.g. Youth Camp 2026"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  style={inputStyle}
                 />
               </div>
             )}
@@ -1355,9 +1358,9 @@ export const AdminDashboard = () => {
   return (
     <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
       <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000000' }}>Committee Dashboard</h1>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000000' }}>Super Admin Dashboard</h1>
         <p style={{ color: '#475569', fontSize: '1rem', marginTop: '0.25rem' }}>
-          Host examinations, score results, edit church resources, and manage public gallery.
+          Host examinations, score results, manage Project, and manage public gallery.
         </p>
       </div>
 

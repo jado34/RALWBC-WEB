@@ -79,7 +79,7 @@ export const Blogs = () => {
             <span style={{ color: '#ca8a04' }}>&amp; Blogs.</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 'clamp(0.9rem,1.5vw,1.05rem)', maxWidth: '560px', lineHeight: 1.75, margin: 0 }}>
-            Stay updated with the latest exam committee announcements, quiz tips, regional camp summaries, and weekly devotionals from RALWBC.
+            Stay updated with the latest exam committee announcements, quiz tips, senior camp summaries, and weekly bulletin from RALWBC.
           </p>
         </div>
       </section>
