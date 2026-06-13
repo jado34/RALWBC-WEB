@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Mail, Eye, EyeOff, ShieldAlert, Lock } from 'lucide-react';
 import { dbService } from '../services/db';
 
 export const Login = () => {
@@ -13,6 +13,7 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(false); // Controls onboarding vs form view
+  const [regWindowOpen, setRegWindowOpen] = useState(null); // null = checking, true/false = result
   const navigate = useNavigate();
 
   // If already logged in, redirect away
@@ -21,6 +22,11 @@ export const Login = () => {
       navigate(currentUser.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     }
   }, [currentUser, navigate]);
+
+  // Check if the registration/login window is open
+  React.useEffect(() => {
+    dbService.isRegistrationWindowOpen().then(open => setRegWindowOpen(open));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,6 +68,43 @@ export const Login = () => {
       </div>
     );
   };
+
+  // ── Registration window gate ───────────────────────────────────────────────
+  if (regWindowOpen === null) {
+    // Still checking — show minimal blank screen to avoid flicker
+    return <div style={{ minHeight: '85vh' }} />;
+  }
+
+  if (regWindowOpen === false) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '85vh', backgroundColor: '#ffffff', padding: '3rem 1.5rem', textAlign: 'center'
+      }}>
+        <img src="/logo.png" alt="RALWBC" style={{ width: '90px', height: 'auto', marginBottom: '2rem', objectFit: 'contain' }} />
+        <div style={{
+          backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+          borderRadius: '16px', padding: '2.5rem 2rem', maxWidth: '460px', width: '100%'
+        }}>
+          <Lock size={40} color="#ef4444" style={{ marginBottom: '1.25rem' }} />
+          <h2 style={{ fontSize: '1.5rem', color: '#0a1141', fontWeight: '800', marginBottom: '0.75rem' }}>
+            Portal Access Closed
+          </h2>
+          <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: 1.7, marginBottom: '0.5rem' }}>
+            The RALWBC Ambassador login portal is currently closed. Please check back when the
+            conference registration window has been opened by the administrator.
+          </p>
+        </div>
+        {/* Discreet admin link */}
+        <p style={{ marginTop: '2.5rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+          Admin?{' '}
+          <Link to="/admin-login" style={{ color: '#94a3b8', textDecoration: 'underline', fontWeight: '500' }}>
+            Click here
+          </Link>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in" style={{

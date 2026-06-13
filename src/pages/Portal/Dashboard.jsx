@@ -16,7 +16,8 @@ export const Dashboard = () => {
   const [session, setSession] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [countdown, setCountdown] = useState(null);
-  const [eligibilityDate, setEligibilityDate] = useState(null); // 1-year rule
+  const [eligibilityDate, setEligibilityDate] = useState(null);        // 1-year rule (Amb. Extraordinary)
+  const [plenipotentiaryEligDate, setPlenipotentiaryEligDate] = useState(null); // 1-year rule (Amb. Plenipotentiary)
   const [projectSubmissions, setProjectSubmissions] = useState([]);
   const navigate = useNavigate();
   const countdownRef = useRef(null);
@@ -27,7 +28,7 @@ export const Dashboard = () => {
 
     const loadData = async () => {
       try {
-        // Get exams the admin has enrolled this student in
+        // Get exams the admin has enrolled this Ambassador in
         const enrolledList = await dbService.getEnrolledExamsForUser(currentUser.id);
         const enrolledIds = new Set(enrolledList.map(e => e.examId));
 
@@ -51,6 +52,14 @@ export const Dashboard = () => {
           const date = await dbService.getAmbassadorExtraordinaryEligibilityDate(currentUser.id);
           if (date && date > new Date()) {
             setEligibilityDate(date);
+          }
+        }
+
+        // Check 1-year cooldown (for Amb. Plenipotentiary candidates)
+        if (currentUser.rankCategory === 'ambassador_plenipotentiary') {
+          const date = await dbService.getAmbassadorPlenipotentiaryEligibilityDate(currentUser.id);
+          if (date && date > new Date()) {
+            setPlenipotentiaryEligDate(date);
           }
         }
 
@@ -141,7 +150,8 @@ export const Dashboard = () => {
 
   const pad = (n) => String(n).padStart(2, '0');
 
-  const isAmbExtraordinaryLocked = eligibilityDate && eligibilityDate > new Date();
+  const isAmbExtraordinaryLocked     = eligibilityDate && eligibilityDate > new Date();
+  const isAmbPlenipotentiaryLocked   = plenipotentiaryEligDate && plenipotentiaryEligDate > new Date();
 
   return (
     <div className="animate-fade-in" style={{ padding: '3rem 0' }}>
@@ -168,7 +178,7 @@ export const Dashboard = () => {
           </Link>
         </div>
 
-        {/* 1-Year Wait Banner for Amb. Extraordinary */}
+        {/* 1-Year Wait Banner — Amb. Extraordinary */}
         {isAmbExtraordinaryLocked && (
           <div style={{
             display: 'flex', alignItems: 'flex-start', gap: '1rem',
@@ -186,6 +196,30 @@ export const Dashboard = () => {
                 Ambassador Extraordinary exam from{' '}
                 <strong style={{ color: 'var(--text-primary)' }}>
                   {eligibilityDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 1-Year Wait Banner — Amb. Plenipotentiary */}
+        {isAmbPlenipotentiaryLocked && (
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: '1rem',
+            padding: '1.25rem 1.75rem', marginBottom: '2rem', borderRadius: '12px',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            background: 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(18,24,38,0.7) 100%)',
+          }}>
+            <AlertTriangle size={22} color="#ef4444" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+            <div>
+              <p style={{ fontWeight: '700', fontSize: '1rem', color: '#ef4444', marginBottom: '0.25rem' }}>
+                Ambassador Plenipotentiary Exam — 1 Year Wait Active
+              </p>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                You wrote the Ambassador Extraordinary exam within the last year. You will be eligible to sit the
+                Ambassador Plenipotentiary exam from{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {plenipotentiaryEligDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </strong>.
               </p>
             </div>
@@ -268,8 +302,12 @@ export const Dashboard = () => {
                 {exams.map(exam => {
                   const submission = submissions[exam.id];
                   const isSubmitted = !!submission;
-                  const isAmbExtraordinary = exam.category === 'ambassador_extraordinary';
-                  const isLocked = isAmbExtraordinary && isAmbExtraordinaryLocked;
+                  const isAmbExtraordinary   = exam.category === 'ambassador_extraordinary';
+                  const isAmbPlenipotentiary = exam.category === 'ambassador_plenipotentiary';
+                  const isLocked =
+                    (isAmbExtraordinary   && isAmbExtraordinaryLocked) ||
+                    (isAmbPlenipotentiary && isAmbPlenipotentiaryLocked);
+                  const lockedUntil = isAmbExtraordinary ? eligibilityDate : plenipotentiaryEligDate;
 
                   return (
                     <div
@@ -326,7 +364,7 @@ export const Dashboard = () => {
                         ) : isLocked ? (
                           <button disabled className="btn btn-secondary btn-sm"
                             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', opacity: 0.55, cursor: 'not-allowed' }}>
-                            <Lock size={13} /> Locked — Wait until {eligibilityDate.toLocaleDateString('en-GB')}
+                            <Lock size={13} /> Locked — Wait until {lockedUntil.toLocaleDateString('en-GB')}
                           </button>
                         ) : sessionActive ? (
                           <button

@@ -43,6 +43,8 @@ export const AdminDashboard = () => {
   const [pastCandidates, setPastCandidates] = useState([]);
   const [pastSearch, setPastSearch] = useState('');
   const [pastPage, setPastPage] = useState(1);
+  const [candidateRankFilter, setCandidateRankFilter] = useState('all');
+  const [pastRankFilter, setPastRankFilter] = useState('all');
 
   // Supervisors state
   const [supervisors, setSupervisors] = useState([]);
@@ -134,6 +136,11 @@ export const AdminDashboard = () => {
   const [session, setSession] = useState({ startDate: '', endDate: '', startTime: '08:00', isOpen: false });
   const [sessionSaved, setSessionSaved] = useState(false);
 
+  // Registration Window Settings
+  const [regWindow, setRegWindow] = useState({ isOpen: false, deadline: '' });
+  const [regWindowSaved, setRegWindowSaved] = useState(false);
+  const [regWindowOpen, setRegWindowOpen] = useState(false);
+
   // Warning Logs & Gallery management states
   const [selectedSubLogs, setSelectedSubLogs] = useState(null);
   const [newPhotoAlt, setNewPhotoAlt] = useState('');
@@ -160,6 +167,10 @@ export const AdminDashboard = () => {
         setSession({ startDate: s.startDate || '', endDate: s.endDate || '', startTime: s.startTime || '08:00', isOpen: s.isOpen || false });
         const active = await dbService.isSessionActive();
         setSessionActive(active);
+        // Also load the registration window state
+        const rw = await dbService.getRegistrationWindow();
+        setRegWindow({ isOpen: rw.isOpen, deadline: rw.deadline || '' });
+        setRegWindowOpen(await dbService.isRegistrationWindowOpen());
       } catch (err) {
         console.error('Failed to load session details:', err);
       }
@@ -248,7 +259,11 @@ export const AdminDashboard = () => {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
         const result = await dbService.importPastCandidates(rows);
-        setImportMsg(`✅ Imported ${result.inserted} candidates successfully!${result.errors.length > 0 ? ` (${result.errors.length} errors)` : ''}`);
+        if (result.errors.length > 0) {
+          setImportMsg(`❌ Imported ${result.inserted} candidates successfully, but encountered errors: ${result.errors.join(', ')}`);
+        } else {
+          setImportMsg(`✅ Imported ${result.inserted} candidates successfully!`);
+        }
         setImportPreview([]);
         setImportFile(null);
         loadPastCandidates();
@@ -293,6 +308,19 @@ export const AdminDashboard = () => {
       setTimeout(() => setSessionSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save session:', err);
+    }
+  };
+
+  const handleSaveRegWindow = async () => {
+    try {
+      await dbService.saveRegistrationWindow({ isOpen: regWindow.isOpen, deadline: regWindow.deadline || null });
+      const nowOpen = await dbService.isRegistrationWindowOpen();
+      setRegWindowOpen(nowOpen);
+      setRegWindowSaved(true);
+      setTimeout(() => setRegWindowSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save registration window:', err);
+      alert('Failed to save registration window: ' + err.message);
     }
   };
 
@@ -625,8 +653,11 @@ export const AdminDashboard = () => {
 
   // ── IMPORT CANDIDATES TAB (Super Admin) ────────────────────────────────────
   if (currentTab === 'import') {
-    const pagedPast = pastCandidates.slice((pastPage - 1) * itemsPerPage, pastPage * itemsPerPage);
-    const totalPastPages = Math.ceil(pastCandidates.length / itemsPerPage) || 1;
+    const filteredPast = pastCandidates.filter(pc => {
+      return pastRankFilter === 'all' || pc.rankCategory === pastRankFilter;
+    });
+    const pagedPast = filteredPast.slice((pastPage - 1) * itemsPerPage, pastPage * itemsPerPage);
+    const totalPastPages = Math.ceil(filteredPast.length / itemsPerPage) || 1;
 
     return (
       <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
@@ -690,17 +721,41 @@ export const AdminDashboard = () => {
             </div>
           )}
         </div>
-
         {/* Past Candidates Archive */}
         <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0a1141', margin: 0 }}>
-              Past Candidates Archive ({pastCandidates.length})
+              Past Candidates Archive ({filteredPast.length === pastCandidates.length ? pastCandidates.length : `${filteredPast.length}/${pastCandidates.length}`})
             </h3>
             <input type="text" placeholder="Search archive..." value={pastSearch}
               onChange={e => { setPastSearch(e.target.value); setPastPage(1); loadPastCandidates(e.target.value); }}
               style={{ ...inputStyle, maxWidth: '280px' }} />
           </div>
+
+          {/* Past Candidates Rank Category Tabs */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            {['all', 'ambassador', 'ambassador_extraordinary', 'ambassador_plenipotentiary'].map(rank => (
+              <button
+                key={rank}
+                onClick={() => { setPastRankFilter(rank); setPastPage(1); }}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: '20px',
+                  border: '1px solid',
+                  borderColor: pastRankFilter === rank ? '#0a1141' : '#cbd5e1',
+                  backgroundColor: pastRankFilter === rank ? '#0a1141' : '#ffffff',
+                  color: pastRankFilter === rank ? '#ffffff' : '#475569',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {rank === 'all' ? 'All Ranks' : getRankLabel(rank)}
+              </button>
+            ))}
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
               <thead>
@@ -1055,15 +1110,16 @@ export const AdminDashboard = () => {
       </div>
     );
   }
-
   // ── CANDIDATES TAB ─────────────────────────────────────────────────────────
   if (currentTab === 'candidates') {
     const filtered = candidates.filter(u => {
       const q = searchQuery.toLowerCase();
-      return (u.name || '').toLowerCase().includes(q) ||
+      const matchesSearch = (u.name || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q) ||
         (u.church || '').toLowerCase().includes(q) ||
         getRankLabel(u.rankCategory).toLowerCase().includes(q);
+      const matchesRank = candidateRankFilter === 'all' || u.rankCategory === candidateRankFilter;
+      return matchesSearch && matchesRank;
     });
     const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
     const paginated = filtered.slice((candidatePage - 1) * itemsPerPage, candidatePage * itemsPerPage);
@@ -1075,13 +1131,37 @@ export const AdminDashboard = () => {
           <p style={{ color: '#475569', fontSize: '0.95rem' }}>View and manage all registered Royal Ambassadors.</p>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1.25rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1.25rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input type="text" placeholder="Search candidates..." value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCandidatePage(1); }}
             style={{ padding: '0.75rem 1.25rem', border: '1px solid #cbd5e1', borderRadius: '8px', width: '100%', maxWidth: '320px', fontSize: '0.9rem', outline: 'none', fontFamily: 'var(--font-body)' }} />
           <button onClick={handleDownloadCandidates} style={{ ...goldBtnStyle }}>
             <Download size={18} /> Export Excel (CSV)
           </button>
+        </div>
+
+        {/* Rank Category Tabs */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          {['all', 'ambassador', 'ambassador_extraordinary', 'ambassador_plenipotentiary'].map(rank => (
+            <button
+              key={rank}
+              onClick={() => { setCandidateRankFilter(rank); setCandidatePage(1); }}
+              style={{
+                padding: '0.5rem 1.2rem',
+                borderRadius: '20px',
+                border: '1px solid',
+                borderColor: candidateRankFilter === rank ? '#0a1141' : '#cbd5e1',
+                backgroundColor: candidateRankFilter === rank ? '#0a1141' : '#ffffff',
+                color: candidateRankFilter === rank ? '#ffffff' : '#475569',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {rank === 'all' ? 'All Ranks' : getRankLabel(rank)}
+            </button>
+          ))}
         </div>
 
         <div style={{ borderTop: '2px solid #000000', paddingTop: '1rem', overflowX: 'auto' }}>
@@ -1413,7 +1493,7 @@ export const AdminDashboard = () => {
         </div>
 
         <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '1.75rem', lineHeight: 1.6 }}>
-          Set the start and end dates for the camping/exam session. Students can only access and start exams within this window.
+          Set the start and end dates for the camping/exam session. Ambassadors can only access and start exams within this window.
           You can also manually force the portal open or closed using the toggle below.
         </p>
 
@@ -1458,6 +1538,79 @@ export const AdminDashboard = () => {
             <Save size={16} /> Save Session Settings
           </button>
           {sessionSaved && <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem' }}>✓ Saved successfully!</span>}
+        </div>
+      </div>
+
+      {/* Registration Window Panel */}
+      <div style={{ border: '2px solid #ca8a04', borderRadius: '12px', padding: '2rem', backgroundColor: '#ffffff', marginTop: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <Lock size={22} color="#ca8a04" />
+          <h3 style={{ fontSize: '1.25rem', color: '#000000', margin: 0 }}>Ambassador Registration Window</h3>
+          <span style={{
+            marginLeft: 'auto', padding: '0.3rem 0.85rem', borderRadius: '999px',
+            fontSize: '0.78rem', fontWeight: '700',
+            backgroundColor: regWindowOpen ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+            color: regWindowOpen ? '#059669' : '#dc2626',
+            border: `1px solid ${regWindowOpen ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
+          }}>
+            {regWindowOpen ? '● Registration Open' : '● Registration Closed'}
+          </span>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '1.75rem', lineHeight: 1.6 }}>
+          Controls whether Ambassadors can access the <strong>Login</strong> and <strong>Register</strong> pages.
+          When closed, both pages show a &quot;Portal Access Closed&quot; screen. Set an optional deadline so registration
+          closes automatically on that date.
+        </p>
+
+        {/* Optional deadline picker */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Registration Deadline (optional)
+          </label>
+          <input
+            type="date"
+            value={regWindow.deadline || ''}
+            onChange={(e) => setRegWindow(w => ({ ...w, deadline: e.target.value }))}
+            style={{ padding: '0.65rem 0.9rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', fontFamily: 'var(--font-body)', outline: 'none', width: '220px' }}
+          />
+          <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.35rem' }}>
+            Leave blank for no automatic deadline. Portal closes at midnight on the selected date.
+          </p>
+        </div>
+
+        {/* Toggle open/closed */}
+        <div
+          onClick={() => setRegWindow(w => ({ ...w, isOpen: !w.isOpen }))}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '1rem',
+            padding: '1rem 1.25rem', borderRadius: '8px',
+            backgroundColor: regWindow.isOpen ? 'rgba(16,185,129,0.06)' : '#f8fafc',
+            border: `1px solid ${regWindow.isOpen ? 'rgba(16,185,129,0.25)' : '#e2e8f0'}`,
+            marginBottom: '1.5rem', cursor: 'pointer'
+          }}
+        >
+          {regWindow.isOpen ? <ToggleRight size={28} color="#10b981" /> : <ToggleLeft size={28} color="#94a3b8" />}
+          <div>
+            <p style={{ fontWeight: '700', fontSize: '0.92rem', color: '#0f172a', margin: 0 }}>
+              {regWindow.isOpen ? 'Registration is OPEN' : 'Registration is CLOSED'}
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, marginTop: '0.1rem' }}>
+              {regWindow.isOpen
+                ? 'Toggle OFF to block all Ambassador access to Login and Register.'
+                : 'Toggle ON to allow Ambassadors to log in and create accounts.'}
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            onClick={handleSaveRegWindow}
+            style={{ backgroundColor: '#ca8a04', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem 1.75rem', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 2px 8px rgba(202,138,4,0.2)' }}
+          >
+            <Save size={16} /> Save Registration Settings
+          </button>
+          {regWindowSaved && <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem' }}>✓ Saved successfully!</span>}
         </div>
       </div>
 

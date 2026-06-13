@@ -60,7 +60,7 @@ export const AntiCheatGuard = ({ children, onWarning, onAutoSubmit, maxWarnings 
           hasEnteredFullscreenOnce.current = true;
         })
         .catch(() => {
-          // Fullscreen blocked by browser — warn but don't trap the student
+          // Fullscreen blocked by browser — warn but don't trap the Ambassador
         });
     }
   };

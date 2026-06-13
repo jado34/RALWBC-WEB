@@ -85,14 +85,14 @@ export const PortalLayout = ({ children }) => {
       path: '/admin?tab=gallery',
       isActive: location.pathname === '/admin' && currentTab === 'gallery'
     },
-    // Student only: My Project (Amb. Extraordinary only)
+    // Ambassador only: My Project (Amb. Extraordinary only)
     (!isAnyAdmin && currentUser.rankCategory === 'ambassador_extraordinary') && {
       name: 'My Project',
       icon: <FolderOpen size={20} />,
       path: '/project',
       isActive: location.pathname === '/project'
     },
-    // Student only: My Exams
+    // Ambassador only: My Exams
     !isAnyAdmin && {
       name: 'My Exams',
       icon: <BookOpen size={20} />,

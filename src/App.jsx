@@ -19,7 +19,7 @@ import { Register }   from './pages/Register';
 import { Officers }   from './pages/Officers';
 import { AdminLogin } from './pages/AdminLogin';
 
-// Protected Student pages
+// Protected Ambassador pages
 import { Dashboard }        from './pages/Portal/Dashboard';
 import { Examination }      from './pages/Portal/Examination';
 import { Profile }          from './pages/Profile';
@@ -65,7 +65,7 @@ function App() {
 
                 {/* Portal Layout Wrapper for Dashboard and Profile screens */}
                 <Route element={<PortalLayoutWrapper />}>
-                  {/* Student Portal Protected Routes */}
+                  {/* Ambassador Portal Protected Routes */}
                   <Route
                     path="/dashboard"
                     element={
@@ -129,7 +129,7 @@ function App() {
                   />
                 </Route>
 
-                {/* Student Exam taking — full screen distraction-free (no portal sidebar layout) */}
+                {/* Ambassador Exam taking — full screen distraction-free (no portal sidebar layout) */}
                 <Route
                   path="/exam/:id"
                   element={

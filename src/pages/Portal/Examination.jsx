@@ -5,7 +5,7 @@ import { dbService } from '../../services/db';
 import { AntiCheatGuard } from '../../components/AntiCheatGuard';
 import { ConfirmDialog } from '../../components/Toast';
 import { hashSeed, seededShuffle } from '../../utils/shuffle';
-import { Clock, ShieldAlert, AlertTriangle, CheckCircle, CheckSquare, Send } from 'lucide-react';
+import { Clock, ShieldAlert, AlertTriangle, CheckCircle, CheckSquare, Send, WifiOff } from 'lucide-react';
 
 export const Examination = () => {
   const { id }          = useParams();
@@ -24,6 +24,8 @@ export const Examination = () => {
   const [sessionClosed, setSessionClosed]     = useState(false);
   const [flaggedQuestions, setFlaggedQuestions] = useState({});
   const [infractionLogs, setInfractionLogs]   = useState([]);
+  const [isOnline, setIsOnline]               = useState(navigator.onLine);       // Fix C
+  const [submissionError, setSubmissionError] = useState(null); // Fix A: null | 'NETWORK' | 'RETRYING'
 
   // ── Race-condition guard: prevents double-submit from timer + session poll ──
   const isSubmittingRef = useRef(false);
@@ -42,6 +44,18 @@ export const Examination = () => {
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // ── Fix C: Online / Offline detection ────────────────────────────────────
+  useEffect(() => {
+    const handleOnline  = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const storageKey = `ralwbc_active_exam_${currentUser.id}_${id}`;
@@ -79,18 +93,27 @@ export const Examination = () => {
       const currentExam   = examRef.current;
       const totalDuration = currentExam ? currentExam.duration * 60 : 0;
       const durationSpent = Math.max(1, totalDuration - timeRemainingRef.current);
+      // Fix B: pass pre-loaded questions to skip a redundant DB fetch on weak connections
       await dbService.submitExam(
         currentUser.id, currentUser.name,
         currentExam.id, currentExam.title,
         answersRef.current, warningsRef.current,
         durationSpent, infractionLogsRef.current,
+        currentExam.questions,
       );
       localStorage.removeItem(storageKey);
       setIsSubmitted(true);
     } catch (error) {
-      // Submission failed (e.g. already submitted in another tab)
-      localStorage.removeItem(storageKey);
-      navigate('/dashboard');
+      isSubmittingRef.current = false; // Fix A: allow retry attempts
+      const alreadySubmitted = error?.message?.toLowerCase().includes('already submitted');
+      if (alreadySubmitted) {
+        // Confirmed duplicate — safe to wipe local data and redirect
+        localStorage.removeItem(storageKey);
+        navigate('/dashboard');
+      } else {
+        // Fix A: network / timeout failure — keep answers safe in localStorage, show retry UI
+        setSubmissionError('NETWORK');
+      }
     }
   }, [currentUser, navigate, storageKey]);
 
@@ -163,12 +186,18 @@ export const Examination = () => {
 
         // ── Session expiry poll (every 60s) ──────────────────────────────────────
         sessionPollRef.current = setInterval(async () => {
-          const active = await dbService.isSessionActive();
-          if (!active) {
-            clearInterval(timerIntervalRef.current);
-            clearInterval(sessionPollRef.current);
-            setSessionClosed(true);
-            setTimeout(() => submitExamResultsRef.current?.('SESSION_CLOSED'), 5000);
+          try {
+            // Fix D: wrap in try/catch so a network error here never crashes the exam tab
+            const active = await dbService.isSessionActive();
+            if (!active) {
+              clearInterval(timerIntervalRef.current);
+              clearInterval(sessionPollRef.current);
+              setSessionClosed(true);
+              setTimeout(() => submitExamResultsRef.current?.('SESSION_CLOSED'), 5000);
+            }
+          } catch (pollErr) {
+            // Silently ignore network errors during the poll — will retry on next interval
+            console.warn('Session poll failed (network):', pollErr?.message);
           }
         }, 60000);
       } catch (err) {
@@ -277,6 +306,52 @@ export const Examination = () => {
             <div><strong style={{ color: '#64748b' }}>Grade access:</strong> Secured with the Exam Committee (Scores are not displayed to candidates).</div>
           </div>
           <button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-full">Return to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Fix A: Network Submission Failure / Retry Screen ─────────────────────
+  if (submissionError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5rem 1rem', minHeight: '70vh', backgroundColor: '#ffffff' }}>
+        <div className="glass-panel" style={{ maxWidth: '520px', width: '100%', padding: '3rem', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)' }}>
+          <WifiOff size={56} color="#ef4444" style={{ marginBottom: '1.5rem', display: 'inline-block' }} />
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '1rem', color: '#0a1141' }}>Submission Failed</h2>
+          <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
+            Your internet connection dropped while saving your exam.{' '}
+            <strong style={{ color: '#16a34a' }}>Your answers are safe</strong> — stored on this device.
+          </p>
+          <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+            Check your connection and click <strong>Retry Submission</strong> to send your answers.
+          </p>
+          {!isOnline && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#ef4444', fontWeight: '600' }}>
+              <WifiOff size={15} /> You are offline — waiting for connection to return...
+            </div>
+          )}
+          <button
+            type="button"
+            disabled={submissionError === 'RETRYING' || !isOnline}
+            onClick={() => {
+              setSubmissionError('RETRYING');
+              isSubmittingRef.current = false;
+              submitExamResultsRef.current?.('MANUAL_SUBMIT');
+            }}
+            style={{
+              width: '100%', padding: '0.9rem', borderRadius: '8px', border: 'none',
+              backgroundColor: (!isOnline || submissionError === 'RETRYING') ? '#94a3b8' : '#0a1141',
+              color: '#ffffff', fontWeight: '700', fontSize: '0.95rem',
+              cursor: (!isOnline || submissionError === 'RETRYING') ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <Send size={16} />
+            {submissionError === 'RETRYING'
+              ? 'Submitting...'
+              : isOnline ? 'Retry Submission' : 'Waiting for Connection...'}
+          </button>
         </div>
       </div>
     );
@@ -595,7 +670,21 @@ export const Examination = () => {
         </div>
       )}
 
-
+      {/* ── Fix C: Offline Connection Banner ─────────────────────────────── */}
+      {!isOnline && (
+        <div style={{
+          position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          backgroundColor: '#1e293b', color: '#ffffff',
+          padding: '0.75rem 1.5rem', borderRadius: '999px',
+          display: 'flex', alignItems: 'center', gap: '0.6rem',
+          fontSize: '0.85rem', fontWeight: '600', zIndex: 9999,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
+          whiteSpace: 'nowrap',
+        }}>
+          <WifiOff size={15} />
+          You are offline — your progress is saved. Keep answering.
+        </div>
+      )}
 
       <style>{`
         .sr-only {

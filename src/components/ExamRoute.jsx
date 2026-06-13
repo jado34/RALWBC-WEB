@@ -6,18 +6,18 @@ import { dbService } from '../services/db';
 /**
  * ExamRoute — guards /exam/:id
  * Requires:
- *   1. User is logged in as 'student'
+ *   1. User is logged in as 'ambassador' (role = 'student' in DB)
  *   2. The global exam session is currently active
  *   3. The exam's category matches the user's rankCategory
  *
  * If any check fails, redirects to /dashboard where the
- * student will see the appropriate closed-portal banner.
+ * Ambassador will see the appropriate closed-portal banner.
  */
 export const ExamRoute = ({ children }) => {
   const { currentUser } = useAuth();
   const { id } = useParams();
 
-  // 1. Must be authenticated as student
+  // 1. Must be authenticated as an Ambassador (role = 'student')
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }

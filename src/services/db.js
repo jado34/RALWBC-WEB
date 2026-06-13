@@ -408,6 +408,7 @@ export const dbService = {
   },
 
   // Get the date when a candidate becomes eligible for Ambassador Extraordinary
+  // (1-year wait after submitting the Ambassador exam)
   async getAmbassadorExtraordinaryEligibilityDate(userId) {
     const { data, error } = await supabase
       .from('submissions')
@@ -422,20 +423,50 @@ export const dbService = {
     return eligibleDate;
   },
 
+  // Get the date when a candidate becomes eligible for Ambassador Plenipotentiary
+  // (1-year wait after submitting the Ambassador Extraordinary exam)
+  async getAmbassadorPlenipotentiaryEligibilityDate(userId) {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('submitted_at, exams(category)')
+      .eq('user_id', userId)
+      .order('submitted_at', { ascending: false });
+    if (error || !data) return null;
+    const latest = (data || []).find(s => s.exams?.category === 'ambassador_extraordinary');
+    if (!latest) return null;
+    const eligibleDate = new Date(latest.submitted_at);
+    eligibleDate.setFullYear(eligibleDate.getFullYear() + 1);
+    return eligibleDate;
+  },
+
   // ── Past Candidates Import ────────────────────────────────────────────────
 
   async importPastCandidates(rows) {
-    const records = rows.map(row => ({
-      id: 'pc_' + Math.random().toString(36).substr(2, 9),
-      name: row.name || row.Name || '',
-      email: row.email || row.Email || '',
-      church: row.church || row.Church || '',
-      association: row.association || row.Association || '',
-      rank_category: row.rankCategory || row.RankCategory || row['Rank Category'] || '',
-      rank: row.rank || row.Rank || '',
-      phone: row.phone || row.Phone || '',
-      year: parseInt(row.year || row.Year || new Date().getFullYear()) || null,
-    })).filter(r => r.name.trim());
+    const generateUUID = () => {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    };
+
+    const records = rows.map(row => {
+      const rawCat = row.rankCategory || row.RankCategory || row['Rank Category'] || '';
+      const normCat = String(rawCat).trim().toLowerCase().replace(/\s+/g, '_');
+      return {
+        id: generateUUID(),
+        name: row.name || row.Name || '',
+        email: row.email || row.Email || '',
+        church: row.church || row.Church || '',
+        association: row.association || row.Association || '',
+        rank_category: normCat,
+        rank: row.rank || row.Rank || row['Rank Title'] || row.rankTitle || '',
+        phone: row.phone || row.Phone || '',
+        year: parseInt(row.year || row.Year || new Date().getFullYear()) || null,
+      };
+    }).filter(r => r.name.trim());
 
     if (records.length === 0) return { inserted: 0, errors: [] };
 
@@ -660,12 +691,19 @@ export const dbService = {
     if (error) throw error;
   },
 
-  async submitExam(userId, userName, examId, examTitle, answers, warningsCount, durationSpent, infractionLogs = []) {
-    const exam = await this.getExamById(examId);
-    if (!exam) throw new Error('Exam not found');
+  async submitExam(userId, userName, examId, examTitle, answers, warningsCount, durationSpent, infractionLogs = [], examQuestions = null) {
+    // Fix B: use pre-loaded questions when available to avoid a redundant network round-trip
+    let exam;
+    if (examQuestions && examQuestions.length > 0) {
+      exam = { questions: examQuestions };
+    } else {
+      exam = await this.getExamById(examId);
+      if (!exam) throw new Error('Exam not found');
+    }
 
     const existing = await this.getSubmissionForUserAndExam(userId, examId);
     if (existing) throw new Error('You have already submitted this exam.');
+
 
     let correctCount = 0;
     const totalQuestions = exam.questions.length;
@@ -716,14 +754,52 @@ export const dbService = {
   // ── Blog Operations ───────────────────────────────────────────────────────
 
   async getBlogs() {
-    let dbBlogs = [];
+    const defaultBlogs = [
+      {
+        id: 'blog_def1',
+        title: 'Upcoming RA Week Ushering In: Preparing for the Spiritual Journey',
+        author: 'Conference Planning Committee',
+        date: '2026-06-10',
+        content: "The Royal Ambassadors Lagos West Baptist Conference (RALWBC) is set to embark on our annual RA Week Ushering In. This week-long program is a cornerstone spiritual event designed to inspire dedication, missionary zeal, and community service among all chapters. Under this year's theme, we focus on rebuilding the walls of service and rekindling the fire of active evangelism. All chapters are urged to finalize their parade schedules, community clean-up logistics, and special missionary collections. Let us walk in dignity and show the world what it means to be an Ambassador for Christ."
+      },
+      {
+        id: 'blog_def2',
+        title: 'RAN Leadership Training Conference (LTC): Building Next-Gen Leaders',
+        author: 'Training & Education Directorate',
+        date: '2026-06-08',
+        content: "Leadership is the foundation of service. The upcoming Royal Ambassadors of Nigeria Leadership Training Conference (RAN LTC) at Abeokuta will gather executives, officers, and aspiring leaders for an intensive weekend of instruction, fellowship, and spiritual growth. The curriculum covers administrative guidelines, mission theology, first aid, disaster management, and advanced leadership skills. Ranks will be examined and certified, including candidate screenings for the prestigious Ambassador Plenipotentiary senior exam. Early registration is advised to secure conference materials."
+      },
+      {
+        id: 'blog_def3',
+        title: 'Maximizing Your Exam Preparation: A Guide for Royal Ambassadors',
+        author: 'Ranking Officer',
+        date: '2026-06-05',
+        content: "As the camping session draws near, candidates preparing for their promotional ranks are encouraged to start their study early. This year's exams will test theological knowledge, Baptist history, Royal Ambassador manual rules, and practical outdoor tasks. To help you succeed, the online portal offers sample questionnaires, study guides, and mock quiz exercises. Ensure you revise the pledge, declaration, and three ranks structure. Maintain focus, maintain integrity, and study to show yourself approved."
+      }
+    ];
+
     try {
       const { data, error } = await supabase
         .from('blogs')
         .select('*')
         .order('date', { ascending: false });
       if (error) throw error;
-      dbBlogs = (data || []).map(b => ({
+
+      // Seed if the table is completely empty
+      if (!data || data.length === 0) {
+        console.log('Blogs database is empty. Attempting to seed default blogs...');
+        const { error: seedError } = await supabase
+          .from('blogs')
+          .insert(defaultBlogs);
+        if (seedError) {
+          console.warn('Failed to seed default blogs in database:', seedError);
+        } else {
+          console.log('Successfully seeded default blogs in database.');
+        }
+        return defaultBlogs;
+      }
+
+      return data.map(b => ({
         id: b.id,
         title: b.title,
         author: b.author,
@@ -731,41 +807,9 @@ export const dbService = {
         content: b.content
       }));
     } catch (err) {
-      console.warn("Could not load blogs from database, using local blogs only:", err);
+      console.warn("Could not load blogs from database, using local defaults fallback:", err);
+      return defaultBlogs;
     }
-
-    const defaultBlogs = [
-      {
-        id: 'blog_def1',
-        title: 'Upcoming RA Week Ushering In: Preparing for the Spiritual Journey',
-        author: 'Conference Planning Committee',
-        date: '2026-06-10',
-        content: 'The Royal Ambassadors Lagos West Baptist Conference (RALWBC) is set to embark on our annual RA Week Ushering In. This week-long program is a cornerstone spiritual event designed to inspire dedication, missionary zeal, and community service among all chapters. Under this year\'s theme, we focus on rebuilding the walls of service and rekindling the fire of active evangelism. All chapters are urged to finalize their parade schedules, community clean-up logistics, and special missionary collections. Let us walk in dignity and show the world what it means to be an Ambassador for Christ.'
-      },
-      {
-        id: 'blog_def2',
-        title: 'RAN Leadership Training Conference (LTC): Building Next-Gen Leaders',
-        author: 'Training & Education Directorate',
-        date: '2026-06-08',
-        content: 'Leadership is the foundation of service. The upcoming Royal Ambassadors of Nigeria Leadership Training Conference (RAN LTC) at Abeokuta will gather executives, officers, and aspiring leaders for an intensive weekend of instruction, fellowship, and spiritual growth. The curriculum covers administrative guidelines, mission theology, first aid, disaster management, and advanced leadership skills. Ranks will be examined and certified, including candidate screenings for the prestigious Ambassador Plenipotentiary senior exam. Early registration is advised to secure conference materials.'
-      },
-      {
-        id: 'blog_def3',
-        title: 'Maximizing Your Exam Preparation: A Guide for Royal Ambassadors',
-        author: 'Ranking Officer',
-        date: '2026-06-05',
-        content: 'As the camping session draws near, candidates preparing for their promotional ranks are encouraged to start their study early. This year\'s exams will test theological knowledge, Baptist history, Royal Ambassador manual rules, and practical outdoor tasks. To help you succeed, the online portal offers sample questionnaires, study guides, and mock quiz exercises. Ensure you revise the pledge, declaration, and three ranks structure. Maintain focus, maintain integrity, and study to show yourself approved.'
-      }
-    ];
-
-    const merged = [...dbBlogs];
-    defaultBlogs.forEach(def => {
-      if (!merged.some(b => b.id === def.id || b.title.trim().toLowerCase() === def.title.trim().toLowerCase())) {
-        merged.push(def);
-      }
-    });
-
-    return merged.sort((a, b) => new Date(b.date) - new Date(a.date));
   },
 
   async saveBlog(blogData) {
@@ -1012,6 +1056,57 @@ export const dbService = {
     if (error) throw error;
     return this.getSession();
   },
+
+  // ── Registration Window Operations ────────────────────────────────────────
+  // Stored as two dedicated columns on camping_session row id=1.
+  // Requires: ALTER TABLE camping_session
+  //           ADD COLUMN IF NOT EXISTS registration_open BOOLEAN DEFAULT FALSE,
+  //           ADD COLUMN IF NOT EXISTS registration_deadline DATE;
+
+  async getRegistrationWindow() {
+    const { data, error } = await supabase
+      .from('camping_session')
+      .select('registration_open, registration_deadline')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error || !data) return { isOpen: false, deadline: null };
+    return {
+      isOpen: data.registration_open || false,
+      deadline: data.registration_deadline || null
+    };
+  },
+
+  async saveRegistrationWindow({ isOpen, deadline }) {
+    const { error } = await supabase
+      .from('camping_session')
+      .upsert({
+        id: 1,
+        registration_open: isOpen,
+        registration_deadline: deadline || null
+      });
+    if (error) throw error;
+    return this.getRegistrationWindow();
+  },
+
+  async isRegistrationWindowOpen() {
+    try {
+      const win = await this.getRegistrationWindow();
+      if (!win.isOpen) return false;
+      if (win.deadline) {
+        const deadline = new Date(win.deadline + 'T23:59:59');
+        if (new Date() > deadline) return false;
+      }
+      return true;
+    } catch (err) {
+      // If DB unreachable, fail open so users are never incorrectly locked out
+      console.warn('Could not check registration window:', err);
+      return true;
+    }
+  },
+
+
+
+
 
   async isSessionActive() {
     const session = await this.getSession();

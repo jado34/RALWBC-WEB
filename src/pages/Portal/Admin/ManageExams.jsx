@@ -330,7 +330,7 @@ export const ManageExams = () => {
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label style={labelStyle}>Rank Category</label>
               <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem', marginTop: '-0.25rem' }}>
-                Students will only see this exam if their registered rank matches this category.
+                Ambassadors will only see this exam if their registered rank matches this category.
               </p>
               <select
                 value={editingExam.category || 'ambassador'}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { RANK_CATEGORIES } from '../services/db';
-import { ShieldAlert, ChevronDown } from 'lucide-react';
+import { RANK_CATEGORIES, dbService } from '../services/db';
+import { ShieldAlert, ChevronDown, Lock } from 'lucide-react';
 
 export const Register = () => {
   const { register, updateProfile, currentUser } = useAuth();
@@ -19,6 +19,7 @@ export const Register = () => {
   const [rank, setRank] = useState('');
   const [rankCategory, setRankCategory] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('+234');
+  const [regWindowOpen, setRegWindowOpen] = useState(null); // null = checking
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +29,11 @@ export const Register = () => {
       navigate(currentUser.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     }
   }, [currentUser, navigate]);
+
+  // Check if registration window is open
+  useEffect(() => {
+    dbService.isRegistrationWindowOpen().then(open => setRegWindowOpen(open));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -239,6 +245,42 @@ export const Register = () => {
     ];
 
   /* ─── JSX ────────────────────────────────────────────────── */
+
+  // ── Registration window gate ───────────────────────────────────────────────
+  if (regWindowOpen === null) {
+    return <div style={{ minHeight: '100vh' }} />;
+  }
+
+  if (regWindowOpen === false) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', backgroundColor: '#ffffff', padding: '3rem 1.5rem', textAlign: 'center'
+      }}>
+        <img src="/logo.png" alt="RALWBC" style={{ width: '90px', height: 'auto', marginBottom: '2rem', objectFit: 'contain' }} />
+        <div style={{
+          backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+          borderRadius: '16px', padding: '2.5rem 2rem', maxWidth: '460px', width: '100%'
+        }}>
+          <Lock size={40} color="#ef4444" style={{ marginBottom: '1.25rem' }} />
+          <h2 style={{ fontSize: '1.5rem', color: '#0a1141', fontWeight: '800', marginBottom: '0.75rem' }}>
+            Registration Closed
+          </h2>
+          <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: 1.7 }}>
+            New account registration is currently closed. The conference administrator will open
+            registration when the enrollment window begins. Please check back later.
+          </p>
+        </div>
+        <p style={{ marginTop: '2.5rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+          Admin?{' '}
+          <Link to="/admin-login" style={{ color: '#94a3b8', textDecoration: 'underline', fontWeight: '500' }}>
+            Click here
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
