@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dbService, RANK_CATEGORIES } from '../../../services/db';
-import { Plus, Trash2, ArrowLeft, Save, Edit3, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Edit3, Image as ImageIcon, CheckCircle, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export const ManageExams = () => {
   const [exams, setExams] = useState([]);
@@ -271,6 +272,95 @@ export const ManageExams = () => {
     setCurrentQIndex(editingExam.questions.length);
   };
 
+  const handleBulkImportQuestions = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const wb = XLSX.read(event.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        
+        if (rows.length === 0) {
+          alert("The uploaded file is empty.");
+          return;
+        }
+
+        const newQuestions = [];
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const qText = row.Question || row.question || row.Text || row.text || '';
+          if (!qText.trim()) continue;
+
+          const optA = String(row['Option A'] || row['OptionA'] || row.optA || row.optionA || '').trim();
+          const optB = String(row['Option B'] || row['OptionB'] || row.optB || row.optionB || '').trim();
+          const optC = String(row['Option C'] || row['OptionC'] || row.optC || row.optionC || '').trim();
+          const optD = String(row['Option D'] || row['OptionD'] || row.optD || row.optionD || '').trim();
+
+          const options = [optA, optB, optC, optD];
+
+          if (options.some(o => !o)) {
+            alert(`Row ${i + 2} is missing one or more options. Each question must have 4 options.`);
+            return;
+          }
+
+          const correct = String(row['Correct Answer'] || row['CorrectAnswer'] || row.correctAnswer || row.answer || '').trim();
+          let matchedCorrect = '';
+
+          const lowerCorrect = correct.toLowerCase();
+          if (lowerCorrect === 'a') matchedCorrect = optA;
+          else if (lowerCorrect === 'b') matchedCorrect = optB;
+          else if (lowerCorrect === 'c') matchedCorrect = optC;
+          else if (lowerCorrect === 'd') matchedCorrect = optD;
+          else {
+            const found = options.find(o => o.toLowerCase() === lowerCorrect);
+            if (found) {
+              matchedCorrect = found;
+            } else {
+              matchedCorrect = correct;
+            }
+          }
+
+          if (!matchedCorrect) {
+            alert(`Row ${i + 2} has an invalid Correct Answer. It must match one of the options or be A, B, C, or D.`);
+            return;
+          }
+
+          newQuestions.push({
+            id: "q_" + Math.random().toString(36).substr(2, 9),
+            text: qText.trim(),
+            options,
+            optionImages: ["", "", "", ""],
+            correctAnswer: matchedCorrect
+          });
+        }
+
+        if (newQuestions.length === 0) {
+          alert("No valid questions found in the file. Please check column headers.");
+          return;
+        }
+
+        setEditingExam(prev => {
+          const currentQs = prev.questions || [];
+          const firstBlank = currentQs.length === 1 && !currentQs[0].text.trim() && currentQs[0].options.every(o => !o.trim());
+          const merged = firstBlank ? newQuestions : [...currentQs, ...newQuestions];
+          return {
+            ...prev,
+            questions: merged
+          };
+        });
+
+        alert(`✅ Successfully imported ${newQuestions.length} questions!`);
+        e.target.value = '';
+      } catch (err) {
+        alert('❌ Error reading file: ' + err.message);
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <div className="animate-fade-in" style={{ backgroundColor: '#ffffff', minHeight: '80vh' }}>
 
@@ -533,6 +623,46 @@ export const ManageExams = () => {
               >
                 <Plus size={16} /> Add Question
               </button>
+
+              <label
+                style={{
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  color: '#16a34a',
+                  border: '2px dashed #16a34a',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#16a34a';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                  e.currentTarget.style.color = '#16a34a';
+                }}
+              >
+                <Upload size={16} /> Bulk Import Questions
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleBulkImportQuestions}
+                  style={{ display: 'none' }}
+                />
+              </label>
+
+              <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: '0.5rem', textAlign: 'center', lineHeight: '1.3' }}>
+                Required columns: <strong>Question, Option A, Option B, Option C, Option D, Correct Answer</strong> (can be the option text or letters A/B/C/D).
+              </div>
             </div>
 
             {/* Main Question Editor (Right Side) */}

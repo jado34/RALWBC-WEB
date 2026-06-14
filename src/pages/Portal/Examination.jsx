@@ -26,6 +26,19 @@ export const Examination = () => {
   const [infractionLogs, setInfractionLogs]   = useState([]);
   const [isOnline, setIsOnline]               = useState(navigator.onLine);       // Fix C
   const [submissionError, setSubmissionError] = useState(null); // Fix A: null | 'NETWORK' | 'RETRYING'
+  const [showReconnected, setShowReconnected] = useState(false);
+  const prevOnlineRef = useRef(isOnline);
+
+  useEffect(() => {
+    if (isOnline && !prevOnlineRef.current) {
+      setShowReconnected(true);
+      const timer = setTimeout(() => {
+        setShowReconnected(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+    prevOnlineRef.current = isOnline;
+  }, [isOnline]);
 
   // ── Race-condition guard: prevents double-submit from timer + session poll ──
   const isSubmittingRef = useRef(false);
@@ -362,6 +375,36 @@ export const Examination = () => {
 
   return (
     <AntiCheatGuard onWarning={handleWarningTriggered} onAutoSubmit={handleAutoSubmitDueToCheating} maxWarnings={3} initialWarnings={warningsCount}>
+
+      {/* ── Offline Reconnect Banner ── */}
+      {!isOnline && (
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 1000,
+          backgroundColor: '#ef4444', color: '#ffffff',
+          padding: '0.75rem 1rem', textAlign: 'center',
+          fontSize: '0.9rem', fontWeight: '700',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+          boxShadow: '0 4px 12px rgba(239,68,68,0.2)'
+        }}>
+          <WifiOff size={18} />
+          <span>📡 Reconnecting to Campsite Router... (Your answers are safe on this device)</span>
+        </div>
+      )}
+
+      {/* ── Reconnected Success Banner ── */}
+      {showReconnected && (
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 1000,
+          backgroundColor: '#16a34a', color: '#ffffff',
+          padding: '0.75rem 1rem', textAlign: 'center',
+          fontSize: '0.9rem', fontWeight: '700',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+          boxShadow: '0 4px 12px rgba(22,163,74,0.2)'
+        }}>
+          <CheckCircle size={18} />
+          <span>🟢 Connected back online! Unsaved answers synchronized.</span>
+        </div>
+      )}
 
       {/* ── Mobile sticky timer bar (shown only on small screens) ── */}
       <div className="mobile-timer-bar" style={{

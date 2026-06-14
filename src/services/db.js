@@ -20,6 +20,16 @@ export const GALLERY_CATEGORIES = [
   'RA Leadership Training Conference'
 ];
 
+export const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export const dbService = {
   // Initialize Database (no-op now since Supabase client is self-initializing)
   init() {
@@ -85,30 +95,119 @@ export const dbService = {
   },
 
   async login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    if (error) throw error;
-    if (!data.user) throw new Error('Login failed');
+    let loginData = null;
+    let loginError = null;
 
+    // 1. Try logging in with the exact password provided (handles admin case-sensitive passwords)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) throw error;
+      if (!data.user) throw new Error('Login failed');
+      loginData = data;
+    } catch (err) {
+      loginError = err;
+    }
+
+    // 2. If it failed and the password is not already lowercase, try with lowercase password (handles case-insensitive surname logins)
+    if (loginError && password.toLowerCase() !== password) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password: password.toLowerCase()
+        });
+        if (!error && data.user) {
+          loginData = data;
+          loginError = null; // Cleared error
+        }
+      } catch (err) {
+        // Keep the original error
+      }
+    }
+
+    // 3. If login still failed, check if they are an imported past candidate
+    if (loginError) {
+      try {
+        const { data: imported, error: importErr } = await supabase
+          .from('past_candidates')
+          .select('*')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (imported && !importErr) {
+          const parts = String(imported.name || '').trim().split(/\s+/);
+          const surname = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+          const expectedPassword = surname.toLowerCase();
+
+          if (password.toLowerCase() === expectedPassword) {
+            // Trigger registration with lowercase password
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email,
+              password: expectedPassword,
+              options: {
+                data: {
+                  name: imported.name,
+                  role: 'student'
+                }
+              }
+            });
+            if (signUpError) throw signUpError;
+
+            if (signUpData.user) {
+              // Create active profile row with all imported details
+              const newProfile = {
+                id: signUpData.user.id,
+                name: imported.name,
+                role: 'student',
+                church: imported.church,
+                association: imported.association,
+                rank_category: imported.rank_category,
+                rank: imported.rank,
+                phone: imported.phone
+              };
+              await supabase.from('profiles').upsert(newProfile);
+
+              return {
+                id: signUpData.user.id,
+                name: imported.name,
+                email: email,
+                role: 'student',
+                church: imported.church,
+                association: imported.association,
+                rankCategory: imported.rank_category,
+                rank: imported.rank,
+                phone: imported.phone,
+                phoneNumber: imported.phone
+              };
+            }
+          }
+        }
+      } catch (signupErr) {
+        console.error('Dynamic signup failed:', signupErr);
+      }
+      throw loginError;
+    }
+
+    // 4. Fetch profile for the successfully logged-in user
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', data.user.id)
-      .single();
+      .eq('id', loginData.user.id)
+      .maybeSingle();
 
     if (profileError || !profile) {
-      const name = data.user.user_metadata?.name || email.split('@')[0];
-      const role = data.user.user_metadata?.role || 'student';
-      await supabase.from('profiles').upsert({ id: data.user.id, name, role });
-      return { id: data.user.id, name, email, role };
+      const name = loginData.user.user_metadata?.name || email.split('@')[0];
+      const role = loginData.user.user_metadata?.role || 'student';
+      await supabase.from('profiles').upsert({ id: loginData.user.id, name, role });
+      return { id: loginData.user.id, name, email, role };
     }
 
     return {
       id: profile.id,
       name: profile.name,
-      email: data.user.email,
+      email: loginData.user.email,
       role: profile.role,
       dob: profile.dob,
       phone: profile.phone || profile.phone_number,
@@ -277,7 +376,7 @@ export const dbService = {
   // ── Exam Enrollment Operations (Super Admin Controlled) ───────────────────
 
   async enrollCandidateInExam(userId, examId, enrolledBy = null) {
-    const id = 'enr_' + Math.random().toString(36).substr(2, 9);
+    const id = generateUUID();
     const { error } = await supabase
       .from('exam_registrations')
       .upsert({ id, user_id: userId, exam_id: examId, enrolled_by: enrolledBy });
@@ -304,59 +403,107 @@ export const dbService = {
   },
 
   async getEnrollmentsForExam(examId) {
-    const { data, error } = await supabase
+    const { data: regs, error: regsErr } = await supabase
       .from('exam_registrations')
-      .select('*, profiles(*)')
+      .select('*')
       .eq('exam_id', examId);
-    if (error) throw error;
-    return (data || []).map(r => ({
-      enrollmentId: r.id,
-      userId: r.user_id,
-      examId: r.exam_id,
-      registeredAt: r.registered_at,
-      profile: r.profiles ? {
-        id: r.profiles.id,
-        name: r.profiles.name,
-        email: r.profiles.email,
-        phone: r.profiles.phone || r.profiles.phone_number,
-        church: r.profiles.church,
-        association: r.profiles.association,
-        rankCategory: r.profiles.rank_category,
-        rank: r.profiles.rank,
-        dob: r.profiles.dob,
-        address: r.profiles.address,
-        chapterName: r.profiles.chapter_name,
-      } : {}
-    }));
+    if (regsErr) throw regsErr;
+
+    const userIds = [...new Set((regs || []).map(r => r.user_id).filter(Boolean))];
+    let profiles = [];
+    if (userIds.length > 0) {
+      const { data: profs, error: profsErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds);
+      if (profsErr) throw profsErr;
+      profiles = profs || [];
+    }
+
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+    return (regs || []).map(r => {
+      const prof = profileMap.get(r.user_id) || {};
+      return {
+        enrollmentId: r.id,
+        userId: r.user_id,
+        examId: r.exam_id,
+        registeredAt: r.registered_at,
+        profile: {
+          id: prof.id,
+          name: prof.name,
+          email: prof.email,
+          phone: prof.phone || prof.phone_number,
+          church: prof.church,
+          association: prof.association,
+          rankCategory: prof.rank_category,
+          rank: prof.rank,
+          dob: prof.dob,
+          address: prof.address,
+          chapterName: prof.chapter_name,
+        }
+      };
+    });
   },
 
   async getAllEnrollments() {
-    const { data, error } = await supabase
+    const { data: regs, error: regsErr } = await supabase
       .from('exam_registrations')
-      .select('*, profiles(*), exams(id, title, category)')
+      .select('*')
       .order('registered_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(r => ({
-      enrollmentId: r.id,
-      userId: r.user_id,
-      examId: r.exam_id,
-      registeredAt: r.registered_at,
-      examTitle: r.exams?.title || 'N/A',
-      examCategory: r.exams?.category || 'N/A',
-      profile: r.profiles ? {
-        id: r.profiles.id,
-        name: r.profiles.name,
-        email: r.profiles.email,
-        phone: r.profiles.phone || r.profiles.phone_number,
-        church: r.profiles.church,
-        association: r.profiles.association,
-        rankCategory: r.profiles.rank_category,
-        rank: r.profiles.rank,
-        dob: r.profiles.dob,
-        address: r.profiles.address,
-        chapterName: r.profiles.chapter_name,
-      } : {}
-    }));
+    if (regsErr) throw regsErr;
+
+    const userIds = [...new Set((regs || []).map(r => r.user_id).filter(Boolean))];
+    const examIds = [...new Set((regs || []).map(r => r.exam_id).filter(Boolean))];
+
+    let profiles = [];
+    if (userIds.length > 0) {
+      const { data: profs, error: profsErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds);
+      if (profsErr) throw profsErr;
+      profiles = profs || [];
+    }
+
+    let exams = [];
+    if (examIds.length > 0) {
+      const { data: exms, error: exmsErr } = await supabase
+        .from('exams')
+        .select('id, title, category')
+        .in('id', examIds);
+      if (exmsErr) throw exmsErr;
+      exams = exms || [];
+    }
+
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+    const examMap = new Map(exams.map(e => [e.id, e]));
+
+    return (regs || []).map(r => {
+      const prof = profileMap.get(r.user_id) || {};
+      const ex = examMap.get(r.exam_id) || {};
+      return {
+        enrollmentId: r.id,
+        userId: r.user_id,
+        examId: r.exam_id,
+        registeredAt: r.registered_at,
+        examTitle: ex.title || 'N/A',
+        examCategory: ex.category || 'N/A',
+        profile: {
+          id: prof.id,
+          name: prof.name,
+          email: prof.email,
+          phone: prof.phone || prof.phone_number,
+          church: prof.church,
+          association: prof.association,
+          rankCategory: prof.rank_category,
+          rank: prof.rank,
+          dob: prof.dob,
+          address: prof.address,
+          chapterName: prof.chapter_name,
+        }
+      };
+    });
   },
 
   async closeExamRegistration(examId) {
@@ -442,16 +589,6 @@ export const dbService = {
   // ── Past Candidates Import ────────────────────────────────────────────────
 
   async importPastCandidates(rows) {
-    const generateUUID = () => {
-      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-        return crypto.randomUUID();
-      }
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    };
-
     const records = rows.map(row => {
       const rawCat = row.rankCategory || row.RankCategory || row['Rank Category'] || '';
       const normCat = String(rawCat).trim().toLowerCase().replace(/\s+/g, '_');
@@ -529,26 +666,43 @@ export const dbService = {
   },
 
   async getProjectSupervisors() {
-    const { data, error } = await supabase
+    const { data: svs, error } = await supabase
       .from('project_supervisors')
-      .select('*, profiles!candidate_user_id(id, name, email, church, association, rank_category)')
+      .select('*')
       .order('assigned_at', { ascending: false });
     if (error) throw error;
-    return (data || []).map(r => ({
-      id: r.id,
-      candidateUserId: r.candidate_user_id,
-      supervisorName: r.supervisor_name,
-      supervisorContact: r.supervisor_contact,
-      projectTitle: r.project_title,
-      assignedAt: r.assigned_at,
-      candidate: r.profiles ? {
-        name: r.profiles.name,
-        email: r.profiles.email,
-        church: r.profiles.church,
-        association: r.profiles.association,
-        rankCategory: r.profiles.rank_category,
-      } : null,
-    }));
+
+    const userIds = [...new Set((svs || []).map(r => r.candidate_user_id).filter(Boolean))];
+    let profiles = [];
+    if (userIds.length > 0) {
+      const { data: profs, error: profsErr } = await supabase
+        .from('profiles')
+        .select('id, name, email, church, association, rank_category')
+        .in('id', userIds);
+      if (profsErr) throw profsErr;
+      profiles = profs || [];
+    }
+
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+    return (svs || []).map(r => {
+      const prof = profileMap.get(r.candidate_user_id);
+      return {
+        id: r.id,
+        candidateUserId: r.candidate_user_id,
+        supervisorName: r.supervisor_name,
+        supervisorContact: r.supervisor_contact,
+        projectTitle: r.project_title,
+        assignedAt: r.assigned_at,
+        candidate: prof ? {
+          name: prof.name,
+          email: prof.email,
+          church: prof.church,
+          association: prof.association,
+          rankCategory: prof.rank_category,
+        } : null,
+      };
+    });
   },
 
   async deleteProjectSupervisor(id) {
@@ -582,25 +736,42 @@ export const dbService = {
   async getProjectSubmissions(userId = null) {
     let query = supabase
       .from('project_submissions')
-      .select('*, profiles(id, name, email, church, association, rank_category)')
+      .select('*')
       .order('uploaded_at', { ascending: false });
     if (userId) query = query.eq('user_id', userId);
-    const { data, error } = await query;
+    const { data: subs, error } = await query;
     if (error) throw error;
-    return (data || []).map(r => ({
-      id: r.id,
-      userId: r.user_id,
-      fileUrl: r.file_url,
-      fileName: r.file_name,
-      uploadedAt: r.uploaded_at,
-      candidate: r.profiles ? {
-        name: r.profiles.name,
-        email: r.profiles.email,
-        church: r.profiles.church,
-        association: r.profiles.association,
-        rankCategory: r.profiles.rank_category,
-      } : null,
-    }));
+
+    const userIds = [...new Set((subs || []).map(r => r.user_id).filter(Boolean))];
+    let profiles = [];
+    if (userIds.length > 0) {
+      const { data: profs, error: profsErr } = await supabase
+        .from('profiles')
+        .select('id, name, email, church, association, rank_category')
+        .in('id', userIds);
+      if (profsErr) throw profsErr;
+      profiles = profs || [];
+    }
+
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+    return (subs || []).map(r => {
+      const prof = profileMap.get(r.user_id);
+      return {
+        id: r.id,
+        userId: r.user_id,
+        fileUrl: r.file_url,
+        fileName: r.file_name,
+        uploadedAt: r.uploaded_at,
+        candidate: prof ? {
+          name: prof.name,
+          email: prof.email,
+          church: prof.church,
+          association: prof.association,
+          rankCategory: prof.rank_category,
+        } : null,
+      };
+    });
   },
 
   // ── Submission Operations ─────────────────────────────────────────────────
@@ -827,7 +998,7 @@ export const dbService = {
         .eq('id', id);
       if (error) throw error;
     } else {
-      id = 'blog_' + Math.random().toString(36).substr(2, 9);
+      id = generateUUID();
       const { error } = await supabase
         .from('blogs')
         .insert({
@@ -1008,7 +1179,7 @@ export const dbService = {
         .eq('id', id);
       if (error) throw error;
     } else {
-      id = 'gal_' + Math.random().toString(36).substr(2, 9);
+      id = generateUUID();
       const { error } = await supabase
         .from('gallery')
         .insert({ id, ...dbPhoto });

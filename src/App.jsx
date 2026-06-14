@@ -15,7 +15,7 @@ import { Gallery }    from './pages/Gallery';
 import { Contact }    from './pages/Contact';
 import { Resources }  from './pages/Resources';
 import { Login }      from './pages/Login';
-import { Register }   from './pages/Register';
+// Registration disabled - Admin bulk imports only
 import { Officers }   from './pages/Officers';
 import { AdminLogin } from './pages/AdminLogin';
 
@@ -60,7 +60,7 @@ function App() {
                 <Route path="/contact"    element={<Contact />}   />
                 <Route path="/resources"  element={<Resources />} />
                 <Route path="/login"       element={<Login />}      />
-                <Route path="/register"    element={<Register />}   />
+                <Route path="/register"    element={<Navigate to="/login" replace />}   />
                 <Route path="/admin-access" element={<AdminLogin />} />
 
                 {/* Portal Layout Wrapper for Dashboard and Profile screens */}

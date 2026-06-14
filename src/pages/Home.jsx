@@ -167,7 +167,7 @@ export const Home = () => {
           {/* CTAs */}
           <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', ...fade(1.2) }}>
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/login')}
               className="hero-cta-primary"
               style={{ padding: '0.9rem 2.25rem', backgroundColor: '#ca8a04', color: '#fff', border: 'none', borderRadius: '3px', fontWeight: '700', fontSize: '0.82rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.2s, transform 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#a16207'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
@@ -297,7 +297,7 @@ export const Home = () => {
             {[
               { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: 'https://images.unsplash.com/photo-1489641493513-ba4ee84ccea9?w=600&auto=format&fit=crop&q=80', link: '/about-us' },
               { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=80', link: '/about-us' },
-              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600&auto=format&fit=crop&q=80', link: '/register' },
+              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600&auto=format&fit=crop&q=80', link: '/login' },
             ].map((card, i) => (
               <div key={i} className="mission-pillar-card" style={{ backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'box-shadow 0.3s' }}>
                 <div style={{ height: '220px', overflow: 'hidden' }}>

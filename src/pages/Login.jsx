@@ -146,31 +146,31 @@ export const Login = () => {
           textAlign: 'center'
         }}>
           {/* Dual Emblem Logos (RA & Conference Logo side-by-side) */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '3rem', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            flexWrap: 'wrap', 
+          <div style={{
+            display: 'flex',
+            gap: '3rem',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
             marginBottom: '4.5rem',
             width: '100%'
           }}>
-            <img 
-              src="/logo.png" 
-              alt="Royal Ambassadors Logo" 
-              style={{ 
-                width: 'clamp(150px, 25vw, 240px)', 
-                height: 'auto', 
+            <img
+              src="/logo.png"
+              alt="Royal Ambassadors Logo"
+              style={{
+                width: 'clamp(150px, 25vw, 240px)',
+                height: 'auto',
                 objectFit: 'contain',
                 filter: 'drop-shadow(0 8px 16px rgba(10, 17, 65, 0.08))'
               }}
             />
-            <img 
-              src="/lwbc-logo.png" 
-              alt="Lagos West Baptist Conference Logo" 
-              style={{ 
-                width: 'clamp(150px, 25vw, 240px)', 
-                height: 'auto', 
+            <img
+              src="/lwbc-logo.png"
+              alt="Lagos West Baptist Conference Logo"
+              style={{
+                width: 'clamp(150px, 25vw, 240px)',
+                height: 'auto',
                 objectFit: 'contain',
                 filter: 'drop-shadow(0 8px 16px rgba(10, 17, 65, 0.08))'
               }}
@@ -178,7 +178,7 @@ export const Login = () => {
           </div>
 
           {/* Begin Call-To-Action Link (Click here to begin) */}
-          <button 
+          <button
             onClick={() => setShowLoginForm(true)}
             style={{
               background: 'none',
@@ -213,8 +213,8 @@ export const Login = () => {
           zIndex: 2
         }}>
           {/* Back button to onboarding */}
-          <button 
-            onClick={() => setShowLoginForm(false)} 
+          <button
+            onClick={() => setShowLoginForm(false)}
             style={{
               background: 'none',
               border: 'none',
@@ -234,21 +234,21 @@ export const Login = () => {
 
           {/* Branding Emblem Header */}
           <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
-            <img 
-              src="/logo.png" 
-              alt="Royal Ambassadors Logo" 
-              style={{ 
-                width: '60px', 
-                height: '60px', 
-                objectFit: 'contain', 
-                margin: '0 auto 1.25rem', 
-                display: 'block' 
-              }} 
+            <img
+              src="/logo.png"
+              alt="Royal Ambassadors Logo"
+              style={{
+                width: '60px',
+                height: '60px',
+                objectFit: 'contain',
+                margin: '0 auto 1.25rem',
+                display: 'block'
+              }}
             />
-            <h2 style={{ 
-              fontSize: '1.6rem', 
+            <h2 style={{
+              fontSize: '1.6rem',
               color: '#ca8a04', // Brand Gold
-              fontWeight: '800', 
+              fontWeight: '800',
               marginBottom: '0.35rem',
               fontFamily: 'var(--font-heading)'
             }}>
@@ -283,14 +283,14 @@ export const Login = () => {
             {/* Email input field */}
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
               <div style={{ position: 'relative' }}>
-                <input 
+                <input
                   type="email"
                   required
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="form-input"
-                  style={{ 
+                  style={{
                     padding: '0.85rem 3rem 0.85rem 1.25rem',
                     backgroundColor: '#eff6f5', // Faint greyish-blue tinted background
                     border: 'none',
@@ -299,15 +299,15 @@ export const Login = () => {
                     fontSize: '0.95rem'
                   }}
                 />
-                <Mail 
-                  size={18} 
-                  color="#64748b" 
-                  style={{ 
-                    position: 'absolute', 
-                    right: '1.25rem', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)' 
-                  }} 
+                <Mail
+                  size={18}
+                  color="#64748b"
+                  style={{
+                    position: 'absolute',
+                    right: '1.25rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)'
+                  }}
                 />
               </div>
             </div>
@@ -315,14 +315,14 @@ export const Login = () => {
             {/* Password input field */}
             <div className="form-group" style={{ marginBottom: '1rem' }}>
               <div style={{ position: 'relative' }}>
-                <input 
+                <input
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="form-input"
-                  style={{ 
+                  style={{
                     padding: '0.85rem 3rem 0.85rem 1.25rem',
                     backgroundColor: '#eff6f5', // Faint greyish-blue tinted background
                     border: 'none',
@@ -355,10 +355,10 @@ export const Login = () => {
             </div>
 
             {/* Recover Password row */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'flex-end', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
               fontSize: '0.85rem',
               color: '#1e293b',
               marginBottom: '2.5rem',
@@ -370,17 +370,17 @@ export const Login = () => {
             </div>
 
             {/* Centered navy submit button */}
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSubmitting}
               className="btn"
-              style={{ 
-                display: 'block', 
-                margin: '0 auto', 
-                width: '180px', 
-                padding: '0.75rem 1.5rem', 
+              style={{
+                display: 'block',
+                margin: '0 auto',
+                width: '180px',
+                padding: '0.75rem 1.5rem',
                 backgroundColor: '#0a1141', // Deep navy blue
-                color: '#ffffff', 
+                color: '#ffffff',
                 borderRadius: '6px',
                 fontWeight: '700',
                 fontSize: '0.95rem',
@@ -393,17 +393,18 @@ export const Login = () => {
           </form>
 
           {/* Redirect section */}
-          <div style={{ 
-            textAlign: 'center', 
-            marginTop: '2.25rem', 
-            fontSize: '0.85rem', 
+          <div style={{
+            textAlign: 'center',
+            marginTop: '2.25rem',
+            fontSize: '0.85rem',
             color: '#1e293b',
-            fontWeight: '500'
+            fontWeight: '500',
+            lineHeight: '1.4'
           }}>
             Don't have an account?{' '}
-            <Link to="/register" style={{ color: '#ca8a04', fontWeight: '700' }}>
-              Register Here!
-            </Link>
+            <span style={{ color: '#002060', fontWeight: '600' }}>
+              Contact your Association Director for Registration.
+            </span>
           </div>
         </div>
       )}

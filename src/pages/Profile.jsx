@@ -198,18 +198,34 @@ export const Profile = () => {
                 />
               </div>
 
-              <div>
-                <label style={labelStyle} htmlFor="prof-pw">New Password (leave blank to keep current)</label>
-                <input
-                  id="prof-pw"
-                  type="password"
-                  placeholder="New Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={inputStyle}
-                  autoComplete="new-password"
-                />
-              </div>
+              {currentUser?.role === 'admin' ? (
+                <div>
+                  <label style={labelStyle} htmlFor="prof-pw">New Password (leave blank to keep current)</label>
+                  <input
+                    id="prof-pw"
+                    type="password"
+                    placeholder="New Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={inputStyle}
+                    autoComplete="new-password"
+                  />
+                </div>
+              ) : (
+                <div style={{
+                  backgroundColor: 'rgba(0, 32, 96, 0.03)',
+                  border: '1px solid rgba(0, 32, 96, 0.1)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '1rem',
+                  color: '#002060',
+                  fontSize: '0.875rem'
+                }}>
+                  <strong>🔑 Fixed Account Password:</strong>
+                  <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>
+                    Your password is fixed to your <strong>Last Name (Surname) in lowercase</strong> for offline camper access.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label style={labelStyle} htmlFor="prof-church">Church {currentUser?.role !== 'admin' && '*'}</label>
@@ -250,18 +266,20 @@ export const Profile = () => {
                 />
               </div>
 
-              <div>
-                <label style={labelStyle} htmlFor="prof-cpw">Confirm New Password</label>
-                <input
-                  id="prof-cpw"
-                  type="password"
-                  placeholder="Confirm New Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={inputStyle}
-                  autoComplete="new-password"
-                />
-              </div>
+              {currentUser?.role === 'admin' && (
+                <div>
+                  <label style={labelStyle} htmlFor="prof-cpw">Confirm New Password</label>
+                  <input
+                    id="prof-cpw"
+                    type="password"
+                    placeholder="Confirm New Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    style={inputStyle}
+                    autoComplete="new-password"
+                  />
+                </div>
+              )}
 
               <div>
                 <label style={labelStyle} htmlFor="prof-address">Address</label>

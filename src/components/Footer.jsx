@@ -51,7 +51,6 @@ export const Footer = () => {
             <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold' }}>Portal</h4>
             <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '0.5rem' }}><Link to="/login" style={{ color: textColor }}>Log In</Link></li>
-              <li style={{ marginBottom: '0.5rem' }}><Link to="/register" style={{ color: textColor }}>Sign Up</Link></li>
               <li><Link to="/admin-access" style={{ color: '#ca8a04', fontWeight: '600', fontSize: '0.85rem' }}>Admin Access</Link></li>
             </ul>
           </div>

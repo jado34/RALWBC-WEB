@@ -8,7 +8,6 @@ export const Register = () => {
   const { register, updateProfile, currentUser } = useAuth();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +38,7 @@ export const Register = () => {
     e.preventDefault();
     setError('');
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !association.trim() || !church.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !association.trim() || !church.trim()) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -49,16 +48,12 @@ export const Register = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
-      const user = await register(fullName, email, password, {
+      const generatedPassword = lastName.trim().toLowerCase();
+      const user = await register(fullName, email, generatedPassword, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         association: association.trim(),
@@ -339,18 +334,21 @@ export const Register = () => {
             />
           </div>
 
-          {/* Password */}
-          <div style={groupStyle}>
-            <label style={labelStyle} htmlFor="reg-password">Password *</label>
-            <input
-              id="reg-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 6 characters"
-              required
-              style={inputStyle}
-            />
+          {/* Informational Password Note */}
+          <div style={{
+            backgroundColor: 'rgba(0, 32, 96, 0.04)',
+            border: '1px solid rgba(0, 32, 96, 0.15)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            color: '#002060',
+            fontSize: '0.9rem',
+            lineHeight: '1.4'
+          }}>
+            <strong>🔑 Access Password Info:</strong>
+            <p style={{ margin: '0.25rem 0 0 0' }}>
+              Your login password will automatically be set to your <strong>Last Name (Surname) in lowercase</strong>.
+            </p>
           </div>
 
           <hr style={dividerStyle} />

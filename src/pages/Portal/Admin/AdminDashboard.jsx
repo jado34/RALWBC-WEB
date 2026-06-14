@@ -4,6 +4,7 @@ import { dbService, RANK_CATEGORIES, getRankLabel, GALLERY_CATEGORIES } from '..
 import { supabase } from '../../../services/supabaseClient';
 import { useAuth } from '../../../context/AuthContext';
 import * as XLSX from 'xlsx';
+import QRCode from 'qrcode';
 import {
   Users, Award, ShieldAlert, FileSpreadsheet, PlusCircle, Settings,
   ClipboardList, UserCheck, Download, Plus, CalendarClock,
@@ -45,6 +46,165 @@ export const AdminDashboard = () => {
   const [pastPage, setPastPage] = useState(1);
   const [candidateRankFilter, setCandidateRankFilter] = useState('all');
   const [pastRankFilter, setPastRankFilter] = useState('all');
+
+  // Campsite connectivity state
+  const [campsiteIp, setCampsiteIp] = useState('');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+
+  // Google Sheet Importer state
+  const [googleSheetUrl, setGoogleSheetUrl] = useState('');
+  const [googleImporting, setGoogleImporting] = useState(false);
+  const [googleMsg, setGoogleMsg] = useState('');
+  const [googlePreview, setGooglePreview] = useState([]);
+  const [googleRows, setGoogleRows] = useState([]);
+
+  // Detect local IP address on mount
+  useEffect(() => {
+    const host = window.location.hostname;
+    const isIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(host);
+    if (isIp) {
+      setCampsiteIp(host);
+    } else {
+      setCampsiteIp('');
+    }
+  }, []);
+
+  // Re-generate QR Code when campsiteIp changes
+  useEffect(() => {
+    if (!campsiteIp.trim()) {
+      setQrCodeDataUrl('');
+      return;
+    }
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const loginUrl = `http://${campsiteIp.trim()}${port}/#/login`;
+    
+    QRCode.toDataURL(loginUrl, { width: 300, margin: 2, color: { dark: '#0a1141', light: '#ffffff' } })
+      .then(url => setQrCodeDataUrl(url))
+      .catch(err => console.error('Failed to generate QR Code:', err));
+  }, [campsiteIp]);
+
+  const handleGoogleSheetFetch = async () => {
+    if (!googleSheetUrl.trim()) {
+      setGoogleMsg('❌ Please enter a valid Google Sheets URL.');
+      return;
+    }
+    setGoogleImporting(true);
+    setGoogleMsg('');
+    setGooglePreview([]);
+    setGoogleRows([]);
+
+    try {
+      const match = googleSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (!match) {
+        throw new Error('Could not find a valid Google Spreadsheet ID in the URL. Please verify the link format.');
+      }
+      const sheetId = match[1];
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+
+      const res = await fetch(csvUrl);
+      if (!res.ok) {
+        throw new Error('Failed to retrieve the Google Sheet. Please check that the sheet sharing settings are set to "Anyone with the link can view".');
+      }
+
+      const csvText = await res.text();
+      const parsedRows = parseCSV(csvText);
+      if (parsedRows.length === 0) {
+        throw new Error('No data rows found in the spreadsheet.');
+      }
+
+      setGoogleRows(parsedRows);
+      setGooglePreview(parsedRows.slice(0, 5));
+      setGoogleMsg(`✅ Successfully fetched ${parsedRows.length} candidates from Google Sheets! Preview below.`);
+    } catch (err) {
+      console.error(err);
+      setGoogleMsg(`❌ Fetch failed: ${err.message}`);
+    } finally {
+      setGoogleImporting(false);
+    }
+  };
+
+  const handleGoogleSheetImportConfirm = async () => {
+    if (googleRows.length === 0) return;
+    setGoogleImporting(true);
+    setGoogleMsg('');
+    try {
+      const mappedRows = googleRows.map(row => {
+        const findVal = (names) => {
+          const matchedKey = Object.keys(row).find(k => 
+            names.some(name => k.toLowerCase().replace(/[\s_-]+/g, '').includes(name.toLowerCase()))
+          );
+          return matchedKey ? row[matchedKey] : '';
+        };
+
+        return {
+          name: findVal(['name', 'fullname', 'candidate']),
+          email: findVal(['email', 'mail']),
+          church: findVal(['church', 'congregation']),
+          association: findVal(['association', 'lg']),
+          rankCategory: findVal(['rankcategory', 'category']),
+          rank: findVal(['ranktitle', 'rank', 'title']),
+          phone: findVal(['phone', 'mobile', 'tel', 'contact']),
+          year: findVal(['year', 'session'])
+        };
+      });
+
+      const result = await dbService.importPastCandidates(mappedRows);
+      if (result.errors.length > 0) {
+        setGoogleMsg(`❌ Imported ${result.inserted} candidates successfully, but encountered errors: ${result.errors.join(', ')}`);
+      } else {
+        setGoogleMsg(`✅ Imported ${result.inserted} candidates successfully!`);
+      }
+      setGooglePreview([]);
+      setGoogleRows([]);
+      setGoogleSheetUrl('');
+      loadPastCandidates();
+    } catch (err) {
+      setGoogleMsg(`❌ Import failed: ${err.message}`);
+    } finally {
+      setGoogleImporting(false);
+    }
+  };
+
+  const parseCSV = (text) => {
+    const lines = [];
+    let row = [""];
+    lines.push(row);
+    let i = 0, q = false;
+
+    while (i < text.length) {
+      const c = text[i];
+      const next = text[i+1];
+      if (c === '"') {
+        if (q && next === '"') { row[row.length - 1] += '"'; i++; }
+        else { q = !q; }
+      } else if (c === ',' && !q) {
+        row.push('');
+      } else if ((c === '\r' || c === '\n') && !q) {
+        if (c === '\r' && next === '\n') { i++; }
+        row = [''];
+        lines.push(row);
+      } else {
+        row[row.length - 1] += c;
+      }
+      i++;
+    }
+
+    const cleanLines = lines.filter(line => line.length > 1 || (line[0] && line[0].trim() !== ''));
+    if (cleanLines.length === 0) return [];
+
+    const headers = cleanLines[0].map(h => h.trim().replace(/^"|"$/g, ''));
+    const dataRows = [];
+
+    for (let r = 1; r < cleanLines.length; r++) {
+      const values = cleanLines[r];
+      const obj = {};
+      for (let h = 0; h < headers.length; h++) {
+        obj[headers[h]] = (values[h] || '').trim().replace(/^"|"$/g, '');
+      }
+      dataRows.push(obj);
+    }
+    return dataRows;
+  };
 
   // Supervisors state
   const [supervisors, setSupervisors] = useState([]);
@@ -721,6 +881,80 @@ export const AdminDashboard = () => {
             </div>
           )}
         </div>
+
+        {/* Google Sheets Sync Panel */}
+        <div style={{ border: '2px solid #ca8a04', borderRadius: '12px', padding: '2rem', marginBottom: '2rem', backgroundColor: '#ffffff' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ca8a04', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FileText size={20} /> One-Click Google Sheets Sync
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+            Import candidate records directly from Google Drive / Google Forms response sheet. 
+            <strong>Requirement:</strong> The sheet sharing must be set to <strong>&quot;Anyone with the link can view&quot;</strong>.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <input
+              type="text"
+              placeholder="Paste Google Sheets Share Link here..."
+              value={googleSheetUrl}
+              onChange={(e) => setGoogleSheetUrl(e.target.value)}
+              style={{ ...inputStyle, flex: 1, minWidth: '280px' }}
+            />
+            <button
+              onClick={handleGoogleSheetFetch}
+              disabled={googleImporting}
+              style={{ backgroundColor: '#ca8a04', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.85rem 1.75rem', fontWeight: '700', cursor: 'pointer', opacity: googleImporting ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              {googleImporting ? 'Connecting...' : 'Fetch Sheet'}
+            </button>
+          </div>
+
+          {googleMsg && (
+            <div style={{
+              padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '600',
+              backgroundColor: googleMsg.startsWith('✅') ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              color: googleMsg.startsWith('✅') ? '#059669' : '#dc2626',
+              border: `1px solid ${googleMsg.startsWith('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+              marginBottom: '1rem'
+            }}>{googleMsg}</div>
+          )}
+
+          {googlePreview.length > 0 && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <p style={{ fontSize: '0.82rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                Google Sheet Data Preview (first {googlePreview.length} rows)
+              </p>
+              <div style={{ overflowX: 'auto', maxHeight: '250px', border: '1px solid #cbd5e1', borderRadius: '8px', marginBottom: '1.25rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '700px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #cbd5e1', position: 'sticky', top: 0 }}>
+                      {Object.keys(googlePreview[0] || {}).map(k => (
+                        <th key={k} style={{ padding: '0.65rem 0.75rem', textAlign: 'left', fontWeight: '700', color: '#475569', backgroundColor: '#f8fafc' }}>{k}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {googlePreview.map((row, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        {Object.values(row).map((v, j) => (
+                          <td key={j} style={{ padding: '0.65rem 0.75rem', color: '#0f172a' }}>{String(v)}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <button
+                onClick={handleGoogleSheetImportConfirm}
+                disabled={googleImporting}
+                style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.85rem 2rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', opacity: googleImporting ? 0.7 : 1 }}
+              >
+                Confirm & Sync {googleRows.length} Candidates
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Past Candidates Archive */}
         <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -1611,6 +1845,70 @@ export const AdminDashboard = () => {
             <Save size={16} /> Save Registration Settings
           </button>
           {regWindowSaved && <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem' }}>✓ Saved successfully!</span>}
+        </div>
+      </div>
+
+      {/* Campsite Local Connectivity & QR Code Panel */}
+      <div style={{ border: '2px solid #0a1141', borderRadius: '12px', padding: '2rem', backgroundColor: '#ffffff', marginTop: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <BookOpen size={22} color="#0a1141" />
+          <h3 style={{ fontSize: '1.25rem', color: '#000000', margin: 0 }}>Campsite Offline Connectivity (QR Code)</h3>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '1.75rem', lineHeight: 1.6 }}>
+          Generate a <strong>Scan-to-Join QR Code</strong> so candidates can connect their phones to this admin laptop server without typing complex IP addresses.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+          {/* IP Input controls */}
+          <div>
+            <label style={labelStyle}>Admin Laptop Wi-Fi IP Address</label>
+            <input
+              type="text"
+              placeholder="e.g. 192.168.8.100"
+              value={campsiteIp}
+              onChange={(e) => setCampsiteIp(e.target.value)}
+              style={inputStyle}
+            />
+            
+            <div style={{
+              marginTop: '1rem',
+              backgroundColor: 'rgba(10, 17, 65, 0.04)',
+              border: '1px solid rgba(10, 17, 65, 0.1)',
+              borderRadius: '8px',
+              padding: '1rem',
+              fontSize: '0.82rem',
+              color: '#475569',
+              lineHeight: '1.5'
+            }}>
+              <strong>📌 How to find your Laptop IP Address:</strong>
+              <ol style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem' }}>
+                <li>Connect your Admin laptop to the campsite Wi-Fi router.</li>
+                <li>Open Command Prompt (Windows) and type: <code>ipconfig</code></li>
+                <li>Look for <strong>IPv4 Address</strong> under your Wi-Fi Adapter (usually starts with <code>192.168...</code>).</li>
+                <li>Paste/type that IP address into the input field above.</li>
+              </ol>
+            </div>
+          </div>
+
+          {/* QR Code display */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.5rem', backgroundColor: '#f8fafc' }}>
+            {qrCodeDataUrl ? (
+              <>
+                <img src={qrCodeDataUrl} alt="Campsite Scan to Join QR Code" style={{ width: '220px', height: '220px', objectFit: 'contain', border: '2px solid #0a1141', borderRadius: '8px', padding: '0.25rem', backgroundColor: '#ffffff' }} />
+                <p style={{ marginTop: '1rem', fontSize: '0.88rem', fontWeight: '700', color: '#0a1141', textAlign: 'center', margin: '0.75rem 0 0 0' }}>
+                  📲 Candidates: Scan to Sit Exam!
+                </p>
+                <code style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.25rem', wordBreak: 'break-all', display: 'block', textAlign: 'center' }}>
+                  {`http://${campsiteIp.trim()}${window.location.port ? `:${window.location.port}` : ''}/#/login`}
+                </code>
+              </>
+            ) : (
+              <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                Enter your Laptop's Wi-Fi IP address<br />to generate the Scan-to-Join QR Code.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
