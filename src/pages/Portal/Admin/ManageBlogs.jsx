@@ -110,6 +110,34 @@ export const ManageBlogs = () => {
             </div>
 
             <div className="form-group">
+              <label className="form-label" htmlFor="blog-image-input">
+                Featured Image
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', fontWeight: '500', color: 'var(--text-muted)', textTransform: 'none', letterSpacing: 0 }}>
+                  (optional)
+                </span>
+              </label>
+              <input 
+                id="blog-image-input"
+                type="text"
+                placeholder="e.g. /IMG-20260613-WA0001.jpg or https://..."
+                value={editingBlog.image_url || ''}
+                onChange={(e) => setEditingBlog({ ...editingBlog, image_url: e.target.value || null })}
+                className="form-input"
+              />
+              <p style={{ margin: '0.4rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                Enter a path to a file in the <code>/public</code> folder (e.g. <code>/photo.jpg</code>) or a full image URL. Leave blank for no featured image.
+              </p>
+              {editingBlog.image_url && (
+                <img
+                  src={editingBlog.image_url}
+                  alt="Preview"
+                  style={{ marginTop: '0.75rem', width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                  onError={e => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
+            </div>
+
+            <div className="form-group">
               <label className="form-label" htmlFor="blog-content-input">Content body</label>
               <textarea 
                 id="blog-content-input"

@@ -124,41 +124,77 @@ export const Blogs = () => {
                   className="featured-article"
                   onClick={() => setExpandedId(expandedId === featured.id ? null : featured.id)}
                 >
-                  {/* Left: decorative panel */}
-                  <div style={{
-                    backgroundColor: '#0a1141', padding: '3.5rem 3rem',
-                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                    minHeight: '280px',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}>
+                  {/* Left: featured image OR decorative dark panel */}
+                  {featured.image_url ? (
                     <div style={{
-                      position: 'absolute', top: '-10%', right: '-10%', width: '150px', height: '150px',
-                      background: 'radial-gradient(circle, rgba(202,138,4,0.15) 0%, transparent 70%)',
-                      pointerEvents: 'none'
-                    }} />
+                      position: 'relative',
+                      overflow: 'hidden',
+                      minHeight: '280px',
+                    }}>
+                      <img
+                        src={featured.image_url}
+                        alt={featured.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: '280px' }}
+                      />
+                      {/* Overlay gradient */}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,17,65,0.65) 0%, transparent 55%)' }} />
+                      {/* Meta on image */}
+                      <div style={{ position: 'absolute', bottom: '1.75rem', left: '2rem', right: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Calendar size={13} /> {formatDate(featured.date)}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <BookOpen size={13} /> {readTime(featured.content)} min read
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#c9a227', fontSize: '0.82rem', fontWeight: '700', marginTop: '0.4rem' }}>
+                          <User size={13} />
+                          <span>{featured.author}</span>
+                        </div>
+                      </div>
+                      {/* FEATURED pill */}
+                      <div style={{ position: 'absolute', top: '1.25rem', left: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(10,17,65,0.75)', backdropFilter: 'blur(6px)', padding: '0.3rem 0.75rem', borderRadius: '2px' }}>
+                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#ca8a04' }} />
+                        <span style={{ color: '#ca8a04', fontSize: '0.65rem', fontWeight: '800', letterSpacing: '0.22em', textTransform: 'uppercase' }}>Featured</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      backgroundColor: '#0a1141', padding: '3.5rem 3rem',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                      minHeight: '280px',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        position: 'absolute', top: '-10%', right: '-10%', width: '150px', height: '150px',
+                        background: 'radial-gradient(circle, rgba(202,138,4,0.15) 0%, transparent 70%)',
+                        pointerEvents: 'none'
+                      }} />
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ca8a04' }} />
-                      <span style={{ color: '#ca8a04', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.25em', textTransform: 'uppercase' }}>
-                        FEATURED Announcement
-                      </span>
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <Calendar size={14} /> {formatDate(featured.date)}
-                        </span>
-                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <BookOpen size={14} /> {readTime(featured.content)} min read
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ca8a04' }} />
+                        <span style={{ color: '#ca8a04', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.25em', textTransform: 'uppercase' }}>
+                          FEATURED Announcement
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ca8a04', fontSize: '0.82rem', fontWeight: '700' }}>
-                        <User size={14} />
-                        <span>{featured.author}</span>
+                      <div>
+                        <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Calendar size={14} /> {formatDate(featured.date)}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <BookOpen size={14} /> {readTime(featured.content)} min read
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ca8a04', fontSize: '0.82rem', fontWeight: '700' }}>
+                          <User size={14} />
+                          <span>{featured.author}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Right: content */}
                   <div style={{ padding: '3.5rem 3rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1.25rem' }}>
@@ -197,6 +233,19 @@ export const Blogs = () => {
                     >
                       {/* Left vertical tag stripe */}
                       <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: TAG_COLORS[idx % TAG_COLORS.length] }} />
+
+                      {/* Optional featured image strip */}
+                      {blog.image_url && (
+                        <div style={{ margin: '-2.5rem -2rem 1rem -2rem', height: '180px', overflow: 'hidden', position: 'relative' }}>
+                          <img
+                            src={blog.image_url}
+                            alt={blog.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            onError={e => { e.currentTarget.parentElement.style.display = 'none'; }}
+                          />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,17,65,0.35) 0%, transparent 60%)' }} />
+                        </div>
+                      )}
 
                       {/* Meta row */}
                       <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
