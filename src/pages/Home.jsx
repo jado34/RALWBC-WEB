@@ -295,13 +295,13 @@ export const Home = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '1.5px', backgroundColor: '#e2e8f0', border: '1.5px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
             {[
-              { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: 'https://images.unsplash.com/photo-1489641493513-ba4ee84ccea9?w=600&auto=format&fit=crop&q=80', link: '/about-us' },
-              { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&auto=format&fit=crop&q=80', link: '/about-us' },
-              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600&auto=format&fit=crop&q=80', link: '/login' },
+              { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: '/Lagos-West3.jpeg', imgPos: 'center 20%', link: '/about-us' },
+              { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: '/671245412_18050382983733739_357892051856325748_n.jpg', imgPos: 'center 15%', link: '/about-us' },
+              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: '/Lagos-West1.jpeg', imgPos: 'center 30%', link: '/login' },
             ].map((card, i) => (
               <div key={i} className="mission-pillar-card" style={{ backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'box-shadow 0.3s' }}>
                 <div style={{ height: '220px', overflow: 'hidden' }}>
-                  <img src={card.img} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }}
+                  <img src={card.img} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: card.imgPos || 'center', transition: 'transform 0.7s ease' }}
                     onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'}
                     onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                   />
