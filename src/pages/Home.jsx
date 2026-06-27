@@ -12,11 +12,10 @@ const SLIDES = [
 
 // ─── Stats Data ───────────────────────────────────────────────────────────────
 const STATS = [
-  { end: 1998, label: 'YEAR FOUNDED', prefix: '' },
   { end: 16, label: 'LWBC ASSOCIATIONS', prefix: '' },
   { end: 11, label: 'RA RANKS', prefix: '' },
-  { end: 28, label: 'YEARS OF MINISTRY', prefix: '' },
 ];
+
 
 // ─── Animated Counter Component ───────────────────────────────────────────────
 const AnimatedCounter = ({ end, prefix = '', animate }) => {

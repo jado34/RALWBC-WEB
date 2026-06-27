@@ -24,7 +24,7 @@ export const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
@@ -1059,7 +1059,7 @@ export const dbService = {
         id: 'off_6',
         name: 'Amb. Damilola Aderibigbe',
         post: 'Ranking officer, RALWBC',
-        image: '',
+        image: '/Myself.jpg',
         sortOrder: 5
       },
       {

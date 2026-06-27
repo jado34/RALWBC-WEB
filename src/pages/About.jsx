@@ -44,7 +44,7 @@ const RANKS = [
     ages: '10 – 12',
     symbol: 'Torch',
     symbolIcon: <TorchIcon size={22} />,
-    symbolMeaning: 'The Torch is the emblem symbol for the Junior Royal Ambassador. It represents the light of the Gospel — a boy who carries the flame of faith in its earliest, most formative stage. It calls the junior boy to shine brightly as he begins his walk with Christ.',
+    symbolMeaning: 'The Torch is the emblem symbol for the Junior Royal Ambassador. It represents the light of the Gospel a boy who carries the flame of faith in its earliest, most formative stage. It calls the junior boy to shine brightly as he begins his walk with Christ.',
     desc: 'Foundational Christian education plans. Introducing boys to scripture, prayer, and the mission of Royal Ambassadors. The junior boy begins his journey of discipleship, building a spiritual foundation that will carry him through every stage of life.',
     color: EMBLEM_NAVY,
     accentColor: EMBLEM_NAVY,
@@ -55,7 +55,7 @@ const RANKS = [
     ages: '13 – 16',
     symbol: 'Wheel',
     symbolIcon: <WheelIcon size={22} />,
-    symbolMeaning: 'The Wheel is the emblem of the Intermediate Royal Ambassador — the rank of Apprentice. It represents the boy as a learner of trade: becoming an Ambassador for Christ. The wheel is a sign of movement and progress, reminding the boy to progressively pattern his life after the Carpenter Boy from Nazareth, knowing there is no higher work than becoming an Ambassador for Christ.',
+    symbolMeaning: 'The Wheel is the emblem of the Intermediate Royal Ambassador the rank of Apprentice. It represents the boy as a learner of trade: becoming an Ambassador for Christ. The wheel is a sign of movement and progress, reminding the boy to progressively pattern his life after the Carpenter Boy from Nazareth, knowing there is no higher work than becoming an Ambassador for Christ.',
     desc: 'Basic discipleship plans for secondary school-age boys. Building habits of faith, study, and community service. The intermediate boy is trained in mission action, leadership, and the practical knowledge of what it means to serve as a representative of Christ.',
     color: EMBLEM_NAVY,
     accentColor: EMBLEM_GOLD,
@@ -66,7 +66,7 @@ const RANKS = [
     ages: '17 – 24',
     symbol: 'Crown',
     symbolIcon: <Crown size={22} color={EMBLEM_GOLD} />,
-    symbolMeaning: 'The Crown is the symbol for the Senior Royal Ambassador. A crown represents a king — and this crown specifically represents Christ, the King of kings and Lord of lords. It signifies that the Senior RA has reached an age and acquired certain knowledge that qualifies him to serve as an effective Ambassador for Christ the King, loyal and faithful to his calling.',
+    symbolMeaning: 'The Crown is the symbol for the Senior Royal Ambassador. A crown represents a king and this crown specifically represents Christ, the King of kings and Lord of lords. It signifies that the Senior RA has reached an age and acquired certain knowledge that qualifies him to serve as an effective Ambassador for Christ the King, loyal and faithful to his calling.',
     desc: 'Solid mission education and action plans. Preparing young men for leadership, outreach, and lifelong ambassadorship. The senior boy is equipped as a mature representative of Christ, ready to lead, serve, and impact his community and the world.',
     color: EMBLEM_NAVY,
     accentColor: EMBLEM_NAVY,
@@ -77,12 +77,12 @@ const RANKS = [
 // ─── 7 Cardinal Objectives ───────────────────────────────────────────────────
 const OBJECTIVES = [
   { n: '01', title: 'Spiritual Development', body: 'Helping boys in personal spiritual development and discipleship journey.' },
-  { n: '02', title: 'Educational Growth', body: 'Ensuring structural educational and career advancement of our members.' },
-  { n: '03', title: 'Discipline', body: 'Promoting personal and corporate discipline, physical alertness, and group cohesion.' },
-  { n: '04', title: 'Potentiality', body: "Enabling members' personality development, discovering talents, and restoring dignity." },
-  { n: '05', title: 'Mission Action', body: 'Equipping our members for physical and spiritual mission activities and outreaches.' },
-  { n: '06', title: 'Social Awareness', body: 'Promoting social awareness, civic responsibility, and active responsiveness to community needs.' },
-  { n: '07', title: 'Commitment', body: 'Promoting stewardship of life, churchmanship, denominational interest, and Baptist practices.' },
+  { n: '02', title: 'Educational Growth', body: 'Ensuring  educational and career advancement of boys.' },
+  { n: '03', title: 'Discipline', body: 'Promoting personal and corporate discipline, and responsiveness.' },
+  { n: '04', title: 'Potentiality', body: "Enabling members' personality, potentiality development, and dignity development." },
+  { n: '05', title: 'Mission Action', body: 'Equipping boys for mission action.' },
+  { n: '06', title: 'Social Awareness', body: 'Promoting social awareness, responsibility, and responsiveness.' },
+  { n: '07', title: 'Commitment', body: 'Promoting personal commitment demonstrated in stewardship of life, churchmanship, denominational interest, and understanding as well as appreciation of Baptist beliefs and practices.' },
 ];
 
 // ─── RA Pledge items ─────────────────────────────────────────────────────────
@@ -97,8 +97,8 @@ const PLEDGE = [
 
 // ─── The Royal Ambassador Emblem paragraphs ───────────────────────────────────
 const EMBLEM_PARAS = [
-  'The Royal Ambassador Emblem is a blue shield on a background of a white circle, with a gold edge around the circle. The shield represents a soldier — for in Ephesians 6:16, the Christian is instructed to "take the shield of faith." The emblem reminds every youth to have faith in God, whom he will represent as an ambassador.',
-  'The shield is divided into three distinct parts: a torch, a wheel, and a crown. Each symbol corresponds to one of the three ranks of Royal Ambassadors, encoding the full journey of a boy\'s growth — from the earliest spark of faith, through the progress of discipleship, to the fullness of mature ambassadorship for Christ the King.',
+  'The Royal Ambassador Emblem is a blue shield on a background of a white circle, with a gold edge around the circle. The shield represents a soldier for in Ephesians 6:16, the Christian is instructed to "take the shield of faith." The emblem reminds every Royal Ambassador to have faith in God, whom he will represent as an ambassador.',
+  'The shield is divided into three distinct parts: a torch, a wheel, and a crown. Each symbol corresponds to one of the three ranks of Royal Ambassadors, encoding the full journey of a boy\'s growth from the earliest spark of faith, through the progress of discipleship, to the fullness of mature ambassadorship for Christ the King.',
 ];
 
 // ─── RA Colours data ──────────────────────────────────────────────────────────
@@ -316,11 +316,11 @@ export const About = () => {
                 text: 'Royal Ambassadors is the name of a Baptist worldwide missionary organization for boys between the ages of 10 and 24 – an international organization found in many countries of the world, wherever there are Baptists. It is found on the continents of Africa, Asia, Australia, Europe, North America, and South America.',
               },
               {
-                tag: 'Nigeria Chapter',
+                tag: 'Royal Ambassadors of Nigeria',
                 text: 'The organization in Nigeria is called Royal Ambassadors of Nigeria (RAN). In its mission education and ministry plan, RAN has a foundational Christian education plan for Junior RA, boys between the ages of 10 and 12; basic discipleship plans for Intermediate RA, boys from age 13 to 16 (or secondary school age); and solid mission education and action plans for Senior RA, who are boys within the ages of 17 and 24.',
               },
               {
-                tag: 'The Journey',
+                tag: 'Our Journey',
                 text: "The vision and work of Royal Ambassadors started in the United States of America in 1908 among the brotherhood commission of the Southern Baptist Convention, USA; and came to Nigeria as one of the world's leading organizations for boys through the SBC missionaries in the 1920s. The Women's Missionary Union sponsored the organization from the beginning until 1954, when it was proposed that the men of the Nigerian Baptist Convention should take over the boys' work. This led to the proposal of the Men and Boys Department in 1961, which later became the defunct Men's Missionary Union and Youth Department, now known as the Missionary Organizations Department since 1998. Royal Ambassadors National Executive Committee (RANEC) comprises all elected national officers of the organization only; while the National Executive Council (NEC) includes all Conference RA Directors.",
               },
             ].map(({ tag, text }, i) => (
@@ -343,12 +343,12 @@ export const About = () => {
       <section style={{ backgroundColor: '#f8fafc', padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{ marginBottom: '3.5rem' }}>
-            <SectionLabel text="Membership Ranks" />
+            <SectionLabel text="Ranks" />
             <h2 style={{ margin: '0 0 1rem', fontSize: 'clamp(1.8rem,3.5vw,2.75rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
               Three Stages of Growth
             </h2>
             <p style={{ margin: 0, color: '#64748b', fontSize: 'clamp(0.9rem,1.4vw,1rem)', lineHeight: 1.8, maxWidth: '640px' }}>
-              Royal Ambassadors structures a boy's journey into three progressive ranks — each with its own age range and mission education plan, progressing from Junior through Intermediate to Senior.
+              Royal Ambassadors structures a boy's journey into three progressive ranks each with its own age range and mission education plan, progressing from Junior through Intermediate to Senior.
             </p>
           </div>
 
@@ -357,7 +357,7 @@ export const About = () => {
               <div
                 key={i}
                 className="rank-row"
-                 style={{
+                style={{
                   backgroundColor: '#fff',
                   display: 'grid',
                   gridTemplateColumns: '3px 1fr',
@@ -434,33 +434,16 @@ export const About = () => {
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
                 marginBottom: '2.5rem',
               }}>
-                <div style={{
-                  width: 'clamp(180px,24vw,260px)', height: 'clamp(180px,24vw,260px)',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  border: '2px solid rgba(202,138,4,0.35)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  position: 'relative',
-                  boxShadow: '0 0 0 10px rgba(202,138,4,0.07), 0 0 60px rgba(202,138,4,0.15), 0 24px 64px rgba(0,0,0,0.5)',
-                }}>
-                  {/* Outer gold ring pulse */}
-                  <div style={{
-                    position: 'absolute', inset: '-10px',
-                    borderRadius: '50%',
-                    border: '1px solid rgba(202,138,4,0.2)',
-                    pointerEvents: 'none',
-                  }} />
-                  <img
-                    src="/logo.png"
-                    alt="Royal Ambassador Emblem"
-                    style={{
-                      width: '78%',
-                      height: '78%',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 4px 24px rgba(202,138,4,0.35))',
-                    }}
-                  />
-                </div>
+                <img
+                  src="/logo.png"
+                  alt="Royal Ambassador Emblem"
+                  style={{
+                    width: 'clamp(180px,24vw,260px)',
+                    height: 'auto',
+                    objectFit: 'contain',
+                  }}
+                />
+
                 <p style={{
                   marginTop: '1.1rem',
                   color: 'rgba(202,138,4,0.7)',
@@ -495,7 +478,7 @@ export const About = () => {
             </div>
 
             {/* Right: Three symbol breakdown cards */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5px', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'rgba(201,162,39,0.12)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5px', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'rgba(201,162,39,0.12)' }}>
               {RANKS.map((rank, i) => (
                 <div
                   key={i}
@@ -560,7 +543,7 @@ export const About = () => {
                 'To carry the message of Christ around the world.',
                 'To have a Christ-like concern for all people.',
                 'To work with others in sharing Christ.',
-                'To keep oneself clean and healthy in mind and body.',
+                'To keep myself clean and healthy in mind and body.',
               ].map((item, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ca8a04', marginTop: '0.45rem', flexShrink: 0 }} />
