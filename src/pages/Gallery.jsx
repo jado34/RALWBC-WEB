@@ -2,16 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { dbService, GALLERY_CATEGORIES } from '../services/db';
 
+// Module-level cache so data survives between page navigations
+let _galleryCache = null;
+
 export const Gallery = () => {
-  const [photosList, setPhotosList] = useState([]);
+  const [photosList, setPhotosList] = useState(_galleryCache || []);
   const [currentPage, setCurrentPage] = useState('01');
   const [activePhoto, setActivePhoto] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!_galleryCache);
 
   useEffect(() => {
     dbService.init();
     dbService.getGalleryPhotos()
-      .then(data => setPhotosList(data))
+      .then(data => {
+        _galleryCache = data;
+        setPhotosList(data);
+      })
       .catch(err => console.error(err))
       .finally(() => setIsLoading(false));
   }, []);
@@ -50,13 +56,11 @@ export const Gallery = () => {
 
         {/* Dynamic Photo Sections */}
         {isLoading ? (
-          <div style={{ padding: '6rem 2rem', textAlign: 'center' }}>
-            <div style={{
-              width: '40px', height: '40px', border: '3px solid rgba(10, 17, 65, 0.1)',
-              borderTopColor: '#ca8a04', borderRadius: '50%',
-              animation: 'spin 1s linear infinite', margin: '0 auto'
-            }} />
-            <p style={{ marginTop: '1.5rem', color: '#64748b', fontSize: '0.95rem', fontWeight: '500' }}>Loading gallery photos...</p>
+          /* Skeleton grid */
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} style={{ aspectRatio: '3/2', borderRadius: '16px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', animation: 'shimmer 1.4s infinite' }} />
+            ))}
           </div>
         ) : photosList.length === 0 ? (
           <div style={{ padding: '4rem 2rem', textAlign: 'center', border: '1px dashed #cbd5e1', borderRadius: '8px', color: '#64748b', margin: '2rem 0' }}>
@@ -171,6 +175,10 @@ export const Gallery = () => {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
         }
         .gallery-photo-card {
           cursor: pointer;

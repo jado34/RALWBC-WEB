@@ -17,17 +17,23 @@ const readTime = (content = '') => {
 
 const TAG_COLORS = ['#0a1141', '#ca8a04', '#1e3a8a', '#065f46'];
 
+// Module-level cache so data survives between page navigations
+let _blogsCache = null;
+
 export const Blogs = () => {
-  const [blogs, setBlogs] = useState([]);
-  const [featured, setFeatured] = useState(null);
-  const [rest, setRest] = useState([]);
+  // If we have cached data, show it immediately (no spinner)
+  const [blogs, setBlogs] = useState(_blogsCache || []);
+  const [featured, setFeatured] = useState(_blogsCache ? _blogsCache[0] : null);
+  const [rest, setRest] = useState(_blogsCache ? _blogsCache.slice(1) : []);
   const [expandedId, setExpandedId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Only show skeleton when we truly have nothing yet
+  const [isLoading, setIsLoading] = useState(!_blogsCache);
 
   useEffect(() => {
     dbService.init();
     dbService.getBlogs()
       .then(all => {
+        _blogsCache = all; // store in module cache
         if (all && all.length > 0) {
           setFeatured(all[0]);
           setRest(all.slice(1));
@@ -38,7 +44,7 @@ export const Blogs = () => {
       })
       .catch(err => {
         console.error('Failed to load blogs:', err);
-        setBlogs([]);
+        if (!_blogsCache) setBlogs([]);
       })
       .finally(() => {
         setIsLoading(false);
@@ -85,14 +91,33 @@ export const Blogs = () => {
       </section>
 
       {isLoading ? (
-        /* ── LOADING STATE ──────────────────────────── */
-        <section style={{ padding: '8rem 2rem', textAlign: 'center' }}>
-          <div style={{
-            width: '40px', height: '40px', border: '3px solid rgba(10, 17, 65, 0.1)',
-            borderTopColor: '#ca8a04', borderRadius: '50%',
-            animation: 'spin 1s linear infinite', margin: '0 auto'
-          }} />
-          <p style={{ marginTop: '1.5rem', color: '#64748b', fontSize: '0.95rem', fontWeight: '500' }}>Loading announcements...</p>
+        /* ── SKELETON STATE ─ content-shaped placeholders ──────────── */
+        <section style={{ padding: 'clamp(4rem,6vw,6rem) clamp(1.5rem,5vw,4rem)', backgroundColor: '#f8fafc' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+            {/* Featured skeleton */}
+            <div style={{ height: '12px', width: '160px', borderRadius: '4px', backgroundColor: '#e2e8f0', marginBottom: '2.5rem', animation: 'shimmer 1.4s infinite' }} />
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '24px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1.2fr', minHeight: '280px', marginBottom: '4rem' }}>
+              <div style={{ backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ padding: '3.5rem 3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ height: '28px', width: '80%', borderRadius: '4px', backgroundColor: '#e2e8f0', animation: 'shimmer 1.4s infinite' }} />
+                <div style={{ height: '14px', width: '100%', borderRadius: '4px', backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+                <div style={{ height: '14px', width: '90%', borderRadius: '4px', backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+                <div style={{ height: '14px', width: '75%', borderRadius: '4px', backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+              </div>
+            </div>
+            {/* Grid skeletons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2.5rem' }}>
+              {[1,2,3].map(i => (
+                <div key={i} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ height: '12px', width: '120px', borderRadius: '4px', backgroundColor: '#e2e8f0', animation: 'shimmer 1.4s infinite' }} />
+                  <div style={{ height: '22px', width: '85%', borderRadius: '4px', backgroundColor: '#e2e8f0', animation: 'shimmer 1.4s infinite' }} />
+                  <div style={{ height: '13px', width: '100%', borderRadius: '4px', backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+                  <div style={{ height: '13px', width: '90%', borderRadius: '4px', backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+                  <div style={{ height: '13px', width: '70%', borderRadius: '4px', backgroundColor: '#f1f5f9', animation: 'shimmer 1.4s infinite' }} />
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       ) : blogs.length === 0 ? (
         /* ── EMPTY STATE ──────────────────────────────────────────────── */
@@ -307,6 +332,11 @@ export const Blogs = () => {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @keyframes shimmer {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
         }
 
         .featured-article {

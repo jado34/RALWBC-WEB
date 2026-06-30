@@ -17,7 +17,8 @@ export const GALLERY_CATEGORIES = [
   'RA Week Ushering In',
   'Convention - in - Session',
   'RALWBC Annual General Meeting',
-  'RA Leadership Training Conference'
+  'RA Leadership Training Conference',
+  'General Parade Rehearsal'
 ];
 
 export const generateUUID = () => {
@@ -1031,14 +1032,16 @@ export const dbService = {
         id: 'off_1',
         name: 'Coun. Adegbola Thomas',
         post: 'Director, RALWBC',
-        image: '/Lagos-West1.jpeg',
+        image: '/25.jpg.jpeg',
+        imagePosition: 'center 20%',
+        imageScale: 1.5,
         sortOrder: 1
       },
       {
         id: 'off_2',
         name: 'Amb. Philip Olopade',
         post: 'Assistant Director, RALWBC',
-        image: '/Lagos-West2.jpeg',
+        image: '/26.jpg.jpeg',
         sortOrder: 2
       },
       {
@@ -1059,7 +1062,8 @@ export const dbService = {
         id: 'off_6',
         name: 'Amb. Damilola Aderibigbe',
         post: 'Ranking officer, RALWBC',
-        image: '/Myself.jpg',
+        image: '/officer-aderibigbe.jpeg',
+        imagePosition: 'top',
         sortOrder: 5
       },
       {
@@ -1101,7 +1105,7 @@ export const dbService = {
         id: 'off_12',
         name: 'Amb. Segun Adeniji',
         post: 'ASVC Coordinator, RALWBC',
-        image: '',
+        image: '/officer-adeniji.jpeg',
         sortOrder: 11
       },
       {

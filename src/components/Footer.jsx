@@ -1,15 +1,8 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { RALogo } from './Navbar';
 
 export const Footer = () => {
-  const location = useLocation();
-  const isPortalRoute = ['/dashboard', '/exam', '/admin', '/profile'].some(
-    path => location.pathname.startsWith(path)
-  );
-  if (isPortalRoute) return null;
-
-  const isPublicPage = true;
   const footerBg = '#ffffff';
   const footerBorderColor = '#e2e8f0';
   const textColor = '#475569';
@@ -48,20 +41,21 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold' }}>Portal</h4>
+            <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold' }}>Community</h4>
             <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}><Link to="/login" style={{ color: textColor }}>Log In</Link></li>
-              <li><Link to="/admin-access" style={{ color: '#ca8a04', fontWeight: '600', fontSize: '0.85rem' }}>Admin Access</Link></li>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/officers" style={{ color: textColor }}>Officers</Link></li>
+              <li style={{ marginBottom: '0.5rem' }}><Link to="/resources" style={{ color: textColor }}>Resources</Link></li>
+              <li><Link to="/contact" style={{ color: textColor }}>Contact Us</Link></li>
             </ul>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Social Links</h4>
             <div style={{ display: 'flex', gap: '1rem', color: '#002060' }}>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Instagram">
+              <a href="https://www.instagram.com/ralwbc/" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Instagram">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
               </a>
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Facebook">
+              <a href="https://web.facebook.com/people/Royal-Ambassadors-Lagos-West-Baptist-Conference/100070112613066/?locale=en_GB#" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Facebook">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
               </a>
             </div>

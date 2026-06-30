@@ -72,8 +72,8 @@ export const Contact = () => {
                 <div>
                   <h4 style={infoTitleStyle}>Office Address</h4>
                   <p style={infoTextStyle}>
-                    Lagos West Baptist Conference Secretariat,<br />
-                    32 Baptist Church Street, Ikeja,<br />
+                    Union Baptist Church Agege,<br />
+                    122 Old Ipaja Rd,<br />
                     Lagos, Nigeria.
                   </p>
                 </div>
@@ -88,7 +88,7 @@ export const Contact = () => {
                   <h4 style={infoTitleStyle}>Email Address</h4>
                   <p style={infoTextStyle}>
                     secretariat@ralwbc.org<br />
-                    contact@ralwbc.org
+                    ralwbc@yahoo.com
                   </p>
                 </div>
               </div>

@@ -166,7 +166,7 @@ export const Home = () => {
           {/* CTAs */}
           <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', ...fade(1.2) }}>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/about-us')}
               className="hero-cta-primary"
               style={{ padding: '0.9rem 2.25rem', backgroundColor: '#ca8a04', color: '#fff', border: 'none', borderRadius: '3px', fontWeight: '700', fontSize: '0.82rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.2s, transform 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#a16207'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
@@ -296,7 +296,7 @@ export const Home = () => {
             {[
               { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: '/Lagos-West3.jpeg', imgPos: 'center 20%', link: '/about-us' },
               { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: '/671245412_18050382983733739_357892051856325748_n.jpg', imgPos: 'center 15%', link: '/about-us' },
-              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: '/Lagos-West1.jpeg', imgPos: 'center 30%', link: '/login' },
+              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: '/Lagos-West1.jpeg', imgPos: 'center 30%', link: '/blogs' },
             ].map((card, i) => (
               <div key={i} className="mission-pillar-card" style={{ backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'box-shadow 0.3s' }}>
                 <div style={{ height: '220px', overflow: 'hidden' }}>
@@ -377,37 +377,64 @@ export const Home = () => {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════════
-          6. PORTAL CTA — Dark Section
+          6. BLOG PREVIEW — Dark Navy Section
           ════════════════════════════════════════════════════════════════════ */}
       <section style={{ backgroundColor: '#0a1141', padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,4rem)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'clamp(3rem,5vw,6rem)', alignItems: 'center' }} className="responsive-row">
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              <div style={{ width: '32px', height: '2px', backgroundColor: '#ca8a04' }} />
-              <span style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ca8a04' }}>Exam Portal</span>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+
+          {/* Section header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ width: '32px', height: '2px', backgroundColor: '#ca8a04' }} />
+                <span style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ca8a04' }}>Latest from the Blog</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: '900', color: '#ffffff', fontFamily: 'var(--font-heading)', lineHeight: 1.1, letterSpacing: '-0.03em', margin: 0 }}>
+                News &amp; Updates
+              </h2>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: '900', color: '#ffffff', fontFamily: 'var(--font-heading)', lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: '1.25rem' }}>
-              RALWBC Online<br />Examination Center
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1rem', lineHeight: 1.8, marginBottom: '2rem' }}>
-              Registered Royal Ambassador candidates can access their secured exam room. Log in with your unique credentials to write the senior ranking exam.
-            </p>
             <button
-              onClick={() => navigate('/login')}
-              style={{ padding: '0.95rem 2.5rem', backgroundColor: '#ca8a04', color: '#fff', border: 'none', borderRadius: '3px', fontWeight: '700', fontSize: '0.85rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.2s, transform 0.2s' }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#a16207'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#ca8a04'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onClick={() => navigate('/blogs')}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', backgroundColor: 'transparent', color: '#ca8a04', border: '1.5px solid #ca8a04', borderRadius: '3px', fontWeight: '700', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#ca8a04'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#ca8a04'; }}
             >
-              Click Here To Begin
+              View All Posts <ArrowRight size={14} />
             </button>
           </div>
 
-          {/* Dual floating logos */}
-          <div style={{ display: 'flex', gap: '3rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <img src="/logo.png" alt="Royal Ambassadors Logo" style={{ width: 'clamp(100px,14vw,150px)', objectFit: 'contain', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.4))' }} className="animate-float" />
-            <div style={{ width: '1px', height: '80px', backgroundColor: 'rgba(202,138,4,0.3)', flexShrink: 0 }} />
-            <img src="/lwbc-logo.png" alt="Lagos West Conference Logo" style={{ width: 'clamp(100px,14vw,150px)', objectFit: 'contain', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.4))', animationDelay: '1.5s' }} className="animate-float" />
-          </div>
+          {/* Blog cards */}
+          {blogs.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {blogs.slice(0, 3).map((post, i) => (
+                <div
+                  key={post.id || i}
+                  onClick={() => navigate('/blogs')}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(202,138,4,0.2)', borderRadius: '6px', padding: '1.75rem', cursor: 'pointer', transition: 'background 0.25s, border-color 0.25s, transform 0.25s' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(202,138,4,0.08)'; e.currentTarget.style.borderColor = 'rgba(202,138,4,0.55)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(202,138,4,0.2)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                  {/* Gold accent top bar */}
+                  <div style={{ width: '32px', height: '3px', backgroundColor: '#ca8a04', marginBottom: '1.25rem', borderRadius: '2px' }} />
+                  <h3 style={{ margin: '0 0 0.85rem', fontSize: '1.05rem', fontWeight: '800', color: '#ffffff', lineHeight: 1.35 }}>
+                    {post.title}
+                  </h3>
+                  <p style={{ margin: '0 0 1.5rem', fontSize: '0.88rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>
+                    {post.content
+                      ? post.content.replace(/<[^>]+>/g, '').slice(0, 110) + (post.content.length > 110 ? '…' : '')
+                      : post.excerpt || post.summary || ''}
+                  </p>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#ca8a04', fontWeight: '700', fontSize: '0.78rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    Read More <ArrowRight size={12} />
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1rem', fontStyle: 'italic' }}>Check back soon for news and updates.</p>
+            </div>
+          )}
         </div>
       </section>
 

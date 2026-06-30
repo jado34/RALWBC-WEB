@@ -101,7 +101,7 @@ export const Officers = () => {
                   {/* Photo */}
                   <div className="officer-img-wrapper">
                     {officer.image ? (
-                      <img src={officer.image} alt={officer.name} className="officer-img" />
+                      <img src={officer.image} alt={officer.name} className="officer-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
                       <Avatar name={officer.name} size={200} />
                     )}
@@ -145,7 +145,7 @@ export const Officers = () => {
                   {/* Photo / Avatar */}
                   <div className="exec-img-wrapper">
                     {officer.image ? (
-                      <img src={officer.image} alt={officer.name} className="exec-img" />
+                      <img src={officer.image} alt={officer.name} className="exec-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
                       <Avatar name={officer.name} size={140} />
                     )}
