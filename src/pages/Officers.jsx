@@ -103,7 +103,7 @@ export const Officers = () => {
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} className="officer-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
-                      <Avatar name={officer.name} size={200} />
+                      <Avatar name={officer.name} size={260} />
                     )}
                   </div>
                   {/* Info */}
@@ -147,7 +147,7 @@ export const Officers = () => {
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} className="exec-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
-                      <Avatar name={officer.name} size={140} />
+                      <Avatar name={officer.name} size={190} />
                     )}
                   </div>
 
@@ -192,9 +192,7 @@ export const Officers = () => {
 
       <style>{`
         .officer-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: #ffffff;
           border: 1px solid rgba(226, 232, 240, 0.8);
           border-radius: 20px;
           padding: 3.5rem 2.5rem;
@@ -234,8 +232,8 @@ export const Officers = () => {
 
         .officer-img-wrapper {
           position: relative;
-          width: 200px;
-          height: 200px;
+          width: 260px;
+          height: 260px;
           border-radius: 50%;
           overflow: hidden;
           border: 4px solid #ffffff;
@@ -253,6 +251,7 @@ export const Officers = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          filter: contrast(1.08) saturate(1.1) brightness(1.02);
           transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -302,8 +301,8 @@ export const Officers = () => {
 
         .exec-img-wrapper {
           position: relative;
-          width: 140px;
-          height: 140px;
+          width: 190px;
+          height: 190px;
           border-radius: 50%;
           overflow: hidden;
           border: 3px solid #ffffff;
@@ -320,6 +319,7 @@ export const Officers = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          filter: contrast(1.08) saturate(1.1) brightness(1.02);
           transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 

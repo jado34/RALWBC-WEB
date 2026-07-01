@@ -929,11 +929,19 @@ export const dbService = {
     const defaultBlogs = [
       {
         id: 'blog_def1',
-        title: 'Upcoming RA Week Ushering In: Preparing for the Spiritual Journey',
+        title: '2026 Ushering-In & Handing Over Ceremony: THE KEYS OF THE KINGDOM',
         author: 'Conference Planning Committee',
-        date: '2026-06-10',
+        date: '2026-07-04',
         image_url: '/IMG-20260613-WA0001.jpg',
-        content: "The Royal Ambassadors Lagos West Baptist Conference (RALWBC) is set to embark on our annual RA Week Ushering In. This week-long program is a cornerstone spiritual event designed to inspire dedication, missionary zeal, and community service among all chapters. Under this year's theme, we focus on rebuilding the walls of service and rekindling the fire of active evangelism. All chapters are urged to finalize their parade schedules, community clean-up logistics, and special missionary collections. Let us walk in dignity and show the world what it means to be an Ambassador for Christ."
+        content: `Royal Ambassadors, LWBC invites you to our 2026 Ushering-In & Handing Over Ceremony: THE KEYS OF THE KINGDOM
+
+Witness the sacred handover of vision and authority as we raise leaders to unlock new territories for Christ.
+This week-long program is a cornerstone spiritual event designed to inspire dedication, missionary zeal, and community service among all chapters. Under this year's theme, we focus on rebuilding the walls of service and rekindling the fire of active evangelism. All chapters are urged to finalize their parade schedules, community clean-up logistics, and special missionary collections. Let us walk in dignity and show the world what it means to be an Ambassador
+
+📅 Sat, 4th July 2026 | 7:00 AM
+📍 First Baptist Church, Ikeja
+
+WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
       },
       {
         id: 'blog_def2',
@@ -1098,7 +1106,7 @@ export const dbService = {
         id: 'off_11',
         name: 'Amb. Tobi Oni',
         post: 'Auditor, RALWBC',
-        image: '',
+        image: '/_DSC2348.jpg',
         sortOrder: 10
       },
       {
@@ -1112,8 +1120,15 @@ export const dbService = {
         id: 'off_13',
         name: 'Amb. Olamidotun Simidu',
         post: 'PRO, RALWBC',
-        image: '',
+        image: '/_DSC2447.jpg',
         sortOrder: 12
+      },
+      {
+        id: 'off_14',
+        name: 'Amb. Solomon Adepoju',
+        post: 'Parade Commander, RALWBC',
+        image: '/_DSC2363.jpg',
+        sortOrder: 13
       }
     ];
   },
