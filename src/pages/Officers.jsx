@@ -103,7 +103,7 @@ export const Officers = () => {
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} className="officer-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
-                      <Avatar name={officer.name} size={260} />
+                      <Avatar name={officer.name} size={270} />
                     )}
                   </div>
                   {/* Info */}
@@ -147,7 +147,7 @@ export const Officers = () => {
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} className="exec-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
-                      <Avatar name={officer.name} size={190} />
+                      <Avatar name={officer.name} size={200} />
                     )}
                   </div>
 
@@ -232,8 +232,8 @@ export const Officers = () => {
 
         .officer-img-wrapper {
           position: relative;
-          width: 260px;
-          height: 260px;
+          width: 270px;
+          height: 270px;
           border-radius: 50%;
           overflow: hidden;
           border: 4px solid #ffffff;
@@ -301,8 +301,8 @@ export const Officers = () => {
 
         .exec-img-wrapper {
           position: relative;
-          width: 190px;
-          height: 190px;
+          width: 200px;
+          height: 200px;
           border-radius: 50%;
           overflow: hidden;
           border: 3px solid #ffffff;

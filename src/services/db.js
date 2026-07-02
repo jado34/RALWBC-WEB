@@ -1063,7 +1063,7 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         id: 'off_5',
         name: 'Amb. Daniel Ojeyomi',
         post: 'Recording Secretary, RALWBC',
-        image: '',
+        image: '/Daniel.jpeg',
         sortOrder: 4
       },
       {
@@ -1078,7 +1078,7 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         id: 'off_7',
         name: 'Amb. Emmanuel Akinteye',
         post: 'Mission Officer, RALWBC',
-        image: '',
+        image: '/Mission.jpeg',
         sortOrder: 6
       },
       {
@@ -1099,7 +1099,7 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         id: 'off_10',
         name: 'Amb. Adeleke Adeyemi',
         post: 'Financial Secretary, RALWBC',
-        image: '',
+        image: '/fin.jpeg',
         sortOrder: 9
       },
       {
@@ -1107,7 +1107,7 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Tobi Oni',
         post: 'Auditor, RALWBC',
         image: '/_DSC2348.jpg',
-        sortOrder: 10
+        sortOrder: 12
       },
       {
         id: 'off_12',
@@ -1121,14 +1121,21 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Olamidotun Simidu',
         post: 'PRO, RALWBC',
         image: '/_DSC2447.jpg',
-        sortOrder: 12
+        sortOrder: 13
       },
       {
         id: 'off_14',
         name: 'Amb. Solomon Adepoju',
         post: 'Parade Commander, RALWBC',
         image: '/_DSC2363.jpg',
-        sortOrder: 13
+        sortOrder: 10
+      },
+      {
+        id: 'off_15',
+        name: 'Coun. Olumide Seyi Ajayi (Post Pleni)',
+        post: 'Ex-Officio, RALWBC',
+        image: '/_DSC2453.jpg',
+        sortOrder: 14
       }
     ];
   },
