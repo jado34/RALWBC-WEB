@@ -1056,7 +1056,7 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         id: 'off_4',
         name: 'Amb. Akinola Asabisi',
         post: 'Secretary, RALWBC',
-        image: '',
+        image: '/_DSC2428.jpg',
         sortOrder: 3
       },
       {
@@ -1085,14 +1085,14 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         id: 'off_8',
         name: 'Amb. Ayo Balogun',
         post: 'Custodian, RALWBC',
-        image: '',
+        image: '/_DSC2355.jpg',
         sortOrder: 7
       },
       {
         id: 'off_9',
         name: 'Amb. Pelumi Ojo',
         post: 'Treasurer, RALWBC',
-        image: '',
+        image: '/_DSC2437.jpg',
         sortOrder: 8
       },
       {
