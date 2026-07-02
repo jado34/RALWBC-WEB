@@ -82,7 +82,7 @@ export const Officers = () => {
             <span style={{ color: '#ca8a04' }}>Officers.</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 'clamp(0.9rem,1.5vw,1.05rem)', maxWidth: '520px', lineHeight: 1.75, margin: 0 }}>
-            The dedicated executive leadership team of the Royal Ambassadors Lagos West Baptist Conference — serving with honour and commitment.
+            The dedicated executive leadership team of the Royal Ambassadors Lagos West Baptist Conference serving with honour and commitment.
           </p>
         </div>
       </section>
@@ -103,7 +103,7 @@ export const Officers = () => {
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} className="officer-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
-                      <Avatar name={officer.name} size={270} />
+                      <Avatar name={officer.name} size={260} />
                     )}
                   </div>
                   {/* Info */}
@@ -147,7 +147,7 @@ export const Officers = () => {
                     {officer.image ? (
                       <img src={officer.image} alt={officer.name} className="exec-img" style={{ objectPosition: officer.imagePosition || 'center top', transform: `scale(${officer.imageScale || 1})`, transformOrigin: 'center top' }} />
                     ) : (
-                      <Avatar name={officer.name} size={200} />
+                      <Avatar name={officer.name} size={190} />
                     )}
                   </div>
 
@@ -232,8 +232,8 @@ export const Officers = () => {
 
         .officer-img-wrapper {
           position: relative;
-          width: 270px;
-          height: 270px;
+          width: 260px;
+          height: 260px;
           border-radius: 50%;
           overflow: hidden;
           border: 4px solid #ffffff;
@@ -251,7 +251,8 @@ export const Officers = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          filter: contrast(1.08) saturate(1.1) brightness(1.02);
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
           transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -301,8 +302,8 @@ export const Officers = () => {
 
         .exec-img-wrapper {
           position: relative;
-          width: 200px;
-          height: 200px;
+          width: 190px;
+          height: 190px;
           border-radius: 50%;
           overflow: hidden;
           border: 3px solid #ffffff;
@@ -319,7 +320,8 @@ export const Officers = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          filter: contrast(1.08) saturate(1.1) brightness(1.02);
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
           transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
