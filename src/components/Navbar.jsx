@@ -10,7 +10,6 @@ export const RALogo = ({ size = 36 }) => (
     style={{
       width: `${size}px`,
       height: `${size}px`,
-      borderRadius: '50%',
       objectFit: 'contain'
     }}
   />
