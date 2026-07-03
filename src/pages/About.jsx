@@ -90,7 +90,7 @@ const PLEDGE = [
   'As a Royal Ambassador I will do my best',
   'To become a well-informed, responsible follower of Christ',
   'To have a Christ-like concern for all people',
-  'To learn how the message of Christ is carried around the world',
+  'To carry the message of Christ around the world',
   'To work with others in sharing Christ; and',
   'To keep myself clean and healthy in mind and body.',
 ];
@@ -557,19 +557,72 @@ export const About = () => {
         {/* Right: Pledge — light */}
         <div style={{ backgroundColor: '#fefce8', padding: 'clamp(3.5rem,7vw,6rem) clamp(1.5rem,5vw,4rem)', borderLeft: '3px solid #ca8a04' }}>
           <SectionLabel text="The RA Pledge" />
-          <p style={{ color: '#0a1141', fontSize: 'clamp(1rem,1.8vw,1.2rem)', fontWeight: '700', fontStyle: 'italic', margin: '0 0 2rem', lineHeight: 1.5 }}>
-            "As a Royal Ambassador I will do my best:"
+
+          {/* Opening stanza — large italic display */}
+          <p style={{
+            color: '#0a1141',
+            fontSize: 'clamp(1.15rem,2.2vw,1.45rem)',
+            fontWeight: '800',
+            fontStyle: 'italic',
+            fontFamily: 'var(--font-heading)',
+            margin: '0 0 2.5rem',
+            lineHeight: 1.35,
+            letterSpacing: '-0.01em',
+          }}>
+            "As a Royal Ambassador<br />I will do my best…"
           </p>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {PLEDGE.map((item, i) => (
-              <li key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', borderBottom: i < PLEDGE.length - 1 ? '1px solid rgba(202,138,4,0.2)' : 'none', paddingBottom: i < PLEDGE.length - 1 ? '1.25rem' : '0' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: '900', color: '#ca8a04', letterSpacing: '0.08em', minWidth: '24px', marginTop: '0.15rem', fontFamily: 'var(--font-heading)' }}>
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span style={{ color: '#1e293b', fontSize: '0.92rem', lineHeight: 1.65 }}>{item}</span>
-              </li>
+
+          {/* Pledge lines — clean stacked text, no bullets */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {PLEDGE.slice(1).map((item, i) => (
+              <div
+                key={i}
+                className="pledge-line"
+                style={{
+                  padding: '1rem 0',
+                  borderTop: '1px solid rgba(202,138,4,0.18)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.querySelector('.pledge-bar').style.width = '100%';
+                  e.currentTarget.querySelector('.pledge-text').style.color = '#0a1141';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.querySelector('.pledge-bar').style.width = '0%';
+                  e.currentTarget.querySelector('.pledge-text').style.color = '#374151';
+                }}
+              >
+                {/* Animated gold underline bar */}
+                <div
+                  className="pledge-bar"
+                  style={{
+                    position: 'absolute',
+                    bottom: 0, left: 0,
+                    height: '2px',
+                    width: '0%',
+                    backgroundColor: '#ca8a04',
+                    transition: 'width 0.35s cubic-bezier(0.16,1,0.3,1)',
+                  }}
+                />
+                <p
+                  className="pledge-text"
+                  style={{
+                    margin: 0,
+                    color: '#374151',
+                    fontSize: 'clamp(0.88rem,1.4vw,0.98rem)',
+                    lineHeight: 1.7,
+                    fontWeight: '500',
+                    transition: 'color 0.25s ease',
+                  }}
+                >
+                  {item}
+                </p>
+              </div>
             ))}
-          </ul>
+            {/* Final border */}
+            <div style={{ borderTop: '1px solid rgba(202,138,4,0.18)' }} />
+          </div>
         </div>
       </section>
 
