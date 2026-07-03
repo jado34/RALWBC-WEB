@@ -44,7 +44,6 @@ export const Footer = () => {
             <h4 className="footer-col-title" style={{ color: titleColor, fontSize: '0.9rem', fontWeight: 'bold' }}>Community</h4>
             <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '0.5rem' }}><Link to="/officers" style={{ color: textColor }}>Officers</Link></li>
-              <li style={{ marginBottom: '0.5rem' }}><Link to="/resources" style={{ color: textColor }}>Resources</Link></li>
               <li><Link to="/contact" style={{ color: textColor }}>Contact Us</Link></li>
             </ul>
           </div>
@@ -57,6 +56,9 @@ export const Footer = () => {
               </a>
               <a href="https://web.facebook.com/people/Royal-Ambassadors-Lagos-West-Baptist-Conference/100070112613066/?locale=en_GB#" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="Facebook">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
+              </a>
+              <a href="https://youtube.com/@ralwbcmedia?si=hEM2AsEnXwxB_KVN" target="_blank" rel="noreferrer" style={{ color: '#002060' }} aria-label="YouTube">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" /><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none" /></svg>
               </a>
             </div>
             <span style={{ fontSize: '0.8rem', color: textColor, marginTop: '0.5rem' }}>
