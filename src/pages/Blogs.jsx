@@ -17,6 +17,31 @@ const readTime = (content = '') => {
 
 const TAG_COLORS = ['#0a1141', '#ca8a04', '#1e3a8a', '#065f46'];
 
+// Renders plain text while turning any http/https URLs into clickable links
+const renderContent = (text = '') => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()}
+        style={{
+          color: '#ca8a04',
+          fontWeight: '700',
+          textDecoration: 'underline',
+          wordBreak: 'break-all',
+        }}
+      >
+        {part}
+      </a>
+    ) : part
+  );
+};
+
 // Module-level cache so data survives between page navigations
 let _blogsCache = null;
 
@@ -227,7 +252,7 @@ export const Blogs = () => {
                       {featured.title}
                     </h2>
                     <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem', lineHeight: 1.8, display: '-webkit-box', WebkitLineClamp: expandedId === featured.id ? 'unset' : 3, WebkitBoxOrient: 'vertical', overflow: expandedId === featured.id ? 'visible' : 'hidden', whiteSpace: 'pre-wrap' }}>
-                      {featured.content}
+                      {renderContent(featured.content)}
                     </p>
                     <button style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#ca8a04', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>
                       {expandedId === featured.id ? 'Show Less' : 'Read Full Post'} <ArrowRight size={14} />
@@ -289,7 +314,7 @@ export const Blogs = () => {
 
                       {/* Content — collapses/expands */}
                       <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, display: '-webkit-box', WebkitLineClamp: expandedId === blog.id ? 'unset' : 3, WebkitBoxOrient: 'vertical', overflow: expandedId === blog.id ? 'visible' : 'hidden', whiteSpace: 'pre-wrap' }}>
-                        {blog.content}
+                        {renderContent(blog.content)}
                       </p>
 
                       {/* Author + read toggle */}

@@ -928,6 +928,36 @@ export const dbService = {
   async getBlogs() {
     const defaultBlogs = [
       {
+        id: 'blog_def_ltc2026',
+        title: 'National Leadership Training Conference 2026 — Theme: "Divine Companionship"',
+        author: 'Royal Ambassadors of Nigeria — Men\'s Missionary Union, NBC',
+        date: '2026-07-18',
+        image_url: '/ltc-2026-flyer.jpeg',
+        content: `Royal Ambassadors of Nigeria invites all officers, counsellors, and candidates to the 2026 National Leadership Training Conference (LTC).
+
+Theme: DIVINE COMPANIONSHIP
+Scripture: Exodus 33:14
+
+"My Presence will go with you, and I will give you rest." — God's promise is our confidence as we gather to be equipped, trained, and commissioned for greater service.
+
+📅 DATE: 14th – 17th October, 2026
+📍 VENUE: Peter Akintola Foundation Youth Centre
+   KM 10, Abeokuta–Lagos Expressway, Obada, Abeokuta, Ogun State, Nigeria
+
+💰 REGISTRATION FEES:
+• Regular Registration — ₦18,000
+• Plen. Exam Candidates — ₦20,000
+• Plen. Decoration Candidates — ₦27,000
+
+🎽 T-Shirt is included in the registration package.
+
+🔗 Registration Link: https://tinyurl.com/NLTC26REG
+
+Do not miss this life-changing gathering of Royal Ambassador leaders from across Nigeria. Come ready to learn, grow, and be transformed by Divine Companionship.
+
+WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
+      },
+      {
         id: 'blog_def1',
         title: '2026 Ushering-In & Handing Over Ceremony: THE KEYS OF THE KINGDOM',
         author: 'Conference Planning Committee',
@@ -942,13 +972,6 @@ This week-long program is a cornerstone spiritual event designed to inspire dedi
 📍 First Baptist Church, Ikeja
 
 WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
-      },
-      {
-        id: 'blog_def2',
-        title: 'RAN Leadership Training Conference (LTC): Building Next-Gen Leaders',
-        author: 'Training & Education Directorate',
-        date: '2026-06-08',
-        content: "Leadership is the foundation of service. The upcoming Royal Ambassadors of Nigeria Leadership Training Conference (RAN LTC) at Abeokuta will gather executives, officers, and aspiring leaders for an intensive weekend of instruction, fellowship, and spiritual growth. The curriculum covers administrative guidelines, mission theology, first aid, disaster management, and advanced leadership skills. Ranks will be examined and certified, including candidate screenings for the prestigious Ambassador Plenipotentiary senior exam. Early registration is advised to secure conference materials."
       },
       {
         id: 'blog_def3',
@@ -1037,19 +1060,18 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
   async getOfficers() {
     return [
       {
-        id: 'off_1',
-        name: 'Coun. Adegbola Thomas',
+        id: 'off_2',
+        name: 'Amb. Philip Olopade',
         post: 'Director, RALWBC',
-        image: '/25.jpg.jpeg',
-        imagePosition: 'center 20%',
-        imageScale: 1.5,
+        image: '/26.jpg.jpeg',
         sortOrder: 1
       },
       {
-        id: 'off_2',
-        name: 'Amb. Philip Olopade',
+        id: 'off_6',
+        name: 'Amb. Damilola Aderibigbe',
         post: 'Assistant Director, RALWBC',
-        image: '/26.jpg.jpeg',
+        image: '/officer-aderibigbe.jpeg',
+        imagePosition: 'top',
         sortOrder: 2
       },
       {
@@ -1067,11 +1089,11 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         sortOrder: 4
       },
       {
-        id: 'off_6',
-        name: 'Amb. Damilola Aderibigbe',
-        post: 'Ranking officer, RALWBC',
-        image: '/officer-aderibigbe.jpeg',
-        imagePosition: 'top',
+        id: 'off_16',
+        name: 'Amb. Matthew Ajayi Adebayo',
+        post: 'Ranking Officer, RALWBC',
+        image: '/officer-adebayo.jpeg',
+        imagePosition: 'center top',
         sortOrder: 5
       },
       {
@@ -1103,11 +1125,11 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         sortOrder: 9
       },
       {
-        id: 'off_11',
-        name: 'Amb. Tobi Oni',
-        post: 'Auditor, RALWBC',
-        image: '/_DSC2348.jpg',
-        sortOrder: 12
+        id: 'off_14',
+        name: 'Amb. Solomon Adepoju',
+        post: 'Parade Commander, RALWBC',
+        image: '/_DSC2363.jpg',
+        sortOrder: 10
       },
       {
         id: 'off_12',
@@ -1117,6 +1139,13 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         sortOrder: 11
       },
       {
+        id: 'off_11',
+        name: 'Amb. Tobi Oni',
+        post: 'Auditor, RALWBC',
+        image: '/_DSC2348.jpg',
+        sortOrder: 12
+      },
+      {
         id: 'off_13',
         name: 'Amb. Olamidotun Simidu',
         post: 'PRO, RALWBC',
@@ -1124,17 +1153,12 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         sortOrder: 13
       },
       {
-        id: 'off_14',
-        name: 'Amb. Solomon Adepoju',
-        post: 'Parade Commander, RALWBC',
-        image: '/_DSC2363.jpg',
-        sortOrder: 10
-      },
-      {
-        id: 'off_15',
-        name: 'Coun. Olumide Seyi Ajayi (Post Pleni)',
+        id: 'off_1',
+        name: 'Coun. Adegbola Thomas',
         post: 'Ex-Officio, RALWBC',
-        image: '/_DSC2453.jpg',
+        image: '/25.jpg.jpeg',
+        imagePosition: 'center 20%',
+        imageScale: 1.5,
         sortOrder: 14
       }
     ];
