@@ -15,17 +15,34 @@ export const Contact = () => {
       return;
     }
 
-    // Simulate contact submission
+    // Build a mailto: link so the message goes directly to ralwbc@yahoo.com
+    const to = 'ralwbc@yahoo.com';
+    const subjectLine = subject.trim()
+      ? subject.trim()
+      : `Message from ${name.trim()} via RALWBC Website`;
+    const body =
+      `Name: ${name.trim()}\n` +
+      `Email: ${email.trim()}\n\n` +
+      `${message.trim()}`;
+
+    const mailtoUrl =
+      `mailto:${to}` +
+      `?subject=${encodeURIComponent(subjectLine)}` +
+      `&body=${encodeURIComponent(body)}` +
+      `&reply-to=${encodeURIComponent(email.trim())}`;
+
+    window.location.href = mailtoUrl;
+
     setSubmitted(true);
     setName('');
     setEmail('');
     setSubject('');
     setMessage('');
 
-    // Reset notification after 5 seconds
+    // Reset notification after 6 seconds
     setTimeout(() => {
       setSubmitted(false);
-    }, 5000);
+    }, 6000);
   };
 
   return (
@@ -101,8 +118,8 @@ export const Contact = () => {
                 <div>
                   <h4 style={infoTitleStyle}>Phone Numbers</h4>
                   <p style={infoTextStyle}>
-                    +234 803 123 4567<br />
-                    +234 812 987 6543
+                    +234 708 708 7273<br />
+                    +234 806 658 7250
                   </p>
                 </div>
               </div>

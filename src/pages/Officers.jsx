@@ -108,12 +108,12 @@ export const Officers = () => {
                   </div>
                   {/* Info */}
                   <div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.5rem' }}>
-                      {officer.post}
-                    </div>
-                    <h2 style={{ margin: 0, fontSize: 'clamp(1.3rem,2vw,1.65rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
+                    <h2 style={{ margin: '0 0 0.4rem', fontSize: 'clamp(1.3rem,2vw,1.65rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
                       {officer.name}
                     </h2>
+                    <div style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#ca8a04' }}>
+                      {officer.post}
+                    </div>
                   </div>
                 </div>
               );
@@ -153,12 +153,12 @@ export const Officers = () => {
 
                   {/* Info */}
                   <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ca8a04', marginBottom: '0.4rem' }}>
-                      {officer.post}
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
+                    <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.15rem', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25 }}>
                       {officer.name}
                     </h3>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ca8a04' }}>
+                      {officer.post}
+                    </div>
                   </div>
                 </div>
               ))}

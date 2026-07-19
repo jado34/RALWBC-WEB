@@ -13,7 +13,7 @@ const SLIDES = [
 // ─── Stats Data ───────────────────────────────────────────────────────────────
 const STATS = [
   { end: 16, label: 'LWBC ASSOCIATIONS', prefix: '' },
-  { end: 11, label: 'RA RANKS', prefix: '' },
+  { end: 10, label: 'RA RANKS', prefix: '' },
 ];
 
 
