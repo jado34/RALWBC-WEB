@@ -1061,14 +1061,14 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
     return [
       {
         id: 'off_2',
-        name: 'Amb. Philip Olopade',
+        name: 'Coun. Philip Olopade',
         post: 'Director, RALWBC',
         image: '/26.jpg.jpeg',
         sortOrder: 1
       },
       {
         id: 'off_6',
-        name: 'Amb. Damilola Aderibigbe',
+        name: 'Coun. Damilola Aderibigbe',
         post: 'Assistant Director, RALWBC',
         image: '/officer-aderibigbe.jpeg',
         imagePosition: 'top',
@@ -1090,7 +1090,7 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
       },
       {
         id: 'off_16',
-        name: 'Amb. Matthew Ajayi Adebayo',
+        name: 'Amb. Matthew Adebayo Ajayi',
         post: 'Ranking Officer, RALWBC',
         image: '/officer-adebayo.jpeg',
         imagePosition: 'center top',
