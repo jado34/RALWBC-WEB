@@ -21,6 +21,87 @@ export const GALLERY_CATEGORIES = [
   'General Parade Rehearsal'
 ];
 
+/**
+ * Synchronously returns local gallery photos from /public/gallery using Vite's
+ * import.meta.glob. No network request — runs instantly at module load time.
+ * Used to pre-populate the gallery cache before any DB fetch.
+ */
+export function getLocalGalleryPhotos() {
+  const images = import.meta.glob('/public/gallery/**/*.{jpg,jpeg,png,webp,svg}', { eager: false });
+  const localPhotos = [];
+  Object.keys(images).forEach((key, index) => {
+    const parts = key.split('/');
+    if (parts.length >= 5) {
+      const category = decodeURIComponent(parts[3]);
+      const url = key.replace(/^\/public/, '');
+      const filename = parts[parts.length - 1];
+      const alt = filename.split('.')[0].replace(/[-_]/g, ' ');
+      localPhotos.push({ id: `local_${index}`, url, alt, category });
+    }
+  });
+  return localPhotos;
+}
+
+/**
+ * Default blogs shown immediately before any DB fetch.
+ * Keeps the page feeling instant on first load.
+ */
+export const DEFAULT_BLOGS = [
+  {
+    id: 'blog_def_ltc2026',
+    title: 'National Leadership Training Conference 2026 — Theme: "Divine Companionship"',
+    author: "Royal Ambassadors of Nigeria — Men's Missionary Union, NBC",
+    date: '2026-07-18',
+    image_url: '/ltc-2026-flyer.webp',
+    content: `Royal Ambassadors of Nigeria invites all officers, counsellors, and candidates to the 2026 National Leadership Training Conference (LTC).
+
+Theme: DIVINE COMPANIONSHIP
+Scripture: Exodus 33:14
+
+"My Presence will go with you, and I will give you rest." — God's promise is our confidence as we gather to be equipped, trained, and commissioned for greater service.
+
+📅 DATE: 14th – 17th October, 2026
+📍 VENUE: Peter Akintola Foundation Youth Centre
+   KM 10, Abeokuta–Lagos Expressway, Obada, Abeokuta, Ogun State, Nigeria
+
+💰 REGISTRATION FEES:
+• Regular Registration — ₦18,000
+• Plen. Exam Candidates — ₦20,000
+• Plen. Decoration Candidates — ₦27,000
+
+🎽 T-Shirt is included in the registration package.
+
+🔗 Registration Link: https://tinyurl.com/NLTC26REG
+
+Do not miss this life-changing gathering of Royal Ambassador leaders from across Nigeria. Come ready to learn, grow, and be transformed by Divine Companionship.
+
+WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`,
+  },
+  {
+    id: 'blog_def1',
+    title: '2026 Ushering-In & Handing Over Ceremony: THE KEYS OF THE KINGDOM',
+    author: 'Conference Planning Committee',
+    date: '2026-07-04',
+    image_url: '/IMG-20260613-WA0001.webp',
+    content: `Royal Ambassadors, LWBC invites you to our 2026 Ushering-In & Handing Over Ceremony: THE KEYS OF THE KINGDOM
+
+Witness the sacred handover of vision and authority as we raise leaders to unlock new territories for Christ.
+This week-long program is a cornerstone spiritual event designed to inspire dedication, missionary zeal, and community service among all chapters. Under this year's theme, we focus on rebuilding the walls of service and rekindling the fire of active evangelism. All chapters are urged to finalize their parade schedules, community clean-up logistics, and special missionary collections. Let us walk in dignity and show the world what it means to be an Ambassador
+
+📅 Sat, 4th July 2026 | 7:00 AM
+📍 First Baptist Church, Ikeja
+
+WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`,
+  },
+  {
+    id: 'blog_def3',
+    title: 'Maximizing Your Exam Preparation: A Guide for Royal Ambassadors',
+    author: 'Ranking Officer',
+    date: '2026-06-05',
+    content: "As the camping session draws near, candidates preparing for their promotional ranks are encouraged to start their study early. This year's exams will test theological knowledge, Baptist history, Royal Ambassador manual rules, and practical outdoor tasks. To help you succeed, the online portal offers sample questionnaires, study guides, and mock quiz exercises. Ensure you revise the pledge, declaration, and three ranks structure. Maintain focus, maintain integrity, and study to show yourself approved.",
+  },
+];
+
 export const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();

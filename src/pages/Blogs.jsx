@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { dbService } from '../services/db';
+import { dbService, DEFAULT_BLOGS } from '../services/db';
 import { Calendar, User, BookOpen, ArrowRight } from 'lucide-react';
 
 const formatDate = (raw) => {
@@ -42,38 +42,45 @@ const renderContent = (text = '') => {
   );
 };
 
-// Module-level cache so data survives between page navigations
-let _blogsCache = null;
+// ── Persistent cache helpers (localStorage) ───────────────────────────────
+const CACHE_KEY = 'ralwbc_blogs_v1';
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache(blogs) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(blogs)); } catch {}
+}
+
+// Module-level in-memory cache (survives navigations in the same session)
+// Priority: in-memory → localStorage → hardcoded defaults
+let _blogsCache = readCache() || DEFAULT_BLOGS;
 
 export const Blogs = () => {
-  // If we have cached data, show it immediately (no spinner)
-  const [blogs, setBlogs] = useState(_blogsCache || []);
-  const [featured, setFeatured] = useState(_blogsCache ? _blogsCache[0] : null);
-  const [rest, setRest] = useState(_blogsCache ? _blogsCache.slice(1) : []);
+  // Start with whatever we already have — NEVER show an empty spinner
+  const [blogs, setBlogs] = useState(_blogsCache);
+  const [featured, setFeatured] = useState(_blogsCache[0] ?? null);
+  const [rest, setRest] = useState(_blogsCache.slice(1));
   const [expandedId, setExpandedId] = useState(null);
-  // Only show skeleton when we truly have nothing yet
-  const [isLoading, setIsLoading] = useState(!_blogsCache);
+  // isLoading is always false now — DB runs silently in the background
+  const [isLoading] = useState(false);
 
   useEffect(() => {
-    dbService.init();
+    // Background DB sync — never blocks the UI
     dbService.getBlogs()
       .then(all => {
-        _blogsCache = all; // store in module cache
-        if (all && all.length > 0) {
-          setFeatured(all[0]);
-          setRest(all.slice(1));
-          setBlogs(all);
-        } else {
-          setBlogs([]);
-        }
+        if (!all || all.length === 0) return;
+        _blogsCache = all;
+        writeCache(all);        // persist for next page load
+        setBlogs(all);
+        setFeatured(all[0]);
+        setRest(all.slice(1));
       })
-      .catch(err => {
-        console.error('Failed to load blogs:', err);
-        if (!_blogsCache) setBlogs([]);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .catch(() => {}); // silently fail — default/cached content stays visible
   }, []);
 
   return (

@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronDown, ArrowRight, Shield, BookOpen, Users, ChevronLeft, ChevronRight } from 'lucide-react';
-import { dbService } from '../services/db';
+import { dbService, DEFAULT_BLOGS } from '../services/db';
+
+// ── Shared blog cache (reads same localStorage key as Blogs.jsx) ──────────
+const BLOGS_CACHE_KEY = 'ralwbc_blogs_v1';
+function readBlogsCache() {
+  try {
+    const raw = localStorage.getItem(BLOGS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
 
 // ─── Hero Slides ─────────────────────────────────────────────────────────────
 const SLIDES = [
   { url: '/Hero.jpeg', position: 'center 20%' },
-  { url: '/671245412_18050382983733739_357892051856325748_n.jpg', position: 'center 15%' },
-  { url: '/IMG_9917.jpg', position: 'center 30%' },
+  { url: '/671245412_18050382983733739_357892051856325748_n.webp', position: 'center 15%' },
+  { url: '/gallery/RA Week Ushering In/IMG_9917.webp', position: 'center 30%' },
 ];
 
 // ─── Stats Data ───────────────────────────────────────────────────────────────
@@ -43,13 +52,15 @@ export const Home = () => {
   const [slide, setSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
-  const [blogs, setBlogs] = useState([]);
+  const [blogs, setBlogs] = useState(readBlogsCache() || DEFAULT_BLOGS);
   const navigate = useNavigate();
   const statsRef = useRef(null);
 
   useEffect(() => {
-    dbService.init();
-    dbService.getBlogs().then(data => setBlogs(data));
+    // Silently sync blogs from DB — never blocks render
+    dbService.getBlogs().then(data => {
+      if (data && data.length > 0) setBlogs(data);
+    }).catch(() => {});
     const t = setTimeout(() => setLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);

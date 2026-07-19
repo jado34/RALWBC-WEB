@@ -1,24 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { dbService, GALLERY_CATEGORIES } from '../services/db';
+import { supabase } from '../services/supabaseClient';
+import { GALLERY_CATEGORIES, getLocalGalleryPhotos } from '../services/db';
 
-// Module-level cache so data survives between page navigations
-let _galleryCache = null;
+// Instantly load local /public/gallery photos — no network needed, runs synchronously
+const _localPhotos = getLocalGalleryPhotos();
+
+// Module-level cache: starts with local photos so the page renders immediately
+let _galleryCache = _localPhotos.length > 0 ? _localPhotos : null;
 
 export const Gallery = () => {
   const [photosList, setPhotosList] = useState(_galleryCache || []);
   const [currentPage, setCurrentPage] = useState('01');
   const [activePhoto, setActivePhoto] = useState(null);
-  const [isLoading, setIsLoading] = useState(!_galleryCache);
+  // Only show skeleton if we have absolutely no local photos (empty folder)
+  const [isLoading, setIsLoading] = useState(_galleryCache === null);
 
   useEffect(() => {
-    dbService.init();
-    dbService.getGalleryPhotos()
-      .then(data => {
-        _galleryCache = data;
-        setPhotosList(data);
+    // Silently fetch DB-only photos (admin-uploaded) in the background.
+    // Local photos are already shown — this just appends any extras.
+    supabase
+      .from('gallery')
+      .select('*')
+      .then(({ data, error }) => {
+        if (error || !data || data.length === 0) return;
+        const dbPhotos = data.map(g => ({
+          id: g.id,
+          url: g.url,
+          alt: g.alt || '',
+          category: g.category,
+        }));
+        // Merge: local photos first, then any DB-only additions
+        const localIds = new Set(_localPhotos.map(p => p.url));
+        const newDbPhotos = dbPhotos.filter(p => !localIds.has(p.url));
+        if (newDbPhotos.length > 0) {
+          const merged = [..._localPhotos, ...newDbPhotos];
+          _galleryCache = merged;
+          setPhotosList(merged);
+        }
       })
-      .catch(err => console.error(err))
+      .catch(() => {}) // silently fail — local photos still show
       .finally(() => setIsLoading(false));
   }, []);
 
