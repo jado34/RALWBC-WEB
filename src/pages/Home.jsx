@@ -7,7 +7,7 @@ import { dbService } from '../services/db';
 const SLIDES = [
   { url: '/Lagos-West3.jpeg', position: 'center 20%' },
   { url: '/671245412_18050382983733739_357892051856325748_n.jpg', position: 'center 15%' },
-  { url: '/Lagos-West1.jpeg', position: 'center 25%' },
+  { url: '/IMG_9917.jpg', position: 'center 30%' },
 ];
 
 // ─── Stats Data ───────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ export const Home = () => {
 
   // Auto-advance slides every 6s
   useEffect(() => {
-    const iv = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 6000);
+    const iv = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 9000);
     return () => clearInterval(iv);
   }, []);
 
@@ -122,7 +122,7 @@ export const Home = () => {
           {/* Gold badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', maxWidth: '100%', ...fade(0.1) }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', flexShrink: 0 }} />
-            <span style={{ color: '#ffffff', fontSize: 'clamp(0.85rem, 1.7vw, 1.9rem)', fontWeight: '800', letterSpacing: 'clamp(0.04em,0.16vw,0.16em)', textTransform: 'uppercase', lineHeight: 1.35 }}>
+            <span style={{ color: '#ffffff', fontSize: 'clamp(1.1rem, 2.5vw, 1.9rem)', fontWeight: '800', letterSpacing: 'clamp(0.04em,0.16vw,0.16em)', textTransform: 'uppercase', lineHeight: 1.35 }}>
               Royal Ambassadors Lagos West Baptist Conference
             </span>
           </div>
@@ -294,9 +294,9 @@ export const Home = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '1.5px', backgroundColor: '#e2e8f0', border: '1.5px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
             {[
-              { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: '/Lagos-West3.jpeg', imgPos: 'center 20%', link: '/about-us' },
-              { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: '/671245412_18050382983733739_357892051856325748_n.jpg', imgPos: 'center 15%', link: '/about-us' },
-              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: '/Lagos-West1.jpeg', imgPos: 'center 30%', link: '/blogs' },
+              { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: '/IMG_9915.jpg', imgPos: 'center 30%', link: '/about-us' },
+              { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: '/DSC_2218.jpg', imgPos: 'center 20%', link: '/about-us' },
+              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: '/IMG_0091.jpg', imgPos: 'center 25%', link: '/blogs' },
             ].map((card, i) => (
               <div key={i} className="mission-pillar-card" style={{ backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'box-shadow 0.3s' }}>
                 <div style={{ height: '220px', overflow: 'hidden' }}>
@@ -345,7 +345,7 @@ export const Home = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '1fr 1fr', gap: '6px', height: 'clamp(320px,50vw,520px)', borderRadius: '6px', overflow: 'hidden' }}>
             {/* Large left tile */}
             <div style={{ gridRow: '1 / 3', overflow: 'hidden', position: 'relative', cursor: 'pointer' }} onClick={() => navigate('/gallery')}>
-              <img src="/Lagos-West3.jpeg" alt="Conference" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%', transition: 'transform 0.7s ease' }}
+              <img src="/DSC_2698.jpg" alt="Conference" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', transition: 'transform 0.7s ease' }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               />
@@ -357,14 +357,14 @@ export const Home = () => {
 
             {/* Top right */}
             <div style={{ overflow: 'hidden', cursor: 'pointer' }} onClick={() => navigate('/gallery')}>
-              <img src="/671245412_18050382983733739_357892051856325748_n.jpg" alt="NBC Abuja" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%', transition: 'transform 0.7s ease' }}
+              <img src="/_DSC6741.jpg" alt="Conference Ushering" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%', transition: 'transform 0.7s ease' }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               />
             </div>
             {/* Bottom right */}
             <div style={{ overflow: 'hidden', cursor: 'pointer', position: 'relative', backgroundColor: '#0a1141' }} onClick={() => navigate('/gallery')}>
-              <img src="/Lagos-West1.jpeg" alt="LWBC" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', opacity: 0.8, transition: 'opacity 0.4s, transform 0.7s ease' }}
+              <img src="/IMG_0070.jpg" alt="LWBC Ushering" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%', opacity: 0.8, transition: 'opacity 0.4s, transform 0.7s ease' }}
                 onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.06)'; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = '0.8'; e.currentTarget.style.transform = 'scale(1)'; }}
               />
