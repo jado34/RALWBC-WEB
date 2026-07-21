@@ -60,7 +60,7 @@ export const Home = () => {
     // Silently sync blogs from DB — never blocks render
     dbService.getBlogs().then(data => {
       if (data && data.length > 0) setBlogs(data);
-    }).catch(() => {});
+    }).catch(() => { });
     const t = setTimeout(() => setLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
@@ -307,7 +307,7 @@ export const Home = () => {
             {[
               { icon: <BookOpen size={26} color="#ca8a04" />, title: 'Spiritual Discipleship', body: 'Helping boys develop a personal saving relationship with Jesus Christ and training them to become well-informed followers through structured Bible studies and devotionals.', img: '/IMG_9915.jpg', imgPos: 'center 30%', link: '/about-us' },
               { icon: <Shield size={26} color="#ca8a04" />, title: 'Leadership Training', body: 'Promoting personal and corporate discipline, orderliness, character development, and enabling potentiality. We build boys into strong leaders and Christian role models.', img: '/DSC_2218.jpg', imgPos: 'center 20%', link: '/about-us' },
-              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches — scripture studies, ranking exams, community service, and annual camp meets.', img: '/IMG_0091.jpg', imgPos: 'center 25%', link: '/blogs' },
+              { icon: <Users size={26} color="#ca8a04" />, title: 'Mission & Service', body: 'Equipping boys for physical and spiritual mission activities and outreaches for scripture studies, ranking exams, community service, and annual camp meets.', img: '/mi.jpg', imgPos: 'center 30%', link: '/blogs' },
             ].map((card, i) => (
               <div key={i} className="mission-pillar-card" style={{ backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'box-shadow 0.3s' }}>
                 <div style={{ height: '220px', overflow: 'hidden' }}>
