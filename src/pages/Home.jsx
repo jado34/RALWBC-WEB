@@ -255,10 +255,10 @@ export const Home = () => {
               A Baptist Missionary<br />Organization for Boys.
             </h2>
             <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.8, marginBottom: '1.25rem' }}>
-              The Royal Ambassadors of Nigeria (Lagos West Baptist Conference) anchors boys and young men — ages 10 to 24 — in scripture, service, and mission action.
+              The Royal Ambassadors of Nigeria (Lagos West Baptist Conference) anchors boys and young men — 10 years and above — in scripture, service, and mission action.
             </p>
             <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.8, marginBottom: '2rem' }}>
-              From Junior RA (10–12) through Intermediate (13–16) to Senior RA (17–24), every rank equips members for a Christ-centred life and global mission.
+              From Junior RA (10–12) through Intermediate (13–16) to Senior RA (17 years and above), every rank equips members for a Christ-centred life and global mission.
             </p>
             <Link to="/about-us" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#0a1141', fontWeight: '700', fontSize: '0.88rem', letterSpacing: '0.06em', textDecoration: 'none', textTransform: 'uppercase', borderBottom: '2px solid #ca8a04', paddingBottom: '2px', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#ca8a04'}

@@ -63,7 +63,7 @@ const RANKS = [
   },
   {
     label: 'Senior RA',
-    ages: '17 – 24',
+    ages: '17 and above',
     symbol: 'Crown',
     symbolIcon: <Crown size={22} color={EMBLEM_GOLD} />,
     symbolMeaning: 'The Crown is the symbol for the Senior Royal Ambassador. A crown represents a king and this crown specifically represents Christ, the King of kings and Lord of lords. It signifies that the Senior RA has reached an age and acquired certain knowledge that qualifies him to serve as an effective Ambassador for Christ the King, loyal and faithful to his calling.',
@@ -254,7 +254,7 @@ export const About = () => {
             maxWidth: '560px', lineHeight: 1.8, margin: '0 0 2.5rem',
             ...fade(0.35),
           }}>
-            Royal Ambassadors is a Baptist worldwide missionary organization for boys aged 10–24 — found on every continent where Baptists gather, we are ambassadors for Christ 2 CORINTHIANS 5:20.
+            Royal Ambassadors is a Baptist worldwide missionary organization for boys 10 years and above — found on every continent where Baptists gather, we are ambassadors for Christ 2 CORINTHIANS 5:20.
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', ...fade(0.5) }}>
             <Link to="/officers" style={{
@@ -313,11 +313,11 @@ export const About = () => {
             {[
               {
                 tag: 'Global Reach',
-                text: 'Royal Ambassadors is the name of a Baptist worldwide missionary organization for boys between the ages of 10 and 24 – an international organization found in many countries of the world, wherever there are Baptists. It is found on the continents of Africa, Asia, Australia, Europe, North America, and South America.',
+                text: 'Royal Ambassadors is the name of a Baptist worldwide missionary organization for boys 10 years and above – an international organization found in many countries of the world, wherever there are Baptists. It is found on the continents of Africa, Asia, Australia, Europe, North America, and South America.',
               },
               {
                 tag: 'Royal Ambassadors of Nigeria',
-                text: 'The organization in Nigeria is called Royal Ambassadors of Nigeria (RAN). In its mission education and ministry plan, RAN has a foundational Christian education plan for Junior RA, boys between the ages of 10 and 12; basic discipleship plans for Intermediate RA, boys from age 13 to 16 (or secondary school age); and solid mission education and action plans for Senior RA, who are boys within the ages of 17 and 24.',
+                text: 'The organization in Nigeria is called Royal Ambassadors of Nigeria (RAN). In its mission education and ministry plan, RAN has a foundational Christian education plan for Junior RA, boys between the ages of 10 and 12; basic discipleship plans for Intermediate RA, boys from age 13 to 16 (or secondary school age); and solid mission education and action plans for Senior RA, who are young men 17 years and above.',
               },
               {
                 tag: 'Our Journey',
