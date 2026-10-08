@@ -3,22 +3,19 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { GALLERY_CATEGORIES, getLocalGalleryPhotos } from '../services/db';
 
-// Instantly load local /public/gallery photos — no network needed, runs synchronously
-const _localPhotos = getLocalGalleryPhotos();
-
-// Module-level cache: starts with local photos so the page renders immediately
-let _galleryCache = _localPhotos.length > 0 ? _localPhotos : null;
+// Gallery component for displaying event media & photos
 
 export const Gallery = () => {
-  const [photosList, setPhotosList] = useState(_galleryCache || []);
+  const [photosList, setPhotosList] = useState(() => getLocalGalleryPhotos());
   const [currentPage, setCurrentPage] = useState('01');
   const [activePhoto, setActivePhoto] = useState(null);
-  // Only show skeleton if we have absolutely no local photos (empty folder)
-  const [isLoading, setIsLoading] = useState(_galleryCache === null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    const local = getLocalGalleryPhotos();
+    setPhotosList(local);
+
     // Silently fetch DB-only photos (admin-uploaded) in the background.
-    // Local photos are already shown — this just appends any extras.
     supabase
       .from('gallery')
       .select('*')
@@ -31,12 +28,10 @@ export const Gallery = () => {
           category: g.category,
         }));
         // Merge: local photos first, then any DB-only additions
-        const localIds = new Set(_localPhotos.map(p => p.url));
+        const localIds = new Set(local.map(p => p.url));
         const newDbPhotos = dbPhotos.filter(p => !localIds.has(p.url));
         if (newDbPhotos.length > 0) {
-          const merged = [..._localPhotos, ...newDbPhotos];
-          _galleryCache = merged;
-          setPhotosList(merged);
+          setPhotosList([...local, ...newDbPhotos]);
         }
       })
       .catch(() => {}) // silently fail — local photos still show

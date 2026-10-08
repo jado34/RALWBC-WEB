@@ -13,7 +13,7 @@ export const getRankLabel = (value) => {
 };
 
 export const GALLERY_CATEGORIES = [
-  'Jamboore Experience',
+  'Jamboree Experience',
   'RA Week Ushering In',
   'Convention - in - Session',
   'RALWBC Annual General Meeting',
@@ -27,7 +27,7 @@ export const GALLERY_CATEGORIES = [
  * Used to pre-populate the gallery cache before any DB fetch.
  */
 export function getLocalGalleryPhotos() {
-  const images = import.meta.glob('/public/gallery/**/*.{jpg,jpeg,png,webp,svg}', { eager: false });
+  const images = import.meta.glob('/public/gallery/**/*.{jpg,jpeg,png,webp,svg}', { eager: true });
   const localPhotos = [];
   Object.keys(images).forEach((key, index) => {
     const parts = key.split('/');
