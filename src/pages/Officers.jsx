@@ -36,10 +36,14 @@ const Avatar = ({ name, size = 120 }) => {
 
 export const Officers = () => {
   const [officers, setOfficers] = useState([]);
+  const [associationDirectors, setAssociationDirectors] = useState([]);
 
   useEffect(() => {
     dbService.init();
-    dbService.getOfficers().then(data => setOfficers(data));
+    dbService.getOfficers().then(data => setOfficers(data || []));
+    if (typeof dbService.getAssociationDirectors === 'function') {
+      dbService.getAssociationDirectors().then(data => setAssociationDirectors(data || []));
+    }
   }, []);
 
   const director = officers.find(o => o.sortOrder === 1);
@@ -172,6 +176,87 @@ export const Officers = () => {
         </div>
       </section>
 
+      {/* ── ASSOCIATION DIRECTORS ────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(4rem,8vw,6rem) clamp(1.5rem,5vw,4rem)', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '3rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '32px', height: '2px', backgroundColor: '#ca8a04' }} />
+              <span style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ca8a04' }}>16 Associations</span>
+            </div>
+            <h2 style={{ margin: '0 0 0.5rem', fontSize: 'clamp(1.75rem,3vw,2.5rem)', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em' }}>
+              Association Directors
+            </h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem', maxWidth: '620px', lineHeight: 1.6 }}>
+              The dedicated Directors leading the Royal Ambassador mission and discipleship across each Association in the Lagos West Baptist Conference.
+            </p>
+          </div>
+
+          {associationDirectors.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '2rem' }}>
+              {associationDirectors.map((director) => (
+                <div
+                  key={director.id}
+                  className="assoc-card"
+                >
+                  {/* Photo / Avatar */}
+                  <div className="assoc-img-wrapper">
+                    {director.image ? (
+                      <img
+                        src={director.image}
+                        alt={director.name}
+                        className="assoc-img"
+                        style={{
+                          objectPosition: director.imagePosition || 'center top',
+                          transform: `scale(${director.imageScale || 1})`,
+                          transformOrigin: 'center top'
+                        }}
+                      />
+                    ) : (
+                      <Avatar name={director.name} size={190} />
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', width: '100%' }}>
+                    {director.association && (
+                      <div style={{
+                        display: 'inline-block',
+                        padding: '0.2rem 0.75rem',
+                        borderRadius: '9999px',
+                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                        color: '#a16207',
+                        fontSize: '0.72rem',
+                        fontWeight: '700',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.25rem',
+                        textAlign: 'center'
+                      }}>
+                        {director.association}
+                      </div>
+                    )}
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '900', color: '#0a1141', fontFamily: 'var(--font-heading)', lineHeight: 1.25, textAlign: 'center' }}>
+                      {director.name}
+                    </h3>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ca8a04', textAlign: 'center' }}>
+                      {director.post || 'Association Director'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#64748b', border: '1px dashed #cbd5e1', borderRadius: '16px', backgroundColor: '#ffffff' }}>
+              <Shield size={44} color="#ca8a04" style={{ marginBottom: '1rem', opacity: 0.8 }} />
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0a1141', fontSize: '1.2rem', fontWeight: '800' }}>Association Directors Section</h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', maxWidth: '480px', marginInline: 'auto' }}>
+                Association leadership profiles and details are currently being updated.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── BOTTOM DARK STRIP ───────────────*/}
       <section style={{ backgroundColor: '#0a1141', padding: '3.5rem clamp(1.5rem,5vw,4rem)', borderTop: '1px solid rgba(202,138,4,0.2)' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem' }}>
@@ -251,8 +336,7 @@ export const Officers = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          image-rendering: -webkit-optimize-contrast;
-          image-rendering: crisp-edges;
+          image-rendering: auto;
           transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -320,12 +404,80 @@ export const Officers = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          image-rendering: -webkit-optimize-contrast;
-          image-rendering: crisp-edges;
+          image-rendering: auto;
           transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .exec-card:hover .exec-img {
+          transform: scale(1.1);
+        }
+
+        /* Association Director Cards */
+        .assoc-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          padding: 2.5rem 2rem;
+          box-shadow: 0 4px 15px rgba(10, 17, 65, 0.02);
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 1.25rem;
+          position: relative;
+          cursor: default;
+        }
+
+        .assoc-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background: linear-gradient(90deg, #ca8a04, #0a1141);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          border-radius: 18px 18px 0 0;
+        }
+
+        .assoc-card:hover {
+          transform: translateY(-8px);
+          border-color: rgba(202, 138, 4, 0.35);
+          box-shadow: 0 20px 40px rgba(10, 17, 65, 0.08);
+        }
+
+        .assoc-card:hover::before {
+          opacity: 1;
+        }
+
+        .assoc-img-wrapper {
+          position: relative;
+          width: 190px;
+          height: 190px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 3px solid #ffffff;
+          box-shadow: 0 6px 18px rgba(10, 17, 65, 0.06);
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .assoc-card:hover .assoc-img-wrapper {
+          border-color: #ca8a04;
+          box-shadow: 0 8px 24px rgba(202, 138, 4, 0.25);
+          transform: scale(1.04);
+        }
+
+        .assoc-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          image-rendering: auto;
+          transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .assoc-card:hover .assoc-img {
           transform: scale(1.1);
         }
 

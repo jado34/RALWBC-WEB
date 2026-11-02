@@ -1255,6 +1255,146 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
     return true;
   },
 
+  // ── Association Directors Operations ───────────────────────────────────────
+
+  async getAssociationDirectors() {
+    return [
+      {
+        id: 'assoc_1',
+        name: 'Amb. Oluwadamilare Ishola',
+        association: 'Abundant Grace Baptist Association',
+        post: 'Association Director',
+        image: '/directors/oluwadamilare-ishola.jpg',
+        imagePosition: 'center top',
+        sortOrder: 1
+      },
+      {
+        id: 'assoc_2',
+        name: 'Amb. Tunde Oladiji',
+        association: 'The Good Herald Baptist Association',
+        post: 'Association Director',
+        image: '/directors/tunde-oladiji.jpg',
+        imagePosition: 'center top',
+        sortOrder: 2
+      },
+      {
+        id: 'assoc_3',
+        name: 'Amb. Olaoluwa Abatan',
+        association: 'The Good Message Baptist Association',
+        post: 'Association Director',
+        image: '/directors/olaoluwa-abatan.jpg',
+        imagePosition: 'center top',
+        sortOrder: 3
+      },
+      {
+        id: 'assoc_4',
+        name: 'Amb. Emmanuel A. Ademola',
+        association: 'Greater Grace Baptist Association',
+        post: 'Association Director',
+        image: '/directors/emmanuel-ademola.jpg',
+        imagePosition: 'center top',
+        sortOrder: 4
+      },
+      {
+        id: 'assoc_5',
+        name: 'Amb. Olatunji Akinyemi',
+        association: 'Ireti-Ogo Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 5
+      },
+      {
+        id: 'assoc_6',
+        name: 'Amb. Adesanya Shedrack',
+        association: 'Living Faith Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 6
+      },
+      {
+        id: 'assoc_7',
+        name: 'Amb. Aanu O. Bamgbose',
+        association: 'Maranatha Baptist Association',
+        post: 'Association Director',
+        image: '/directors/aanu-bamgbose.jpg',
+        imagePosition: 'center top',
+        sortOrder: 7
+      },
+      {
+        id: 'assoc_8',
+        name: 'Amb. Ikechukwu Mgbeme',
+        association: 'Pentecost Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 8
+      },
+      {
+        id: 'assoc_9',
+        name: 'Amb. Paul Olawale Aremu',
+        association: "The Redeemer's Baptist Association",
+        post: 'Association Director',
+        image: null,
+        sortOrder: 9
+      },
+      {
+        id: 'assoc_10',
+        name: 'Amb. Adebayo Otuneye',
+        association: 'The Anointed Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 10
+      },
+      {
+        id: 'assoc_11',
+        name: 'Amb. Damilola Omotosho',
+        association: 'The Chosen Generation Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 11
+      },
+      {
+        id: 'assoc_12',
+        name: 'Amb. James Etibor',
+        association: 'The Good News Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 12
+      },
+      {
+        id: 'assoc_13',
+        name: 'Amb. Temidayo Ereduse',
+        association: 'The New Creation Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 13
+      },
+      {
+        id: 'assoc_14',
+        name: 'Amb. Johnson Aderinmola',
+        association: 'Victoryland Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 14
+      },
+      {
+        id: 'assoc_15',
+        name: 'Amb. Michael Towobola',
+        association: 'Victory Life Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 15
+      },
+      {
+        id: 'assoc_16',
+        name: 'Amb. Sunkanmi Olaotan',
+        association: 'Victorylight Baptist Association',
+        post: 'Association Director',
+        image: null,
+        sortOrder: 16
+      }
+    ];
+  },
+
   // ── Gallery Operations ────────────────────────────────────────────────────
 
   async getGalleryPhotos() {
