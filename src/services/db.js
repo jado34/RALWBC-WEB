@@ -1300,7 +1300,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Olatunji Akinyemi',
         association: 'Ireti-Ogo Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/olatunji-akinyemi.jpg',
+        imagePosition: 'center top',
         sortOrder: 5
       },
       {
@@ -1308,7 +1309,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Adesanya Shedrack',
         association: 'Living Faith Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/adesanya-shedrack.jpg',
+        imagePosition: 'center top',
         sortOrder: 6
       },
       {
@@ -1325,7 +1327,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Ikechukwu Mgbeme',
         association: 'Pentecost Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/ikechukwu-mgbeme.jpg',
+        imagePosition: 'center top',
         sortOrder: 8
       },
       {
@@ -1333,7 +1336,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Paul Olawale Aremu',
         association: "The Redeemer's Baptist Association",
         post: 'Association Director',
-        image: null,
+        image: '/directors/paul-aremu.jpg',
+        imagePosition: 'center top',
         sortOrder: 9
       },
       {
@@ -1341,7 +1345,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Adebayo Otuneye',
         association: 'The Anointed Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/adebayo-otuneye.jpg',
+        imagePosition: 'center top',
         sortOrder: 10
       },
       {
@@ -1349,7 +1354,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Damilola Omotosho',
         association: 'The Chosen Generation Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/damilola-omotosho.jpg',
+        imagePosition: 'center top',
         sortOrder: 11
       },
       {
@@ -1357,7 +1363,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. James Etibor',
         association: 'The Good News Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/james-etibor.jpg',
+        imagePosition: 'center top',
         sortOrder: 12
       },
       {
@@ -1365,7 +1372,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Temidayo Ereduse',
         association: 'The New Creation Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/temidayo-ereduse.jpg',
+        imagePosition: 'center top',
         sortOrder: 13
       },
       {
@@ -1373,7 +1381,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Johnson Aderinmola',
         association: 'Victoryland Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/johnson-aderinmola.jpg',
+        imagePosition: 'center top',
         sortOrder: 14
       },
       {
@@ -1381,7 +1390,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Michael Towobola',
         association: 'Victory Life Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/michael-towobola.jpg',
+        imagePosition: 'center top',
         sortOrder: 15
       },
       {
@@ -1389,7 +1399,8 @@ WE ARE AMBASSADORS FOR CHRIST — 2 Cor 5:20`
         name: 'Amb. Sunkanmi Olaotan',
         association: 'Victorylight Baptist Association',
         post: 'Association Director',
-        image: null,
+        image: '/directors/sunkanmi-olaotan.jpg',
+        imagePosition: 'center top',
         sortOrder: 16
       }
     ];
